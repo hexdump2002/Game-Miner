@@ -8,18 +8,27 @@ const int kEofMark = 0x0808;
 
 class VdfTools {
   //Test after a clean steam client
-  static void readShortcuts(String path) async {
-    Uint8List buffer = await File("/home/hexdump/.steam/steam/userdata/255842936/config/shortcuts.vdf").readAsBytes();
+  static Future<List<NonSteamGame>> readShortcuts(String path) async {
+    List<NonSteamGame> nonSteamGames = [];
+
+    Uint8List buffer = await File(path).readAsBytes();
 
     //Skip header
-    var seekIndex = 0xC;
+    var seekIndex = 0xB;
 
     var eof = false;
 
     while (!eof) {
-      var o = NonSteamGame.fromBuffer(buffer, seekIndex, true);
+      //Skipt first byte of block
+      seekIndex+=1;
+
+      var retVal = NonSteamGame.fromBuffer(buffer, seekIndex, true);
+      nonSteamGames.add(retVal.item1);
+      seekIndex = retVal.item2;
       eof = _isEndOfFile(buffer, seekIndex);
     }
+
+    return nonSteamGames;
   }
 
   static bool _isEndOfFile(Uint8List buffer, int from){

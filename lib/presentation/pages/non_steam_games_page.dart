@@ -17,7 +17,8 @@ class NonSteamGamesPage extends StatefulWidget {
 class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
   @override
   void initState() {
-    BlocProvider.of<NonSteamGamesCubit>(context).findGames(["/home/hexdump/Downloads/Games/"]);
+    var bloc = BlocProvider.of<NonSteamGamesCubit>(context);
+    bloc.loadData(["/home/hexdump/Downloads/Games/"]);
   }
 
   @override
@@ -28,16 +29,32 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
           // the App.build method, and use it to set our appbar title.
           title: Text("Non Steam Games Manager"),
         ),
-        body: Container(child: BlocBuilder<NonSteamGamesCubit,NonSteamGamesBaseState>(
-          builder: (context, state) {
-            print(state);
-            if(state is RetrievingGames)
-              return _waitingForGamesToBeRetrieved(context);
-            else
-              return _createGameCards(context, (state as GamesRetrieved).games);
+        body: Container(
+          alignment: Alignment.center,
+          child: BlocBuilder<NonSteamGamesCubit, NonSteamGamesBaseState>(
+            builder: (context, state) {
+              return Column(
+                children: [Expanded(child: _buildListOfGames(context, state)), _buildBottomBar(context)],
+              );
+            },
+          ),
+        ));
+  }
 
-          },
-        ),alignment: Alignment.center,));
+  Widget _buildListOfGames(BuildContext context, NonSteamGamesBaseState state) {
+    if (state is RetrievingGameData) {
+      return _waitingForGamesToBeRetrieved(context);
+    } else {
+      return _createGameCards(context, (state as GamesDataRetrieved).games);
+    }
+  }
+  Widget _buildBottomBar(BuildContext context) {
+    return Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+      Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: ElevatedButton(child: Text("Apply"), onPressed: () => { print("pressed!")}),
+      )
+    ]);
   }
 
   Widget _createGameCards(BuildContext context, List<UserGame> games) {
@@ -53,7 +70,6 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
   }
 
   Widget _createGameCard(BuildContext context, UserGame ug) {
-
     List<Widget> gameItems = [
       Text(
         ug.name,
@@ -62,24 +78,20 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
       )
     ];
 
-    List<String> gameExePaths = ug.exeFilePaths;
+    List<UserGameExe> gameExePaths = ug.exeFileEntries;
 
-    for (String gameExePath in gameExePaths) {
+    for (UserGameExe uge in gameExePaths) {
       gameItems.add(Padding(
         padding: const EdgeInsets.fromLTRB(64, 8, 0, 8),
         child: Row(children: [
           Expanded(
-            child: Text(gameExePath, style: Theme.of(context).textTheme.headline6, textAlign: TextAlign.left),
+            child: Text(uge.relativeExePath, style: Theme.of(context).textTheme.headline6, textAlign: TextAlign.left),
           ),
           Row(children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(8.0, 0, 8.0, 0),
-              child: ElevatedButton(child: Text("Add"), onPressed: null),
+              child: ElevatedButton( child: uge.added? Text("Remove"): Text("Add"), onPressed: ()=> {print("pressed")}),
             ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(8.0, 0, 8.0, 0),
-              child: ElevatedButton(child: Text("Remove"), onPressed: null),
-            )
           ])
         ]),
       ));
@@ -98,4 +110,6 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
   Widget _waitingForGamesToBeRetrieved(BuildContext context) {
     return const CircularProgressIndicator();
   }
+
+
 }

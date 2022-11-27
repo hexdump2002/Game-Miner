@@ -8,12 +8,6 @@ import 'package:tuple/tuple.dart';
 final Uint8List shortcutsValueTypeCode = Uint8List.fromList([0,1,2]); //0 for list, 1 for string, 2 for u32
 final Uint8List kEntry_End_Mark = Uint8List.fromList([00,0x74,0x61,0x67,0x73,0x00,0x08,0x08]);
 
-class UserGameExe {
-  late final bool added;
-  late final bool brokenLink;
-  late final String relativeExePath;
-}
-
 
 class NonSteamGame {
   String entryId = "";
@@ -32,16 +26,17 @@ class NonSteamGame {
   String devkitOverrideAppId = "";
   String lastPlayTime = "";
   String flatPackAppId = "";
+  String exePath = "";
 
   NonSteamGame();
 
-  factory  NonSteamGame.fromBuffer(Uint8List buffer, int from, bool consumeData) {
+  static Tuple2<NonSteamGame, int>  fromBuffer(Uint8List buffer, int from, bool consumeData) {
     var propertyName = "";
 
     var nsg = NonSteamGame();
-    nsg._readEntry(buffer, from, consumeData);
+    from = nsg._readEntry(buffer, from, consumeData);
 
-    return nsg;
+    return Tuple2(nsg, from);
   }
 
   void _assignValue(String propertyName, String propertyValue)
@@ -51,7 +46,7 @@ class NonSteamGame {
       case "entry_id": {entryId = propertyValue;}break;
       case "appid" : {appId = propertyValue;}break;
       case "AppName"  : {appName = propertyValue;}break;
-      case "StartDir" : {startDir = propertyValue;}break;
+      case "StartDir" : {propertyName = _cleanPathString(propertyName); startDir = propertyValue;}break;
       case "icon" : {icon = propertyValue;}break;
       case "ShortcutPath" : {shortcutPath = propertyValue;}break;
       case "LaunchOptions" : {launchOptions = propertyValue;}break;
@@ -64,9 +59,18 @@ class NonSteamGame {
       case "DevkitOverrideAppID" : {devkitOverrideAppId = propertyValue;}break;
       case "LastPlayTime" : {lastPlayTime = propertyValue;}break;
       case "FlatpakAppID" : {flatPackAppId = propertyValue;}break;
+      case "Exe" : { propertyValue = _cleanPathString(propertyValue); exePath = propertyValue;}break;
       default: print("$propertyName with value $propertyValue is not a known steam game property");
     }
   }
+  
+  String _cleanPathString(String str)
+  {
+    if(str[0] == "\"") str=str.substring(1,str.length);
+    if(str.endsWith("\"")) str=str.substring(0,str.length-1);
+    return str;
+  }
+  
   bool _convertStrToBool(String str)
   {
     return int.parse(str) == 1;
@@ -76,14 +80,14 @@ class NonSteamGame {
     var finished = false;
     var movingFrom = from;
 
-    var tuple = _readString(buffer, from, consumeData);
+    var tuple = _readString(buffer, movingFrom, consumeData);
     var entryId = tuple.item1;
-    from = tuple.item2;
+    movingFrom = tuple.item2;
 
     print("Entry ID = $entryId");
 
     while (!finished) {
-      var readPropertyRetVal = _readProperty(buffer, from,consumeData);
+      var readPropertyRetVal = _readProperty(buffer, movingFrom,consumeData);
       _assignValue(readPropertyRetVal.item1, readPropertyRetVal.item2);
       movingFrom = readPropertyRetVal.item3;
 
@@ -121,7 +125,7 @@ class NonSteamGame {
       {
         var readStrRetVal = _readString(buffer, movingFrom, consumeData);
         movingFrom = readStrRetVal.item2;
-        propertyName = readStrRetVal.item1;
+        propertyValue = readStrRetVal.item1;
       } break;
       case 0x02:
       {

@@ -5,10 +5,10 @@ abstract class NonSteamGamesBaseState {}
 
 //class InitialState extends NonSteamGamesBaseState {}
 
-class RetrievingGames extends NonSteamGamesBaseState{}
+class RetrievingGameData extends NonSteamGamesBaseState{}
 
-class GamesRetrieved extends NonSteamGamesBaseState{
+class GamesDataRetrieved extends NonSteamGamesBaseState{
   final List<UserGame> games;
 
-  GamesRetrieved(this.games);
+  GamesDataRetrieved(this.games);
 }
