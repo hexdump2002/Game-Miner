@@ -1,12 +1,16 @@
 import 'package:path/path.dart' as pathLib;
 import 'package:steamdeck_toolbox/logic/Tools/file_tools.dart';
+import 'package:path/path.dart' as p;
 
 class UserGameExe {
   late bool added;
   late bool brokenLink;
   late String relativeExePath;
+  late String name;
 
-  UserGameExe(this.added, this.brokenLink, this.relativeExePath);
+  UserGameExe(this.added, this.brokenLink, this.relativeExePath) {
+    name = p.split(relativeExePath).last;
+  }
 }
 
 class UserGame {

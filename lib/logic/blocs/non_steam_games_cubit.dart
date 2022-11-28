@@ -10,13 +10,24 @@ import '../Tools/file_tools.dart';
 
 part 'non_steam_games_state.dart';
 
+class VMUserGame {
+  late final  UserGame userGame;
+  late bool foldingState;
+
+  VMUserGame(this.userGame, this.foldingState);
+}
+
 class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
+  List<VMUserGame> _games = [];
+
   NonSteamGamesCubit() : super(RetrievingGameData());
 
   void loadData(List<String> gamesPath) async {
     emit(RetrievingGameData());
     var result = await Future.wait([_findGames(gamesPath), _loadShortcutsVdfFile()]);
     var userGames = result[0] as List<UserGame>;
+    _games = userGames.map<VMUserGame>( (o) => VMUserGame(o, false)).toList();
+
     var registeredNonSteamGames = result[1] as List<NonSteamGame>;
 
     //Fill all needed data in user games
@@ -24,9 +35,9 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
       bool finished = false;
       var i = 0;
       while (!finished && i < userGames.length) {
-        UserGame e = userGames[i];
+        UserGame e = _games[i].userGame;
         UserGameExe? uge = e.exeFileEntries.firstWhereOrNull((exe) {
-          return e.path + exe.relativeExePath == nsg.exePath;
+          return "${e.path}/${exe.relativeExePath}" == nsg.exePath;
         });
 
         if (uge != null) uge.added = true;
@@ -35,7 +46,7 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
       }
     }
 
-    emit(GamesDataRetrieved(userGames));
+    emit(GamesDataRetrieved(_games));
   }
 
   Future<List<NonSteamGame>> loadShortcutsVdfFile() async {
@@ -74,4 +85,15 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
 
     return VdfTools.readShortcuts(vdfAbsolutePath);
   }
+
+  swapExeAdding(UserGameExe uge) {
+    uge.added = !uge.added;
+    emit(GamesDataChanged(_games));
+  }
+
+  void swapExpansionStateForItem(int index) {
+    _games[index].foldingState=!_games[index].foldingState;
+    emit(GamesFoldingDataChanged(_games));
+  }
 }
+

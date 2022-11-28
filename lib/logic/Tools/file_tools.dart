@@ -21,7 +21,8 @@ class FileTools {
     fileNames = files.map((f) {
       var finalPath = f.path;
 
-      if (retrieveRelativePaths) finalPath = f.path.substring(pathLength);
+      //+1 to remove the / character at the end of the absolute path
+      if (retrieveRelativePaths) finalPath = f.path.substring(pathLength+1);
 
       return finalPath;
     }).toList();
@@ -46,7 +47,8 @@ class FileTools {
     Stream<String> fileNamesStream = stream.map<String>((f) {
       var finalPath = f.path;
 
-      if (retrieveRelativePaths) finalPath = f.path.substring(pathLength);
+      //+1 to remove the / character
+      if (retrieveRelativePaths) finalPath = f.path.substring(pathLength+1);
 
       return finalPath;
     });
