@@ -103,10 +103,14 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
                 child: Text(uge.relativeExePath, style: Theme.of(context).textTheme.headline6, textAlign: TextAlign.left),
               ),
               Row(children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(8.0, 0, 8.0, 0),
-                  child: ElevatedButton(child: uge.added ? Text("Remove") : Text("Add"), onPressed: () => {_bloc.swapExeAdding(uge)}),
-                ),
+                Switch(
+                  value: uge.added,
+                  onChanged: (value) {
+                    _bloc.swapExeAdding(uge);
+                    }),
+                  //activeTrackColor: Colors.lightGreenAccent,
+                  //activeColor: Colors.green,
+                //IconButton(onPressed: uge.added ? () => true: null, icon: Icon(Icons.settings))
               ])
             ]),
             if (uge.added) _buildGameExeForm(uge)
@@ -132,16 +136,28 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
       margin: EdgeInsets.fromLTRB(16, 8, 128, 8),
       child: Padding(
         padding: const EdgeInsets.all(8.0),
-        child: Column(
-          children: [
-            TextFormField(initialValue: uge.name, decoration: const InputDecoration(labelText: "Name")),
-            DropdownButtonFormField<String>(
-                items: protons.map<DropdownMenuItem<String>>((String e) {
-                  return DropdownMenuItem<String>(value: e, child: Text(e));
-                }).toList(),
-                onChanged: (String? value) => print("cambio combo de protones a valor $value"),
-                decoration: const InputDecoration(labelText: "Proton"))
-          ],
+        child: Form(
+          child: Column(
+            children: [
+              TextFormField(
+                initialValue: uge.name,
+                decoration: const InputDecoration(labelText: "Name"),
+                autovalidateMode: AutovalidateMode.onUserInteraction,
+                validator: (String? value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter some text';
+                  }
+                  return null;
+                },
+              ),
+              DropdownButtonFormField<String>(
+                  items: protons.map<DropdownMenuItem<String>>((String e) {
+                    return DropdownMenuItem<String>(value: e, child: Text(e));
+                  }).toList(),
+                  onChanged: (String? value) => print("cambio combo de protones a valor $value"),
+                  decoration: const InputDecoration(labelText: "Proton"))
+            ],
+          ),
         ),
       ),
     );
