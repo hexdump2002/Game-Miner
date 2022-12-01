@@ -2,14 +2,14 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/services.dart';
-import 'package:steamdeck_toolbox/data/non_steam_game.dart';
+import 'package:steamdeck_toolbox/data/non_steam_game_exe.dart';
 
 const int kEofMark = 0x0808;
 
 class VdfTools {
   //Test after a clean steam client
-  static Future<List<NonSteamGame>> readShortcuts(String path) async {
-    List<NonSteamGame> nonSteamGames = [];
+  static Future<List<NonSteamGameExe>> readShortcuts(String path) async {
+    List<NonSteamGameExe> nonSteamGames = [];
 
     Uint8List buffer = await File(path).readAsBytes();
 
@@ -22,7 +22,7 @@ class VdfTools {
       //Skipt first byte of block
       seekIndex+=1;
 
-      var retVal = NonSteamGame.fromBuffer(buffer, seekIndex, true);
+      var retVal = NonSteamGameExe.fromBuffer(buffer, seekIndex, true);
       nonSteamGames.add(retVal.item1);
       seekIndex = retVal.item2;
       eof = _isEndOfFile(buffer, seekIndex);

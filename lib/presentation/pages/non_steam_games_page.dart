@@ -16,6 +16,7 @@ class NonSteamGamesPage extends StatefulWidget {
 
 class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
   late final NonSteamGamesCubit _bloc;
+  final _formKey = GlobalKey<FormState>();
 
   @override
   void initState() {
@@ -47,12 +48,12 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
     if (state is RetrievingGameData) {
       return _waitingForGamesToBeRetrieved(context);
     } else if (state is GamesDataRetrieved) {
-      return _createGameCards(context, (state as GamesDataRetrieved).games);
+      return _createGameCards(context, (state as GamesDataRetrieved).games, (state as GamesDataRetrieved).availableProntonList);
     } else if (state is GamesDataChanged) {
-      return _createGameCards(context, (state as GamesDataChanged).games);
+      return _createGameCards(context, (state as GamesDataChanged).games, (state as GamesDataChanged).availableProntonList);
     } else if (state is GamesFoldingDataChanged) {
       GamesFoldingDataChanged foldingDataChanged = state as GamesFoldingDataChanged;
-      return _createGameCards(context, (state as GamesFoldingDataChanged).games);
+      return _createGameCards(context, (state as GamesFoldingDataChanged).games, (state as GamesFoldingDataChanged).availableProntonList);
     }
 
     throw Exception("Unknown state type");
@@ -62,12 +63,23 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
     return Row(mainAxisAlignment: MainAxisAlignment.end, children: [
       Padding(
         padding: const EdgeInsets.all(8.0),
-        child: ElevatedButton(child: Text("Apply"), onPressed: () => {print("pressed!")}),
+        child: ElevatedButton(
+            child: Text("Apply"),
+            onPressed: () {
+              if (!_formKey.currentState!.validate()) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("There are invalid fields. Please fix them and Apply again.")),
+                );
+              } else {
+                _formKey.currentState!.save();
+                _bloc.saveShortCuts();
+              }
+            }),
       )
     ]);
   }
 
-  Widget _createGameCards(BuildContext context, List<VMUserGame> games) {
+  Widget _createGameCards(BuildContext context, List<VMUserGame> games, List<String> availableProntons) {
     List<ExpansionPanel> widgets = games.map<ExpansionPanel>((VMUserGame game) {
       return ExpansionPanel(
         headerBuilder: (BuildContext context, bool isExpanded) {
@@ -75,19 +87,22 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
             title: Text(game.userGame.name, style: Theme.of(context).textTheme.headline4, textAlign: TextAlign.left),
           );
         },
-        body: _buildGameTile(context, game.userGame),
+        body: _buildGameTile(context, game.userGame, availableProntons),
         isExpanded: game.foldingState,
       );
     }).toList();
 
-    return ExpansionPanelList(
-        expansionCallback: (int index, bool isExpanded) {
-          _bloc.swapExpansionStateForItem(index);
-        },
-        children: widgets);
+    return Form(
+      key: _formKey,
+      child: ExpansionPanelList(
+          expansionCallback: (int index, bool isExpanded) {
+            _bloc.swapExpansionStateForItem(index);
+          },
+          children: widgets),
+    );
   }
 
-  Widget _buildGameTile(BuildContext context, UserGame ug) {
+  Widget _buildGameTile(BuildContext context, UserGame ug, List<String> availableProtons) {
     List<Widget> gameItems = [];
 
     List<UserGameExe> gameExePaths = ug.exeFileEntries;
@@ -104,16 +119,16 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
               ),
               Row(children: [
                 Switch(
-                  value: uge.added,
-                  onChanged: (value) {
-                    _bloc.swapExeAdding(uge);
+                    value: uge.added,
+                    onChanged: (value) {
+                      _bloc.swapExeAdding(uge);
                     }),
-                  //activeTrackColor: Colors.lightGreenAccent,
-                  //activeColor: Colors.green,
+                //activeTrackColor: Colors.lightGreenAccent,
+                //activeColor: Colors.green,
                 //IconButton(onPressed: uge.added ? () => true: null, icon: Icon(Icons.settings))
               ])
             ]),
-            if (uge.added) _buildGameExeForm(uge)
+            if (uge.added) _buildGameExeForm(uge, availableProtons)
           ],
         ),
       ));
@@ -128,36 +143,34 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
     );
   }
 
-  Widget _buildGameExeForm(UserGameExe uge) {
-    var protons = ["Proton GE", "Proton XE", "Proton ME"];
-
+  Widget _buildGameExeForm(UserGameExe uge, List<String> availableProntons) {
     return Container(
       color: Color.fromARGB(255, 230, 230, 230),
       margin: EdgeInsets.fromLTRB(16, 8, 128, 8),
       child: Padding(
         padding: const EdgeInsets.all(8.0),
-        child: Form(
-          child: Column(
-            children: [
-              TextFormField(
-                initialValue: uge.name,
-                decoration: const InputDecoration(labelText: "Name"),
-                autovalidateMode: AutovalidateMode.onUserInteraction,
-                validator: (String? value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter some text';
-                  }
-                  return null;
-                },
-              ),
-              DropdownButtonFormField<String>(
-                  items: protons.map<DropdownMenuItem<String>>((String e) {
-                    return DropdownMenuItem<String>(value: e, child: Text(e));
-                  }).toList(),
-                  onChanged: (String? value) => print("cambio combo de protones a valor $value"),
-                  decoration: const InputDecoration(labelText: "Proton"))
-            ],
-          ),
+        child: Column(
+          children: [
+            TextFormField(
+              initialValue: uge.name,
+              decoration: const InputDecoration(labelText: "Name"),
+              autovalidateMode: AutovalidateMode.onUserInteraction,
+              onSaved: (value) => uge.name = value!,
+              validator: (String? value) {
+                if (value == null || value.isEmpty) {
+                  return 'Please enter some text';
+                }
+                return null;
+              },
+            ),
+            DropdownButtonFormField<String>(
+                items: availableProntons.map<DropdownMenuItem<String>>((String e) {
+                  return DropdownMenuItem<String>(value: e, child: Text(e));
+                }).toList(),
+                value: availableProntons[0],
+                onChanged: (String? value) => print("cambio combo de protones a valor $value"),
+                decoration: const InputDecoration(labelText: "Proton"))
+          ],
         ),
       ),
     );

@@ -55,4 +55,10 @@ class FileTools {
 
     return fileNamesStream.toList();
   }
+
+  static String getHomeFolder() {
+    String os = Platform.operatingSystem;
+    Map<String, String> envVars = Platform.environment;
+    return envVars['HOME']!;
+  }
 }
