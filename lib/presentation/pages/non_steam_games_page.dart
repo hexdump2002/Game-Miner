@@ -31,14 +31,17 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
           // Here we take the value from the MyHomePage object that was created by
           // the App.build method, and use it to set our appbar title.
           title: Text("Non Steam Games Manager"),
+          actions: [
+            IconButton(onPressed: ()=> _bloc.saveShortCuts(), icon: Icon(Icons.save),tooltip: "Save",),
+            IconButton(onPressed: ()=> _bloc.refresh(["/home/hexdump/Downloads/Games/"]), icon: Icon(Icons.refresh), tooltip: "Refresh",),
+            IconButton(onPressed: ()=> Navigator.pushNamed(context, '/settings'), icon: Icon(Icons.settings), tooltip: "Settings",),
+          ],
         ),
         body: Container(
           alignment: Alignment.center,
           child: BlocBuilder<NonSteamGamesCubit, NonSteamGamesBaseState>(
             builder: (context, state) {
-              return Column(
-                children: [Expanded(child: SingleChildScrollView(child: _buildListOfGames(context, state))), _buildBottomBar(context)],
-              );
+              return  _buildListOfGames(context, state);
             },
           ),
         ));
@@ -48,12 +51,12 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
     if (state is RetrievingGameData) {
       return _waitingForGamesToBeRetrieved(context);
     } else if (state is GamesDataRetrieved) {
-      return _createGameCards(context, (state as GamesDataRetrieved).games, (state as GamesDataRetrieved).availableProntonList);
+      return SingleChildScrollView(child:_createGameCards(context, (state as GamesDataRetrieved).games, (state as GamesDataRetrieved).availableProntonList));
     } else if (state is GamesDataChanged) {
-      return _createGameCards(context, (state as GamesDataChanged).games, (state as GamesDataChanged).availableProntonList);
+      return SingleChildScrollView(child:_createGameCards(context, (state as GamesDataChanged).games, (state as GamesDataChanged).availableProntonList));
     } else if (state is GamesFoldingDataChanged) {
       GamesFoldingDataChanged foldingDataChanged = state as GamesFoldingDataChanged;
-      return _createGameCards(context, (state as GamesFoldingDataChanged).games, (state as GamesFoldingDataChanged).availableProntonList);
+      return SingleChildScrollView(child:_createGameCards(context, (state as GamesFoldingDataChanged).games, (state as GamesFoldingDataChanged).availableProntonList));
     }
 
     throw Exception("Unknown state type");
@@ -177,6 +180,15 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
   }
 
   Widget _waitingForGamesToBeRetrieved(BuildContext context) {
-    return const CircularProgressIndicator();
+    return  Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: const [
+        CircularProgressIndicator(),
+        Padding(
+          padding: EdgeInsets.all(16.0),
+          child: Text("Loading Games"),
+        )
+      ],
+    );
   }
 }

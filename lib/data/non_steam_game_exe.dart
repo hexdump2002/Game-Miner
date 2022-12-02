@@ -66,7 +66,7 @@ class NonSteamGameExe {
   }
   
   int _convertBEIntStringToInt(String value) {
-    return 0;
+    return int.parse(value);
   }
   
   String _cleanPathString(String str)
@@ -78,7 +78,8 @@ class NonSteamGameExe {
   
   bool _convertStrToBool(String str)
   {
-    assert(int.parse(str)>=1 || int.parse(str)<=0);
+    if(int.parse(str)!=1 && int.parse(str)!=0) throw  FormatException("Str does not contain a convertible bool");
+
     return int.parse(str) == 1;
   }
 
@@ -135,7 +136,7 @@ class NonSteamGameExe {
       } break;
       case 0x02:
       {
-        var value = dataView.getUint32(movingFrom,Endian.big);
+        var value = dataView.getUint32(movingFrom,Endian.little);
         movingFrom += 4;
         propertyValue = value.toString();
       } break;

@@ -31,52 +31,67 @@ class UserGameExe {
   int lastPlayTime = 0;
   String flatPackAppId = "";
 
-  UserGameExe(String enclosingFolderPath, String absoluteExePath, this.brokenLink,{NonSteamGameExe? nonSteamGameExe}) {
+  UserGameExe(String enclosingFolderPath, String absoluteExePath, this.brokenLink) {
+    relativeExePath = absoluteExePath.substring(enclosingFolderPath.length + 1);
 
-    relativeExePath = absoluteExePath.substring(enclosingFolderPath.length+1);
-
-    if(nonSteamGameExe != null)
-    {
-      entryId = nonSteamGameExe.entryId;
-      appId = nonSteamGameExe.appId;
-      name = nonSteamGameExe.appName;
-      startDir = nonSteamGameExe.startDir;
-      icon = nonSteamGameExe.icon;
-      shortcutPath = nonSteamGameExe.shortcutPath;
-      launchOptions = nonSteamGameExe.launchOptions;
-      isHidden = nonSteamGameExe.isHidden;
-      allowDdesktopConfig = nonSteamGameExe.allowDdesktopCconfig;
-      allowOverlay = nonSteamGameExe.allowOverlay;
-      openVr = nonSteamGameExe.openVr;
-      devkit = nonSteamGameExe.devkit;
-      devkitGameId = nonSteamGameExe.devkitGameId;
-      devkitOverrideAppId = nonSteamGameExe.devkitOverrideAppId;
-      lastPlayTime = nonSteamGameExe.lastPlayTime;
-      flatPackAppId = nonSteamGameExe.flatPackAppId;
-    }
-    else
-    {
-      name = p.split(relativeExePath).last;
-      appId = Random().nextInt(pow(2,32) as int);
-      startDir = p.dirname(absoluteExePath) ;
-    }
-
+    name = p.split(relativeExePath).last;
+    appId = Random().nextInt(pow(2, 32) as int);
+    startDir = p.dirname(absoluteExePath);
   }
 
+  UserGameExe.asExternal(NonSteamGameExe nonSteamGameExe) {
+    relativeExePath = nonSteamGameExe.exePath;
+    entryId = nonSteamGameExe.entryId;
+    appId = nonSteamGameExe.appId;
+    name = nonSteamGameExe.appName;
+    startDir = nonSteamGameExe.startDir;
+    icon = nonSteamGameExe.icon;
+    shortcutPath = nonSteamGameExe.shortcutPath;
+    launchOptions = nonSteamGameExe.launchOptions;
+    isHidden = nonSteamGameExe.isHidden;
+    allowDdesktopConfig = nonSteamGameExe.allowDdesktopCconfig;
+    allowOverlay = nonSteamGameExe.allowOverlay;
+    openVr = nonSteamGameExe.openVr;
+    devkit = nonSteamGameExe.devkit;
+    devkitGameId = nonSteamGameExe.devkitGameId;
+    devkitOverrideAppId = nonSteamGameExe.devkitOverrideAppId;
+    lastPlayTime = nonSteamGameExe.lastPlayTime;
+    flatPackAppId = nonSteamGameExe.flatPackAppId;
+
+    added = true;
+  }
 }
 
 class UserGame {
   late final String path;
   late final String name;
+  late final bool external;
   final List<UserGameExe> exeFileEntries = [];
 
+  //User Folders Game (Internal)
   UserGame(this.path) {
     List<String> pathComponents = pathLib.split(path);
     name = pathComponents.last;
+    external = false;
   }
 
-  void addExeFile(String absoluteFilePath, {NonSteamGameExe? nonSteamGameExe}) {
-    exeFileEntries.add(UserGameExe(path, absoluteFilePath,false,nonSteamGameExe:nonSteamGameExe));
+  //Game not in User Folders (External)
+  UserGame.asExternal() {
+    path = "";
+    name = "External";
+    external = true;
+  }
+
+  void addExeFile(String absoluteFilePath) {
+    if (external) throw Exception("Can't add an internal exe to an external game");
+
+    exeFileEntries.add(UserGameExe(path, absoluteFilePath, false));
+  }
+
+  void addExternalExeFile(NonSteamGameExe nonSteamGameExe) {
+    if (!external) throw Exception("Can't add an interal exe to an external game");
+
+    exeFileEntries.add(UserGameExe.asExternal(nonSteamGameExe));
   }
 
   void addExeFiles(List<String> filePaths) {
@@ -87,16 +102,17 @@ class UserGame {
 
   //TODO: Move all this to write to a in memory buffer and then dump it to the file
   Future<int> saveToStream(RandomAccessFile raf, int blockId) async {
-
-    for(int i=0; i<exeFileEntries.length; ++i) {
+    for (int i = 0; i < exeFileEntries.length; ++i) {
       UserGameExe ef = exeFileEntries[i];
       if (!ef.added) continue;
 
       await _writeBlockId(raf, blockId++);
 
       await _writeInt32BEProperty(raf, "appid", ef.appId);
-      await _writeStringProperty(raf,"AppName", ef.name);
-      await _writeStringProperty(raf, "Exe", "\"$path/${ef.relativeExePath}\"");
+      await _writeStringProperty(raf, "AppName", ef.name);
+      external
+          ? await _writeStringProperty(raf, "Exe", "\"${ef.relativeExePath}\"")
+          : await _writeStringProperty(raf, "Exe", "\"$path/${ef.relativeExePath}\"");
       await _writeStringProperty(raf, "StartDir", "\"${ef.startDir}\"");
       await _writeStringProperty(raf, "icon", "\"${ef.icon}\"");
       await _writeStringProperty(raf, "ShortcutPath", "${ef.shortcutPath}");
@@ -122,23 +138,19 @@ class UserGame {
     return blockId;
   }
 
-  Future<void> _writeBlockId(RandomAccessFile raf, int num)  async {
-    if(num>99) {
+  Future<void> _writeBlockId(RandomAccessFile raf, int num) async {
+    if (num > 99) {
       throw Exception("Can't write more than 999 non steam games");
     }
 
-    if(num>9) {
-      await raf.writeByte(num~/10 + 0x30);
-    }
-    else {
+    if (num > 9) {
+      await raf.writeByte(num ~/ 10 + 0x30);
+    } else {
       await raf.writeByte(0);
     }
 
-
-    await raf.writeByte(num%10+0x30);
+    await raf.writeByte(num % 10 + 0x30);
     await raf.writeByte(0);
-
-
   }
 
   Future<void> _writeStringProperty(RandomAccessFile raf, String propName, String propValue) async {
@@ -148,6 +160,7 @@ class UserGame {
     await raf.writeString(propValue);
     await raf.writeByte(0);
   }
+
   Future<void> _writeInt32BEProperty(RandomAccessFile raf, String propName, int value) async {
     await raf.writeByte(0x02);
 
@@ -158,15 +171,10 @@ class UserGame {
     await raf.writeByte((value & 0x0000FF00) >> 8);
     await raf.writeByte((value & 0x00FF0000) >> 16);
     await raf.writeByte((value & 0xFF000000) >> 24);
-
-
-
   }
-
 
   Future<void> _writeBoolProperty(RandomAccessFile raf, String propName, bool value) async {
     int intValue = value ? 1 : 0;
     await _writeInt32BEProperty(raf, propName, intValue);
-
   }
 }

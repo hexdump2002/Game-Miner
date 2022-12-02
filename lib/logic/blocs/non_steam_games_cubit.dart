@@ -39,7 +39,9 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
 
     var registeredNonSteamGames = result[1] as List<NonSteamGameExe>;
 
-    List<VMUserGame> externalGames = [];
+    UserGame externalGame = UserGame.asExternal();
+
+    //List<VMUserGame> externalGames = [];
     //Fill all needed data in user games
     for (NonSteamGameExe nsg in registeredNonSteamGames) {
       bool finished = false;
@@ -60,19 +62,28 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
 
       //We got an exe path that did not come from our list of folders (previously added or source folder was deleted in toolbox)
       if(!finished) {
-        //search if we have a UserGame with the same startDir to group the exes. With non steam games added manually we can't group by relative path
+        /*//search if we have a UserGame with the same startDir to group the exes. With non steam games added manually we can't group by relative path
         UserGame? e = userGames.firstWhereOrNull((ug) => ug.path == nsg.startDir);
-        e ??= UserGame(nsg.startDir);
-        e.addExeFile(nsg.exePath, nonSteamGameExe: nsg);
-        externalGames.add(VMUserGame(e, false));
+        e ??= UserGame(nsg.startDir);*/
+        externalGame.addExternalExeFile(nsg);
+        /*externalGames.add(VMUserGame(e, false));*/
       }
     }
 
-    _games.addAll(externalGames);
+    if(externalGame.exeFileEntries.isNotEmpty) {
+      _games.add(VMUserGame(externalGame,false));
+    }
+    //_games.addAll(externalGames);
 
 
+    await Future.delayed(const Duration(seconds:5), () {
+      emit(GamesDataRetrieved(_games, _availableProntons));
+    });
+    //emit(GamesDataRetrieved(_games, _availableProntons));
+  }
 
-    emit(GamesDataRetrieved(_games, _availableProntons));
+  refresh(List<String> gamesPath) {
+    loadData(gamesPath);
   }
 
   Future<List<NonSteamGameExe>> loadShortcutsVdfFile() async {
@@ -174,4 +185,6 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
     return protonVersions;
 
   }
+
+
 }
