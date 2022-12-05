@@ -1,9 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:steamdeck_toolbox/logic/blocs/settings_cubit.dart';
 
-class SettingsPage extends StatelessWidget {
+class SettingsPage extends StatefulWidget {
   SettingsPage({Key? key}) : super(key: key);
 
-  final List<String> paths = ["/home/hexdump/Download/Games", "/run/media","/home/hexdump/Download/Games", "/run/media","/home/hexdump/Download/Games", "/run/media","/home/hexdump/Download/Games", "/run/media"];
+  @override
+  State<SettingsPage> createState() => _SettingsPageState();
+}
+
+class _SettingsPageState extends State<SettingsPage> {
+  late final SettingsCubit _bloc;
+
+  @override
+  void initState() {
+    _bloc = BlocProvider.of<SettingsCubit>(context);
+    _bloc.load();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -12,6 +25,13 @@ class SettingsPage extends StatelessWidget {
           // Here we take the value from the MyHomePage object that was created by
           // the App.build method, and use it to set our appbar title.
           title: Text("Non Steam Games Manager"),
+          actions: [
+            IconButton(
+              onPressed: () => _bloc.save(),
+              icon: Icon(Icons.save),
+              tooltip: "Save",
+            ),
+          ],
         ),
         body: Container(
             padding: EdgeInsets.all(8),
@@ -20,6 +40,7 @@ class SettingsPage extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
+                  flex: 2,
                   child: Card(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
@@ -27,31 +48,79 @@ class SettingsPage extends StatelessWidget {
                         Padding(
                           padding: const EdgeInsets.all(8.0),
                           child: Row(
-                            children: [
-                              Text("Search Paths",style: TextStyle(fontSize: 30),),
+                            children: const [
+                              Text(
+                                "Search Paths",
+                                style: TextStyle(fontSize: 30),
+                              ),
                             ],
                           ),
                         ),
                         Expanded(
-                          child: ListView(children: paths.map((e) =>
-                              ListTile(
-                                title: Text(e),
-                                trailing: IconButton(onPressed: () => print("deleted!"), icon: const Icon(Icons.delete)),
-                              )).toList(),),
+                          child: BlocBuilder<SettingsCubit, SettingsState>(
+                            buildWhen: (previous, current) => current is SearchPathsChanged,
+                            builder: (context, state) {
+                              return state is SearchPathsChanged
+                                  ? ListView(
+                                      children: (state as SearchPathsChanged)
+                                          .searchPaths
+                                          .map<ListTile>((e) => ListTile(
+                                                title: Text(e),
+                                                trailing: IconButton(onPressed: () => _bloc.removePath(e), icon: const Icon(Icons.delete)),
+                                              ))
+                                          .toList(),
+                                    )
+                                  : Container();
+                            },
+                          ),
                         ),
                         Padding(
-                          padding: const EdgeInsets.fromLTRB(0,16,8,16),
-                          child: ElevatedButton(onPressed: ()=>null, child: Text("Add Path")),
+                          padding: const EdgeInsets.fromLTRB(0, 16, 8, 16),
+                          child: ElevatedButton(onPressed: () => _bloc.pickPath(), child: Text("Add Path")),
                         )
                       ],
                     ),
                   ),
                 ),
-                Expanded(child: Container())
-                
-              ],
-            ))
-    );
+                Expanded(
+                  flex:4,
+                  child: Card(
 
+                      child: Column(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Row(
+                              children: const [
+                                Text(
+                                  "General Options",
+                                  style: TextStyle(fontSize: 30),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Row(
+                    children: [
+
+                            Expanded(child: Text("Default Proton")),
+                            Expanded(
+                              child: DropdownButtonFormField<String>(
+                                  items: _bloc.getProtons().map<DropdownMenuItem<String>>((String e) {
+                                    return DropdownMenuItem<String>(value: e, child: Text(e));
+                                  }).toList(),
+                                  value: _bloc.getSettings().defaultProton,
+                                  onChanged: (String? value) => _bloc.getSettings().defaultProton = value,
+                                  decoration: const InputDecoration()),
+                            )
+                    ],
+                  ),
+                          ),
+                        ],
+                      )),
+                )
+              ],
+            )));
   }
 }

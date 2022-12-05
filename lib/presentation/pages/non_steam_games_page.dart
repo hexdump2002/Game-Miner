@@ -3,7 +3,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:steamdeck_toolbox/logic/Tools/file_tools.dart';
+import 'package:steamdeck_toolbox/logic/Tools/vdf_tools.dart';
 import 'package:steamdeck_toolbox/logic/blocs/non_steam_games_cubit.dart';
+import 'package:steamdeck_toolbox/logic/blocs/settings_cubit.dart';
 
 import '../../data/user_game.dart';
 
@@ -15,48 +17,122 @@ class NonSteamGamesPage extends StatefulWidget {
 }
 
 class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
-  late final NonSteamGamesCubit _bloc;
+  late final NonSteamGamesCubit _nsgpBloc;
+
+  late final SettingsCubit _settingsBloc;
+
   final _formKey = GlobalKey<FormState>();
 
   @override
   void initState() {
-    _bloc = BlocProvider.of<NonSteamGamesCubit>(context);
-    _bloc.loadData(["/home/hexdump/Downloads/Games/"]);
+    _nsgpBloc = BlocProvider.of<NonSteamGamesCubit>(context);
+    _settingsBloc = BlocProvider.of<SettingsCubit>(context);
+    _nsgpBloc.loadData(_settingsBloc.getSettings().searchPaths);
+    
+    VdfTools.loadConfigVdf("");
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          // Here we take the value from the MyHomePage object that was created by
-          // the App.build method, and use it to set our appbar title.
-          title: Text("Non Steam Games Manager"),
-          actions: [
-            IconButton(onPressed: ()=> _bloc.saveShortCuts(), icon: Icon(Icons.save),tooltip: "Save",),
-            IconButton(onPressed: ()=> _bloc.refresh(["/home/hexdump/Downloads/Games/"]), icon: Icon(Icons.refresh), tooltip: "Refresh",),
-            IconButton(onPressed: ()=> Navigator.pushNamed(context, '/settings'), icon: Icon(Icons.settings), tooltip: "Settings",),
-          ],
-        ),
-        body: Container(
-          alignment: Alignment.center,
-          child: BlocBuilder<NonSteamGamesCubit, NonSteamGamesBaseState>(
-            builder: (context, state) {
-              return  _buildListOfGames(context, state);
-            },
+      appBar: AppBar(
+        // Here we take the value from the MyHomePage object that was created by
+        // the App.build method, and use it to set our appbar title.
+        title: Text("Non Steam Games Manager"),
+        actions: [
+          IconButton(
+            onPressed: () => _nsgpBloc.saveShortCuts(),
+            icon: Icon(Icons.save),
+            tooltip: "Save",
           ),
-        ));
+          IconButton(
+            onPressed: () {
+              _nsgpBloc.refresh(_settingsBloc
+                  .getSettings()
+                  .searchPaths);
+            },
+            icon: Icon(Icons.refresh),
+            tooltip: "Refresh",
+          ),
+          IconButton(
+            onPressed: () => Navigator.pushNamed(context, '/settings'),
+            icon: Icon(Icons.settings),
+            tooltip: "Settings",
+          ),
+        ],
+      ),
+      body: Container(
+          alignment: Alignment.center,
+          child: BlocConsumer<SettingsCubit,SettingsState>(
+            listener: (context, state,) {
+              print("[SetttingsCubit Consumer] State -> $state");
+              if(state is SearchPathsSaved) {
+                _nsgpBloc.refresh( (state as SearchPathsSaved).searchPaths);
+              }
+            },
+            builder: (context, settingsState) {
+             return BlocBuilder<NonSteamGamesCubit, NonSteamGamesBaseState>(
+                  builder: (context, nsgState) {
+                    print("[NonSteamGamesCubit Builder] State -> $nsgState");
+                    return Align(alignment: Alignment.topCenter, child: _buildListOfGames(context, nsgState));
+                  }
+                );
+            }
+
+          )
+
+        /*BlocBuilder<SettingsCubit, SettingsState>(
+            builder: (context, settingsState) {
+              print("[SettingsCubit Builder] State -> $settingsState");
+              return BlocBuilder<NonSteamGamesCubit, NonSteamGamesBaseState>(
+                builder: (context, nsgState) {
+                  print("[NonSteamGamesCubit Builder] State -> $nsgState");
+                  return Align(alignment: Alignment.topCenter, child: _buildListOfGames(context, nsgState, settingsState));
+                },
+              );
+            },
+          )*/
+
+
+        /*Builder(
+            builder: (context) {
+              final nsgState = context
+                  .watch<NonSteamGamesCubit>()
+                  .state;
+              final settingsState = context
+                  .watch<SettingsCubit>()
+                  .state;
+
+              print("###### $nsgState $settingsState");
+
+              return Align(alignment: Alignment.topCenter, child: _buildListOfGames(context, nsgState, settingsState));
+            },*/
+      ),
+    );
+
   }
 
-  Widget _buildListOfGames(BuildContext context, NonSteamGamesBaseState state) {
-    if (state is RetrievingGameData) {
+  Widget _buildListOfGames(BuildContext context, NonSteamGamesBaseState nsgState/*, SettingsState settingsState*/) {
+    if (nsgState is RetrievingGameData) {
       return _waitingForGamesToBeRetrieved(context);
-    } else if (state is GamesDataRetrieved) {
-      return SingleChildScrollView(child:_createGameCards(context, (state as GamesDataRetrieved).games, (state as GamesDataRetrieved).availableProntonList));
-    } else if (state is GamesDataChanged) {
-      return SingleChildScrollView(child:_createGameCards(context, (state as GamesDataChanged).games, (state as GamesDataChanged).availableProntonList));
-    } else if (state is GamesFoldingDataChanged) {
-      GamesFoldingDataChanged foldingDataChanged = state as GamesFoldingDataChanged;
-      return SingleChildScrollView(child:_createGameCards(context, (state as GamesFoldingDataChanged).games, (state as GamesFoldingDataChanged).availableProntonList));
+    } else if (nsgState is GamesDataRetrieved) {
+      return SingleChildScrollView(
+          child: _createGameCards(context, (nsgState as GamesDataRetrieved).games, (nsgState as GamesDataRetrieved).availableProntonList));
+    } else if (nsgState is GamesDataChanged) {
+      return SingleChildScrollView(
+          child: _createGameCards(context, (nsgState as GamesDataChanged).games, (nsgState as GamesDataChanged).availableProntonList));
+    } else if (nsgState is GamesFoldingDataChanged) {
+      GamesFoldingDataChanged foldingDataChanged = nsgState as GamesFoldingDataChanged;
+      return SingleChildScrollView(
+          child: _createGameCards(context, (nsgState as GamesFoldingDataChanged).games, (nsgState as GamesFoldingDataChanged).availableProntonList));
+    }
+    /*else if (settingsState is SearchPathsChanged) {
+      _nsgpBloc.loadData(settingsState.searchPaths);
+      return Container();
+    }*/
+    else {
+      print("[Warning] Unknown state");
+      return Container();
     }
 
     throw Exception("Unknown state type");
@@ -75,7 +151,7 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
                 );
               } else {
                 _formKey.currentState!.save();
-                _bloc.saveShortCuts();
+                _nsgpBloc.saveShortCuts();
               }
             }),
       )
@@ -87,7 +163,10 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
       return ExpansionPanel(
         headerBuilder: (BuildContext context, bool isExpanded) {
           return ListTile(
-            title: Text(game.userGame.name, style: Theme.of(context).textTheme.headline4, textAlign: TextAlign.left),
+            title: Text(game.userGame.name, style: Theme
+                .of(context)
+                .textTheme
+                .headline4, textAlign: TextAlign.left),
           );
         },
         body: _buildGameTile(context, game.userGame, availableProntons),
@@ -98,8 +177,9 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
     return Form(
       key: _formKey,
       child: ExpansionPanelList(
+
           expansionCallback: (int index, bool isExpanded) {
-            _bloc.swapExpansionStateForItem(index);
+            _nsgpBloc.swapExpansionStateForItem(index);
           },
           children: widgets),
     );
@@ -118,13 +198,16 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
           children: [
             Row(children: [
               Expanded(
-                child: Text(uge.relativeExePath, style: Theme.of(context).textTheme.headline6, textAlign: TextAlign.left),
+                child: Text(uge.relativeExePath, style: Theme
+                    .of(context)
+                    .textTheme
+                    .headline6, textAlign: TextAlign.left),
               ),
               Row(children: [
                 Switch(
                     value: uge.added,
                     onChanged: (value) {
-                      _bloc.swapExeAdding(uge);
+                      _nsgpBloc.swapExeAdding(uge);
                     }),
                 //activeTrackColor: Colors.lightGreenAccent,
                 //activeColor: Colors.green,
@@ -180,7 +263,7 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
   }
 
   Widget _waitingForGamesToBeRetrieved(BuildContext context) {
-    return  Column(
+    return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: const [
         CircularProgressIndicator(),

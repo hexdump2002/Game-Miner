@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:collection/collection.dart';
 import 'package:meta/meta.dart';
 import 'package:steamdeck_toolbox/data/non_steam_game_exe.dart';
+import 'package:steamdeck_toolbox/logic/Tools/steam_tools.dart';
 import 'package:steamdeck_toolbox/logic/Tools/vdf_tools.dart';
 import 'dart:io' show File, FileMode, Platform, RandomAccessFile;
 
@@ -19,23 +20,19 @@ class VMUserGame {
   VMUserGame(this.userGame, this.foldingState);
 }
 
-const _builtInProtonList= ["Proton Experimental", "Pronto 6.2", "Proton 5.1"];
-
 class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
   List<VMUserGame> _games = [];
   List<String> _availableProntons = [];
 
-  NonSteamGamesCubit() : super(RetrievingGameData());
+  NonSteamGamesCubit() : super(IninitalState());
 
   void loadData(List<String> gamesPath) async {
     emit(RetrievingGameData());
-    var result = await Future.wait([_findGames(gamesPath), _loadShortcutsVdfFile(), _loadManuallyInstalledProtons()]);
+    var result = await Future.wait([_findGames(gamesPath), _loadShortcutsVdfFile(), SteamTools.loadProtons()]);
     var userGames = result[0] as List<UserGame>;
     _games = userGames.map<VMUserGame>((o) => VMUserGame(o, false)).toList();
 
     _availableProntons = result[2] as List<String>;
-    _availableProntons.addAll(_builtInProtonList);
-    _availableProntons.sort();
 
     var registeredNonSteamGames = result[1] as List<NonSteamGameExe>;
 
@@ -76,10 +73,10 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
     //_games.addAll(externalGames);
 
 
-    await Future.delayed(const Duration(seconds:5), () {
+    /*await Future.delayed(const Duration(seconds:5), () {
       emit(GamesDataRetrieved(_games, _availableProntons));
-    });
-    //emit(GamesDataRetrieved(_games, _availableProntons));
+    });*/
+    emit(GamesDataRetrieved(_games, _availableProntons));
   }
 
   refresh(List<String> gamesPath) {
@@ -91,7 +88,7 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
     String homeFolder = FileTools.getHomeFolder();
     var vdfAbsolutePath = "$homeFolder.steam/steam/userdata/255842936/config/shortcuts.vdf";
 
-    return VdfTools.readShortcuts(vdfAbsolutePath);
+    return VdfTools.loadShortcutsVdf(vdfAbsolutePath);
   }
 
   Future<List<UserGame>> _findGames(List<String> searchPaths) async {
@@ -119,7 +116,7 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
     Map<String, String> envVars = Platform.environment;
     var vdfAbsolutePath = "${FileTools.getHomeFolder()}/.steam/steam/userdata/255842936/config/shortcuts.vdf";
 
-    return VdfTools.readShortcuts(vdfAbsolutePath);
+    return VdfTools.loadShortcutsVdf(vdfAbsolutePath);
   }
 
   swapExeAdding(UserGameExe uge) {
@@ -173,18 +170,5 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
     }
 
   }
-
-  Future<List<String>> _loadManuallyInstalledProtons() async {
-    late final List<String> protonVersions;
-
-    String homeFolder = FileTools.getHomeFolder();
-    String shortcutsFilePath = "$homeFolder/.local/share/Steam/compatibilitytools.d";
-    protonVersions =
-        await FileTools.getFolderFilesAsync(shortcutsFilePath, retrieveRelativePaths: true, recursive: false);
-
-    return protonVersions;
-
-  }
-
 
 }
