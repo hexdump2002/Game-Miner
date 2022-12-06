@@ -29,6 +29,7 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
     _settingsBloc = BlocProvider.of<SettingsCubit>(context);
     _nsgpBloc.loadData(_settingsBloc.getSettings().searchPaths);
     
+    //VdfTools.saveConfigVdf([ProtonMapping("3843348", "perra", "", "700"), ProtonMapping("9998989", "JOJOJO", "", "500")]);
     VdfTools.loadConfigVdf("");
   }
 
