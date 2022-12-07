@@ -23,22 +23,25 @@ class VMUserGame {
 class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
   List<VMUserGame> _games = [];
   List<String> _availableProntons = [];
+  List<ProtonMapping> _protonMappings = [];
 
   NonSteamGamesCubit() : super(IninitalState());
 
   void loadData(List<String> gamesPath) async {
     emit(RetrievingGameData());
-    var result = await Future.wait([_findGames(gamesPath), _loadShortcutsVdfFile(), SteamTools.loadProtons()]);
+    var result = await Future.wait([_findGames(gamesPath), _loadShortcutsVdfFile(), SteamTools.loadProtons(), VdfTools.loadConfigVdf()]);
     var userGames = result[0] as List<UserGame>;
     _games = userGames.map<VMUserGame>((o) => VMUserGame(o, false)).toList();
 
     _availableProntons = result[2] as List<String>;
+    _availableProntons.insert(0,"None");
+
+    _protonMappings = result[3] as List<ProtonMapping>;
 
     var registeredNonSteamGames = result[1] as List<NonSteamGameExe>;
 
     UserGame externalGame = UserGame.asExternal();
 
-    //List<VMUserGame> externalGames = [];
     //Fill all needed data in user games
     for (NonSteamGameExe nsg in registeredNonSteamGames) {
       bool finished = false;
@@ -50,32 +53,32 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
         });
 
         if (uge != null) {
+          uge.fillFromNonSteamGame(nsg, e.path);
           uge.added = true;
           finished = true;
+
+          //Find the proton mapping
+          ProtonMapping? pm = _protonMappings.firstWhereOrNull((e) => uge.appId.toString() == e.id);
+          if(pm!=null) {
+            uge.fillProtonMappingData(pm.name, pm.config, pm.priority);
+          }
         }
 
         ++i;
       }
 
       //We got an exe path that did not come from our list of folders (previously added or source folder was deleted in toolbox)
-      if(!finished) {
-        /*//search if we have a UserGame with the same startDir to group the exes. With non steam games added manually we can't group by relative path
-        UserGame? e = userGames.firstWhereOrNull((ug) => ug.path == nsg.startDir);
-        e ??= UserGame(nsg.startDir);*/
-        externalGame.addExternalExeFile(nsg);
-        /*externalGames.add(VMUserGame(e, false));*/
+      if (!finished) {
+        //Add external exe and provid proton mapping
+        ProtonMapping? pm = _protonMappings.firstWhereOrNull((e) => nsg.appId.toString() == e.id);
+        externalGame.addExternalExeFile(nsg, pm);
       }
     }
 
-    if(externalGame.exeFileEntries.isNotEmpty) {
-      _games.add(VMUserGame(externalGame,false));
+    if (externalGame.exeFileEntries.isNotEmpty) {
+      _games.add(VMUserGame(externalGame, false));
     }
-    //_games.addAll(externalGames);
 
-
-    /*await Future.delayed(const Duration(seconds:5), () {
-      emit(GamesDataRetrieved(_games, _availableProntons));
-    });*/
     emit(GamesDataRetrieved(_games, _availableProntons));
   }
 
@@ -119,9 +122,16 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
     return VdfTools.loadShortcutsVdf(vdfAbsolutePath);
   }
 
-  swapExeAdding(UserGameExe uge) {
+  swapExeAdding(UserGameExe uge, String defaultProton) {
     uge.added = !uge.added;
 
+    if (uge.added) {
+      uge.appId = SteamTools.generateAppId();
+      uge.fillProtonMappingData(defaultProton, "", "250");
+    } else {
+      uge.appId = 0;
+      uge.clearProtonMappingData();
+    }
     emit(GamesDataChanged(_games, _availableProntons));
   }
 
@@ -130,14 +140,12 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
     emit(GamesFoldingDataChanged(_games, _availableProntons));
   }
 
-  void saveShortCuts() async {
-    /*_games.forEach((g) {
-      print("* ${g.userGame.name}");
-      g.userGame.exeFileEntries.forEach((ge) {
-        print("-- ${ge.name}");
-      });
-    });*/
+  void saveData() async {
+    await saveShortCuts();
+    await saveProntonMappings();
+  }
 
+  Future<void> saveShortCuts() async {
     //Build backup
     String homeFolder = FileTools.getHomeFolder();
     var sourceVdfAbsolutePath = "$homeFolder/.steam/steam/userdata/255842936/config/shortcuts.vdf";
@@ -153,22 +161,47 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
 
     int index = 0;
     try {
-      for(int i=0; i<_games.length; ++i) {
+      for (int i = 0; i < _games.length; ++i) {
         VMUserGame ug = _games[i];
         index = await ug.userGame.saveToStream(raf, index);
-      };
+      }
+      ;
 
       //End of file
       await raf.writeByte(8);
       await raf.writeByte(8);
-    }
-    catch(e) {
+    } catch (e) {
       print("An error ocurred while saving shortcuts.vdf file. The error was ${e.toString()}");
-    }
-    finally {
+    } finally {
       await raf.close();
+    }
+  }
+
+  Future<void> saveProntonMappings() async {
+    Map<int, ProtonMapping> usedProtonMappings = {};
+    _games.forEach((e) {
+      e.userGame.exeFileEntries.forEach((uge) {
+        if (usedProtonMappings.containsKey(uge.appId)) throw Exception("An appId with 2 differnt pronton mappings found!. This is not valid.");
+        if (uge.protonVersion == null) return;
+
+        usedProtonMappings[uge.appId] = ProtonMapping(uge.appId.toString(), uge.protonVersion!, uge.protonConfig, uge.protonPriority!);
+      });
+    });
+
+    List<ProtonMapping> protonMappings = usedProtonMappings.entries.map((entry) => entry.value).toList();
+
+    await VdfTools.saveConfigVdf(protonMappings);
+  }
+
+  setProtonDataFor(UserGameExe uge, String? value) {
+    assert(value!=null);
+
+    if(value=="None") {
+      uge.clearProtonMappingData();
+    }
+    else{
+      uge.fillProtonMappingData(value!,"","250");
     }
 
   }
-
 }

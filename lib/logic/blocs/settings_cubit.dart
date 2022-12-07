@@ -39,7 +39,7 @@ class SettingsCubit extends Cubit<SettingsState> {
 
   Future<void> initialize() async {
     _protons = await SteamTools.loadProtons();
-
+    _protons.insert(0,"None");
     if (!existsConfig()) {
       _settings = Settings();
       _settings.defaultProton = _protons.first;

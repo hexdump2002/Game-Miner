@@ -28,9 +28,9 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
     _nsgpBloc = BlocProvider.of<NonSteamGamesCubit>(context);
     _settingsBloc = BlocProvider.of<SettingsCubit>(context);
     _nsgpBloc.loadData(_settingsBloc.getSettings().searchPaths);
-    
+
     //VdfTools.saveConfigVdf([ProtonMapping("3843348", "perra", "", "700"), ProtonMapping("9998989", "JOJOJO", "", "500")]);
-    VdfTools.loadConfigVdf("");
+    //VdfTools.loadConfigVdf("");
   }
 
   @override
@@ -42,15 +42,19 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
         title: Text("Non Steam Games Manager"),
         actions: [
           IconButton(
-            onPressed: () => _nsgpBloc.saveShortCuts(),
+            onPressed: () {
+              if (_formKey.currentState!.validate()) {
+                _nsgpBloc.saveData();
+              } else {
+                print("There are errors in the form. Fix them!");
+              }
+            },
             icon: Icon(Icons.save),
             tooltip: "Save",
           ),
           IconButton(
             onPressed: () {
-              _nsgpBloc.refresh(_settingsBloc
-                  .getSettings()
-                  .searchPaths);
+              _nsgpBloc.refresh(_settingsBloc.getSettings().searchPaths);
             },
             icon: Icon(Icons.refresh),
             tooltip: "Refresh",
@@ -64,56 +68,24 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
       ),
       body: Container(
           alignment: Alignment.center,
-          child: BlocConsumer<SettingsCubit,SettingsState>(
-            listener: (context, state,) {
-              print("[SetttingsCubit Consumer] State -> $state");
-              if(state is SearchPathsSaved) {
-                _nsgpBloc.refresh( (state as SearchPathsSaved).searchPaths);
-              }
-            },
-            builder: (context, settingsState) {
-             return BlocBuilder<NonSteamGamesCubit, NonSteamGamesBaseState>(
-                  builder: (context, nsgState) {
-                    print("[NonSteamGamesCubit Builder] State -> $nsgState");
-                    return Align(alignment: Alignment.topCenter, child: _buildListOfGames(context, nsgState));
-                  }
-                );
+          child: BlocConsumer<SettingsCubit, SettingsState>(listener: (
+            context,
+            state,
+          ) {
+            print("[SetttingsCubit Consumer] State -> $state");
+            if (state is SearchPathsSaved) {
+              _nsgpBloc.refresh((state as SearchPathsSaved).searchPaths);
             }
-
-          )
-
-        /*BlocBuilder<SettingsCubit, SettingsState>(
-            builder: (context, settingsState) {
-              print("[SettingsCubit Builder] State -> $settingsState");
-              return BlocBuilder<NonSteamGamesCubit, NonSteamGamesBaseState>(
-                builder: (context, nsgState) {
-                  print("[NonSteamGamesCubit Builder] State -> $nsgState");
-                  return Align(alignment: Alignment.topCenter, child: _buildListOfGames(context, nsgState, settingsState));
-                },
-              );
-            },
-          )*/
-
-
-        /*Builder(
-            builder: (context) {
-              final nsgState = context
-                  .watch<NonSteamGamesCubit>()
-                  .state;
-              final settingsState = context
-                  .watch<SettingsCubit>()
-                  .state;
-
-              print("###### $nsgState $settingsState");
-
-              return Align(alignment: Alignment.topCenter, child: _buildListOfGames(context, nsgState, settingsState));
-            },*/
-      ),
+          }, builder: (context, settingsState) {
+            return BlocBuilder<NonSteamGamesCubit, NonSteamGamesBaseState>(builder: (context, nsgState) {
+              print("[NonSteamGamesCubit Builder] State -> $nsgState");
+              return Align(alignment: Alignment.topCenter, child: _buildListOfGames(context, nsgState));
+            });
+          })),
     );
-
   }
 
-  Widget _buildListOfGames(BuildContext context, NonSteamGamesBaseState nsgState/*, SettingsState settingsState*/) {
+  Widget _buildListOfGames(BuildContext context, NonSteamGamesBaseState nsgState /*, SettingsState settingsState*/) {
     if (nsgState is RetrievingGameData) {
       return _waitingForGamesToBeRetrieved(context);
     } else if (nsgState is GamesDataRetrieved) {
@@ -164,10 +136,7 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
       return ExpansionPanel(
         headerBuilder: (BuildContext context, bool isExpanded) {
           return ListTile(
-            title: Text(game.userGame.name, style: Theme
-                .of(context)
-                .textTheme
-                .headline4, textAlign: TextAlign.left),
+            title: Text(game.userGame.name, style: Theme.of(context).textTheme.headline4, textAlign: TextAlign.left),
           );
         },
         body: _buildGameTile(context, game.userGame, availableProntons),
@@ -178,7 +147,6 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
     return Form(
       key: _formKey,
       child: ExpansionPanelList(
-
           expansionCallback: (int index, bool isExpanded) {
             _nsgpBloc.swapExpansionStateForItem(index);
           },
@@ -199,16 +167,13 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
           children: [
             Row(children: [
               Expanded(
-                child: Text(uge.relativeExePath, style: Theme
-                    .of(context)
-                    .textTheme
-                    .headline6, textAlign: TextAlign.left),
+                child: Text(uge.relativeExePath, style: Theme.of(context).textTheme.headline6, textAlign: TextAlign.left),
               ),
               Row(children: [
                 Switch(
                     value: uge.added,
                     onChanged: (value) {
-                      _nsgpBloc.swapExeAdding(uge);
+                      _nsgpBloc.swapExeAdding(uge, _settingsBloc.getSettings().defaultProton);
                     }),
                 //activeTrackColor: Colors.lightGreenAccent,
                 //activeColor: Colors.green,
@@ -242,7 +207,10 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
               initialValue: uge.name,
               decoration: const InputDecoration(labelText: "Name"),
               autovalidateMode: AutovalidateMode.onUserInteraction,
-              onSaved: (value) => uge.name = value!,
+              onChanged: (value) => {uge.name = value!},
+              /*onSaved: (value) => {
+                uge.name = value!
+              },*/
               validator: (String? value) {
                 if (value == null || value.isEmpty) {
                   return 'Please enter some text';
@@ -254,8 +222,8 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
                 items: availableProntons.map<DropdownMenuItem<String>>((String e) {
                   return DropdownMenuItem<String>(value: e, child: Text(e));
                 }).toList(),
-                value: availableProntons[0],
-                onChanged: (String? value) => print("cambio combo de protones a valor $value"),
+                value: uge.protonVersion ?? "None",
+                onChanged: (String? value) => _nsgpBloc.setProtonDataFor(uge, value),
                 decoration: const InputDecoration(labelText: "Proton"))
           ],
         ),

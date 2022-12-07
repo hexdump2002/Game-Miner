@@ -5,6 +5,7 @@ import 'dart:math';
 import 'package:path/path.dart' as pathLib;
 import 'package:steamdeck_toolbox/logic/Tools/file_tools.dart';
 import 'package:path/path.dart' as p;
+import 'package:steamdeck_toolbox/logic/Tools/vdf_tools.dart';
 
 import 'non_steam_game_exe.dart';
 
@@ -12,7 +13,9 @@ class UserGameExe {
   late bool brokenLink;
   late String relativeExePath;
   late String name;
-  late String protonName;
+  String? protonVersion; //If null there's no proton mapping assigned to this executable
+  String protonPriority="0";
+  String protonConfig="";
   bool added = false;
 
   String entryId = "";
@@ -35,11 +38,13 @@ class UserGameExe {
     relativeExePath = absoluteExePath.substring(enclosingFolderPath.length + 1);
 
     name = p.split(relativeExePath).last;
-    appId = Random().nextInt(pow(2, 32) as int);
+    appId = 0;
     startDir = p.dirname(absoluteExePath);
+
+    clearProtonMappingData();
   }
 
-  UserGameExe.asExternal(NonSteamGameExe nonSteamGameExe) {
+  UserGameExe.asExternal(NonSteamGameExe nonSteamGameExe, {ProtonMapping? protonMapping}) {
     relativeExePath = nonSteamGameExe.exePath;
     entryId = nonSteamGameExe.entryId;
     appId = nonSteamGameExe.appId;
@@ -59,6 +64,46 @@ class UserGameExe {
     flatPackAppId = nonSteamGameExe.flatPackAppId;
 
     added = true;
+
+    if(protonMapping!=null) {
+      protonVersion=protonMapping.name;
+      protonConfig=protonMapping.config;
+      protonPriority = protonMapping.priority;
+    }
+  }
+
+  void fillProtonMappingData(String protonVersion, String protonConfig, String priority) {
+    this.protonVersion = protonVersion;
+    this.protonConfig = protonConfig;
+    protonPriority = priority;
+  }
+
+  void clearProtonMappingData() {
+    protonVersion = null;
+    protonConfig = "";
+    protonPriority = "0";
+
+  }
+
+  void fillFromNonSteamGame(NonSteamGameExe nsg, String pathToGame) {
+    relativeExePath = nsg.exePath.substring(pathToGame.length+1);
+    entryId = nsg.entryId;
+    appId = nsg.appId;
+    name = nsg.appName;
+    startDir = nsg.startDir;
+    icon = nsg.icon;
+    shortcutPath = nsg.shortcutPath;
+    launchOptions = nsg.launchOptions;
+    isHidden = nsg.isHidden;
+    allowDdesktopConfig = nsg.allowDdesktopCconfig;
+    allowOverlay = nsg.allowOverlay;
+    openVr = nsg.openVr;
+    devkit = nsg.devkit;
+    devkitGameId = nsg.devkitGameId;
+    devkitOverrideAppId = nsg.devkitOverrideAppId;
+    lastPlayTime = nsg.lastPlayTime;
+    flatPackAppId = nsg.flatPackAppId;
+
   }
 }
 
@@ -88,10 +133,12 @@ class UserGame {
     exeFileEntries.add(UserGameExe(path, absoluteFilePath, false));
   }
 
-  void addExternalExeFile(NonSteamGameExe nonSteamGameExe) {
+  void addExternalExeFile(NonSteamGameExe nonSteamGameExe, ProtonMapping? pm) {
     if (!external) throw Exception("Can't add an interal exe to an external game");
 
-    exeFileEntries.add(UserGameExe.asExternal(nonSteamGameExe));
+    var uge = UserGameExe.asExternal(nonSteamGameExe, protonMapping: pm);
+
+    exeFileEntries.add(uge);
   }
 
   void addExeFiles(List<String> filePaths) {

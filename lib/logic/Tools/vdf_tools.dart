@@ -8,8 +8,6 @@ import 'package:steamdeck_toolbox/logic/Tools/file_tools.dart';
 
 const int kEofMark = 0x0808;
 
-//"(\t*\"(\d+)\"\n\t*{\n\t*\"name\"\t*\"(.*)\"\n\t*\"config\"\t*\"(.*)\"\n\t*\"priority\"\t*\"\d+\"\n\t*})+"
-
 class ProtonMapping {
   late String id;
   late String name;
@@ -31,6 +29,8 @@ class VdfTools {
 
     var eof = false;
 
+    eof = _isShortcutsEndOfFile(buffer, seekIndex);
+
     while (!eof) {
       //Skipt first byte of block
       seekIndex+=1;
@@ -51,7 +51,7 @@ class VdfTools {
   }
 
 
-  static Future<List<ProtonMapping>>  loadConfigVdf(String path) async {
+  static Future<List<ProtonMapping>>  loadConfigVdf() async {
     String relativePath = ".local/share/Steam/config/config.vdf";
 
     String fullPath = "${FileTools.getHomeFolder()}/$relativePath";
@@ -59,7 +59,7 @@ class VdfTools {
     await file.open();
     String json = await file.readAsString();
 
-    RegExp r = RegExp(r'"CompatToolMapping"\n\t*{\n(\t*("(\d+)\"\n\t*{\n\t*\"name\"\t*\"(.*)\"\n\t*\"config\"\t*\"(.*)\"\n\t*\"priority\"\t*\"\d+\"\n\t*}\n))+\t*}');
+    RegExp r = RegExp(r'"CompatToolMapping"\n\t*{\n(\t*("(\d+)\"\n\t*{\n\t*\"name\"\t*\"(.*)\"\n\t*\"config\"\t*\"(.*)\"\n\t*\"priority\"\t*\"\d+\"\n\t*}\n))*\t*}');
     var match = r.firstMatch(json);
     String compatToolMappingText = (json.substring(match!.start, match!.end));
     r = RegExp(r'"(\d+)\"\n\t*{\n\t*\"name\"\t*\"(.*)\"\n\t*\"config\"\t*\"(.*)\"\n\t*\"priority\"\t*\"(\d+)\"\n\t*}');
@@ -85,7 +85,7 @@ class VdfTools {
 
     int rootIdent = _getCategoryIndentation(contents, "CompatToolMapping");
 
-    RegExp r = RegExp(r'"CompatToolMapping"\n\t*{\n(\t*("(\d+)\"\n\t*{\n\t*\"name\"\t*\"(.*)\"\n\t*\"config\"\t*\"(.*)\"\n\t*\"priority\"\t*\"\d+\"\n\t*}\n))+\t*}');
+    RegExp r = RegExp(r'"CompatToolMapping"\n\t*{\n(\t*("(\d+)\"\n\t*{\n\t*\"name\"\t*\"(.*)\"\n\t*\"config\"\t*\"(.*)\"\n\t*\"priority\"\t*\"\d+\"\n\t*}\n))*\t*}');
 
     String dstString = '"CompatToolMapping"';
     dstString+="\n";
@@ -94,7 +94,7 @@ class VdfTools {
     protonMappings.forEach((e) {
       dstString = _writeProntoMappingToStr(dstString, e, rootIdent+1);
     });
-    dstString+= _al("}\n","\t",rootIdent);
+    dstString+= _al("}","\t",rootIdent);
 
     contents = contents.replaceAll(r, dstString);
 

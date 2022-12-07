@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'file_tools.dart';
 
 class SteamTools {
@@ -24,6 +26,10 @@ class SteamTools {
     protons.sort();
 
     return protons;
+  }
+
+  static int generateAppId()  {
+    return Random().nextInt(pow(2, 32) as int);
   }
 
 }
