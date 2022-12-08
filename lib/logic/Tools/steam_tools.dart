@@ -8,9 +8,9 @@ class SteamTools {
     late final List<String> protons;
 
     String homeFolder = FileTools.getHomeFolder();
-    String shortcutsFilePath = "$homeFolder/.local/share/Steam/compatibilitytools.d";
+    String path = "$homeFolder/.local/share/Steam/compatibilitytools.d";
     protons =
-    await FileTools.getFolderFilesAsync(shortcutsFilePath, retrieveRelativePaths: true, recursive: false);
+    await FileTools.getFolderFilesAsync(path, retrieveRelativePaths: true, recursive: false);
 
     protons.sort();
 
@@ -30,6 +30,16 @@ class SteamTools {
 
   static int generateAppId()  {
     return Random().nextInt(pow(2, 32) as int);
+  }
+
+  static Future<String> getUserId() async{
+    String homeFolder = FileTools.getHomeFolder();
+    String path = "$homeFolder/.steam/steam/userdata";
+
+    //Todo, check for empty folder
+    var folders = await FileTools.getFolderFilesAsync(path,retrieveRelativePaths: true, recursive: false,regExFilter: "",onlyFolders: true);
+
+    return folders[0];
   }
 
 }

@@ -1,12 +1,11 @@
 
 //ordered as ShortcutsValueType enum
-import 'dart:ffi';
 import 'dart:typed_data';
 
 import 'package:tuple/tuple.dart';
 
 final Uint8List shortcutsValueTypeCode = Uint8List.fromList([0,1,2]); //0 for list, 1 for string, 2 for u32
-final Uint8List kEntry_End_Mark = Uint8List.fromList([00,0x74,0x61,0x67,0x73,0x00,0x08,0x08]);
+final Uint8List k_entry_end_mark = Uint8List.fromList([00,0x74,0x61,0x67,0x73,0x00,0x08,0x08]);
 
 
 class NonSteamGameExe {
@@ -61,7 +60,7 @@ class NonSteamGameExe {
       case "LastPlayTime" : {lastPlayTime = _convertBEIntStringToInt(propertyValue);}break;
       case "FlatpakAppID" : {flatPackAppId = propertyValue;}break;
       case "Exe" : { propertyValue = _cleanPathString(propertyValue); exePath = propertyValue;}break;
-      default: print("$propertyName with value $propertyValue is not a known steam game property");
+      default: throw Exception("$propertyName with value $propertyValue is not a known steam game property");
     }
   }
   
@@ -99,7 +98,7 @@ class NonSteamGameExe {
       movingFrom = readPropertyRetVal.item3;
 
       if (_isEndOfEntry(buffer,movingFrom)) {
-        movingFrom += kEntry_End_Mark.length;
+        movingFrom += k_entry_end_mark.length;
         finished = true;
       }
     }
@@ -155,10 +154,10 @@ class NonSteamGameExe {
     var index = 0;
     var equal = true;
 
-    while(equal && index<kEntry_End_Mark.length)
+    while(equal && index<k_entry_end_mark.length)
     {
       //println!("{:#x} {:#x} {:#x} {:#x}", from+index, buffer[from+index], index, ENTRY_END_MARK[index]);
-      if (buffer[from+index] != kEntry_End_Mark[index]) { return false; }
+      if (buffer[from+index] != k_entry_end_mark[index]) { return false; }
       index+=1;
     }
 

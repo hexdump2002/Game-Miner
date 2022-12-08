@@ -30,9 +30,15 @@ class FileTools {
     return fileNames;
   }
 
-  static Future<List<String>> getFolderFilesAsync(String path, {retrieveRelativePaths = false, bool recursive = true, String regExFilter = ""}) {
+  static Future<List<String>> getFolderFilesAsync(String path, {retrieveRelativePaths = false, bool recursive = true, String regExFilter = "", onlyFolders=false}) {
     final myDir = new Directory(path);
     var stream =  myDir.list(recursive: recursive, followLinks: false);
+
+    if(onlyFolders) {
+      stream = stream.where((event) {
+        return event.runtimeType.toString() == "_Directory"; // "event.runtimeType is Directory" is not working for me
+      });
+    }
 
     if(regExFilter.isNotEmpty) {
       RegExp r = RegExp(regExFilter);

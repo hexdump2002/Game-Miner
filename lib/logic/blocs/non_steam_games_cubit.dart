@@ -1,7 +1,9 @@
 import 'dart:math';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:collection/collection.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:meta/meta.dart';
 import 'package:steamdeck_toolbox/data/non_steam_game_exe.dart';
 import 'package:steamdeck_toolbox/logic/Tools/steam_tools.dart';
@@ -27,9 +29,10 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
 
   NonSteamGamesCubit() : super(IninitalState());
 
-  void loadData(List<String> gamesPath) async {
+  void loadData(String currentUserId, List<String> gamesPath) async {
     emit(RetrievingGameData());
-    var result = await Future.wait([_findGames(gamesPath), _loadShortcutsVdfFile(), SteamTools.loadProtons(), VdfTools.loadConfigVdf()]);
+
+    var result = await Future.wait([_findGames(gamesPath), _loadShortcutsVdfFile(currentUserId), SteamTools.loadProtons(), VdfTools.loadConfigVdf()]);
     var userGames = result[0] as List<UserGame>;
     _games = userGames.map<VMUserGame>((o) => VMUserGame(o, false)).toList();
 
@@ -82,14 +85,14 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
     emit(GamesDataRetrieved(_games, _availableProntons));
   }
 
-  refresh(List<String> gamesPath) {
-    loadData(gamesPath);
+  refresh(String currentUserId, List<String> gamesPath) {
+    loadData(currentUserId, gamesPath);
   }
 
-  Future<List<NonSteamGameExe>> loadShortcutsVdfFile() async {
+  Future<List<NonSteamGameExe>> loadShortcutsVdfFile(String userId) async {
     //we're on linux, just get home folder
     String homeFolder = FileTools.getHomeFolder();
-    var vdfAbsolutePath = "$homeFolder.steam/steam/userdata/255842936/config/shortcuts.vdf";
+    var vdfAbsolutePath = "$homeFolder.steam/steam/userdata/$userId/config/shortcuts.vdf";
 
     return VdfTools.loadShortcutsVdf(vdfAbsolutePath);
   }
@@ -113,11 +116,11 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
     return userGames;
   }
 
-  Future<List<NonSteamGameExe>> _loadShortcutsVdfFile() async {
+  Future<List<NonSteamGameExe>> _loadShortcutsVdfFile(String userId) async {
     //we're on linux, just get home folder
     String os = Platform.operatingSystem;
     Map<String, String> envVars = Platform.environment;
-    var vdfAbsolutePath = "${FileTools.getHomeFolder()}/.steam/steam/userdata/255842936/config/shortcuts.vdf";
+    var vdfAbsolutePath = "${FileTools.getHomeFolder()}/.steam/steam/userdata/$userId/config/shortcuts.vdf";
 
     return VdfTools.loadShortcutsVdf(vdfAbsolutePath);
   }
@@ -140,16 +143,18 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
     emit(GamesFoldingDataChanged(_games, _availableProntons));
   }
 
-  void saveData() async {
-    await saveShortCuts();
+  void saveData(String currentUserId) async {
+    EasyLoading.show(status: "Saving Data");
+    await saveShortCuts(currentUserId);
     await saveProntonMappings();
+    EasyLoading.showSuccess("Data saved!");
   }
 
-  Future<void> saveShortCuts() async {
+  Future<void> saveShortCuts(String userId) async {
     //Build backup
     String homeFolder = FileTools.getHomeFolder();
-    var sourceVdfAbsolutePath = "$homeFolder/.steam/steam/userdata/255842936/config/shortcuts.vdf";
-    await File(sourceVdfAbsolutePath).copy("$homeFolder/.steam/steam/userdata/255842936/config/shortcuts2.vdf");
+    var sourceVdfAbsolutePath = "$homeFolder/.steam/steam/userdata/$userId/config/shortcuts.vdf";
+    //await File(sourceVdfAbsolutePath).copy("$homeFolder/.steam/steam/$userId/config/shortcuts2.vdf");
 
     File file = File(sourceVdfAbsolutePath);
     RandomAccessFile raf = await file.openSync(mode: FileMode.writeOnly);

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:steamdeck_toolbox/logic/blocs/non_steam_games_cubit.dart';
 import 'package:steamdeck_toolbox/logic/blocs/settings_cubit.dart';
 import 'package:steamdeck_toolbox/presentation/pages/non_steam_games_page.dart';
@@ -29,6 +30,7 @@ class MyApp extends StatelessWidget {
         ),
         initialRoute: "/",
         routes: _buildRoutes(),
+        builder: EasyLoading.init(),
       ),
     );
   }

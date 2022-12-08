@@ -5,6 +5,7 @@ import 'package:collection/collection.dart';
 
 import 'package:bloc/bloc.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:meta/meta.dart';
 import 'package:steamdeck_toolbox/logic/Tools/steam_tools.dart';
 
@@ -13,6 +14,7 @@ part 'settings_state.dart';
 class Settings {
   List<String> searchPaths = [];
   late String defaultProton;
+  late String currentUserId;
 
   Settings();
 
@@ -49,7 +51,14 @@ class SettingsCubit extends Cubit<SettingsState> {
     else {
       load();
     }
+
+    _settings.currentUserId = await SteamTools.getUserId();
   }
+
+  void refresh() {
+    emit(SearchPathsChanged(_settings.searchPaths));
+  }
+
   List<String> getProtons() {
     return _protons;
   }
@@ -69,12 +78,13 @@ class SettingsCubit extends Cubit<SettingsState> {
   }
 
   void save() {
+    EasyLoading.show(status: "Saving Settings");
     String json = jsonEncode(_settings);
     Directory appFolder = Directory.current;
     String fullPath = "${appFolder.path}/$_configFilePath";
     File(fullPath)..createSync(recursive: true)..writeAsStringSync(json);
-
-    emit(SearchPathsSaved(_settings.searchPaths));
+    EasyLoading.showSuccess("Settings saved");
+    emit(SettingsSaved(_settings.searchPaths));
   }
 
   bool existsConfig() {

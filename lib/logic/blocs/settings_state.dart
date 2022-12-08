@@ -11,8 +11,8 @@ class SearchPathsChanged extends SettingsState {
   SearchPathsChanged(this.searchPaths);
 }
 
-class SearchPathsSaved extends SettingsState {
+class SettingsSaved extends SettingsState {
   late final  List<String> searchPaths;
 
-  SearchPathsSaved(this.searchPaths);
+  SettingsSaved(this.searchPaths);
 }

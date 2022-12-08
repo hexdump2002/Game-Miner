@@ -15,7 +15,7 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   void initState() {
     _bloc = BlocProvider.of<SettingsCubit>(context);
-    _bloc.load();
+    _bloc.refresh();
   }
 
   @override

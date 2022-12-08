@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:steamdeck_toolbox/logic/Tools/file_tools.dart';
 import 'package:steamdeck_toolbox/logic/Tools/vdf_tools.dart';
 import 'package:steamdeck_toolbox/logic/blocs/non_steam_games_cubit.dart';
@@ -27,7 +28,7 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
   void initState() {
     _nsgpBloc = BlocProvider.of<NonSteamGamesCubit>(context);
     _settingsBloc = BlocProvider.of<SettingsCubit>(context);
-    _nsgpBloc.loadData(_settingsBloc.getSettings().searchPaths);
+    _nsgpBloc.loadData(_settingsBloc.getSettings().currentUserId, _settingsBloc.getSettings().searchPaths);
 
     //VdfTools.saveConfigVdf([ProtonMapping("3843348", "perra", "", "700"), ProtonMapping("9998989", "JOJOJO", "", "500")]);
     //VdfTools.loadConfigVdf("");
@@ -44,7 +45,7 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
           IconButton(
             onPressed: () {
               if (_formKey.currentState!.validate()) {
-                _nsgpBloc.saveData();
+                _nsgpBloc.saveData(_settingsBloc.getSettings().currentUserId);
               } else {
                 print("There are errors in the form. Fix them!");
               }
@@ -54,7 +55,7 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
           ),
           IconButton(
             onPressed: () {
-              _nsgpBloc.refresh(_settingsBloc.getSettings().searchPaths);
+              _nsgpBloc.refresh(_settingsBloc.getSettings().currentUserId, _settingsBloc.getSettings().searchPaths);
             },
             icon: Icon(Icons.refresh),
             tooltip: "Refresh",
@@ -72,13 +73,13 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
             context,
             state,
           ) {
-            print("[SetttingsCubit Consumer] State -> $state");
-            if (state is SearchPathsSaved) {
-              _nsgpBloc.refresh((state as SearchPathsSaved).searchPaths);
+            //print("[SetttingsCubit Consumer] State -> $state");
+            if (state is SettingsSaved) {
+              _nsgpBloc.refresh(_settingsBloc.getSettings().currentUserId, (state as SettingsSaved).searchPaths);
             }
           }, builder: (context, settingsState) {
             return BlocBuilder<NonSteamGamesCubit, NonSteamGamesBaseState>(builder: (context, nsgState) {
-              print("[NonSteamGamesCubit Builder] State -> $nsgState");
+              //print("[NonSteamGamesCubit Builder] State -> $nsgState");
               return Align(alignment: Alignment.topCenter, child: _buildListOfGames(context, nsgState));
             });
           })),
@@ -87,14 +88,18 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
 
   Widget _buildListOfGames(BuildContext context, NonSteamGamesBaseState nsgState /*, SettingsState settingsState*/) {
     if (nsgState is RetrievingGameData) {
-      return _waitingForGamesToBeRetrieved(context);
+      EasyLoading.show(status:"Loading Games");
+      return Container();
     } else if (nsgState is GamesDataRetrieved) {
+      EasyLoading.dismiss();
       return SingleChildScrollView(
           child: _createGameCards(context, (nsgState as GamesDataRetrieved).games, (nsgState as GamesDataRetrieved).availableProntonList));
     } else if (nsgState is GamesDataChanged) {
+      EasyLoading.dismiss();
       return SingleChildScrollView(
           child: _createGameCards(context, (nsgState as GamesDataChanged).games, (nsgState as GamesDataChanged).availableProntonList));
     } else if (nsgState is GamesFoldingDataChanged) {
+      EasyLoading.dismiss();
       GamesFoldingDataChanged foldingDataChanged = nsgState as GamesFoldingDataChanged;
       return SingleChildScrollView(
           child: _createGameCards(context, (nsgState as GamesFoldingDataChanged).games, (nsgState as GamesFoldingDataChanged).availableProntonList));
@@ -109,26 +114,6 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
     }
 
     throw Exception("Unknown state type");
-  }
-
-  Widget _buildBottomBar(BuildContext context) {
-    return Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-      Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: ElevatedButton(
-            child: Text("Apply"),
-            onPressed: () {
-              if (!_formKey.currentState!.validate()) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("There are invalid fields. Please fix them and Apply again.")),
-                );
-              } else {
-                _formKey.currentState!.save();
-                _nsgpBloc.saveShortCuts();
-              }
-            }),
-      )
-    ]);
   }
 
   Widget _createGameCards(BuildContext context, List<VMUserGame> games, List<String> availableProntons) {
@@ -231,7 +216,7 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
     );
   }
 
-  Widget _waitingForGamesToBeRetrieved(BuildContext context) {
+  /*Widget _waitingForGamesToBeRetrieved(BuildContext context) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: const [
@@ -242,5 +227,5 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
         )
       ],
     );
-  }
+  }*/
 }
