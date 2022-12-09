@@ -22,7 +22,11 @@ class VdfTools {
   static Future<List<NonSteamGameExe>> loadShortcutsVdf(String path) async {
     List<NonSteamGameExe> nonSteamGames = [];
 
-    Uint8List buffer = await File(path).readAsBytes();
+    var file = File(path);
+    var fileExists = await file.exists();
+    if(!fileExists) return [];
+
+    Uint8List buffer = await file.readAsBytes();
 
     //Skip header
     var seekIndex = 0xB;
@@ -56,6 +60,9 @@ class VdfTools {
 
     String fullPath = "${FileTools.getHomeFolder()}/$relativePath";
     var file =  File(fullPath);
+    var fileExists = await file.exists();
+    if(!fileExists) return [];
+
     await file.open();
     String json = await file.readAsString();
 

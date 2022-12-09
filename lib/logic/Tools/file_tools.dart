@@ -3,7 +3,7 @@ import 'package:path/path.dart';
 
 class FileTools {
   //Search for exe files inside the game folder
-  static List<String> getFolderFiles(String path, {retrieveRelativePaths = false, bool recursive = true, String regExFilter = ""}) {
+  /*static List<String> getFolderFiles(String path, {retrieveRelativePaths = false, bool recursive = true, String regExFilter = ""}) {
     final myDir = new Directory(path);
     var files = myDir.listSync(recursive: recursive, followLinks: false);
 
@@ -28,10 +28,13 @@ class FileTools {
     }).toList();
 
     return fileNames;
-  }
+  }*/
 
-  static Future<List<String>> getFolderFilesAsync(String path, {retrieveRelativePaths = false, bool recursive = true, String regExFilter = "", onlyFolders=false}) {
+  static Future<List<String>> getFolderFilesAsync(String path, {retrieveRelativePaths = false, bool recursive = true, String regExFilter = "", onlyFolders=false}) async{
     final myDir = new Directory(path);
+
+    if(!await myDir.exists()) return [];
+
     var stream =  myDir.list(recursive: recursive, followLinks: false);
 
     if(onlyFolders) {

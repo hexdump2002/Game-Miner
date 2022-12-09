@@ -8,6 +8,7 @@ import 'package:meta/meta.dart';
 import 'package:steamdeck_toolbox/data/non_steam_game_exe.dart';
 import 'package:steamdeck_toolbox/logic/Tools/steam_tools.dart';
 import 'package:steamdeck_toolbox/logic/Tools/vdf_tools.dart';
+import 'package:steamdeck_toolbox/logic/blocs/settings_cubit.dart';
 import 'dart:io' show File, FileMode, Platform, RandomAccessFile;
 
 import '../../data/user_game.dart';
@@ -143,10 +144,16 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
     emit(GamesFoldingDataChanged(_games, _availableProntons));
   }
 
-  void saveData(String currentUserId) async {
-    EasyLoading.show(status: "Saving Data");
-    await saveShortCuts(currentUserId);
-    await saveProntonMappings();
+  void saveData(Settings settings) async {
+    EasyLoading.show(status: "Saving shortcuts");
+    await saveShortCuts(settings.currentUserId);
+    /*EasyLoading.showSuccess("Data saved!. We will synch with Steam now");
+    await syncWithSteam(settings);
+    EasyLoading.showSuccess("Steam sync succesfull!");
+    refresh(settings.currentUserId, settings.searchPaths);
+    EasyLoading.showSuccess("Saving proton mappings");*/
+    //await saveProntonMappings();
+
     EasyLoading.showSuccess("Data saved!");
   }
 
@@ -208,5 +215,75 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
       uge.fillProtonMappingData(value!,"","250");
     }
 
+    emit(GamesDataChanged(_games, _availableProntons));
   }
+
+  List<bool> isProtonAssignedForGame(VMUserGame vmUserGame)
+  {
+    bool added = false;
+    bool protonAssigned =false;
+    int i =0;
+
+    UserGame ug = vmUserGame.userGame;
+
+    while((!added || !protonAssigned) && i<vmUserGame.userGame.exeFileEntries.length) {
+      UserGameExe exe = ug.exeFileEntries[i];
+      if(exe.added == true) added=true;
+      if(exe.protonVersion!=null) protonAssigned = true;
+
+      ++i;
+    }
+
+    return [added,protonAssigned];
+
+  }
+
+  void sortByName() {
+    _games.sort((a,b) => a.userGame.name.compareTo(b.userGame.name));
+    emit(GamesDataChanged(_games, _availableProntons));
+  }
+
+  void sortByProtonAssigned() {
+    _games.sort((a,b) {
+      bool protonAddedA = isProtonAssignedForGame(a)[1];
+      bool protonAddedB = isProtonAssignedForGame(b)[1];
+      if(protonAddedA==protonAddedB) {
+        return 0;
+      } else if(!protonAddedA  && protonAddedB) {
+        return 1;
+      } else {
+        return -1;
+      }
+    });
+    emit(GamesDataChanged(_games, _availableProntons));
+  }
+
+  void sortBySteamAdded() {
+    _games.sort((a,b) {
+      bool protonAddedA = isProtonAssignedForGame(a)[0];
+      bool protonAddedB = isProtonAssignedForGame(b)[0];
+      if(protonAddedA==protonAddedB) {
+        return 0;
+      } else if(!protonAddedA  && protonAddedB) {
+        return 1;
+      } else {
+        return -1;
+      }
+    });
+    emit(GamesDataChanged(_games, _availableProntons));
+  }
+
+  Future<void> syncWithSteam(Settings settings) async {
+    SteamTools.openSteamClient();
+
+    await Future.delayed(Duration(seconds: 15));
+
+    if(await SteamTools.closeSteamClient())
+      print("Steam closed succesfully");
+    else
+      print("Error closing steam");
+
+    refresh(settings.currentUserId, settings.searchPaths);
+  }
+
 }

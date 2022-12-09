@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:math';
 
 import 'file_tools.dart';
@@ -28,8 +29,10 @@ class SteamTools {
     return protons;
   }
 
+  //The algorithm to generate an app id for steam is not clear. It seems to be dependant on exe path + app name but has a random component
   static int generateAppId()  {
     return Random().nextInt(pow(2, 32) as int);
+    //return 0;
   }
 
   static Future<String> getUserId() async{
@@ -42,4 +45,13 @@ class SteamTools {
     return folders[0];
   }
 
+  static Future<bool> openSteamClient() async{
+    var result = await Process.run('steam',[]);
+    return result.exitCode==0;
+  }
+
+  static Future<bool> closeSteamClient() async{
+    var result = await Process.run('killall',["steam"]);
+    return result.exitCode==0;
+  }
 }

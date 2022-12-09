@@ -45,13 +45,34 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
           IconButton(
             onPressed: () {
               if (_formKey.currentState!.validate()) {
-                _nsgpBloc.saveData(_settingsBloc.getSettings().currentUserId);
+                _nsgpBloc.saveData(_settingsBloc.getSettings());
               } else {
                 print("There are errors in the form. Fix them!");
               }
             },
             icon: Icon(Icons.save),
             tooltip: "Save",
+          ),
+          IconButton(
+            onPressed: () {
+              _nsgpBloc.sortByName();
+            },
+            icon: Icon(Icons.receipt),
+            tooltip: "Sort By Name",
+          ),
+          IconButton(
+            onPressed: () {
+              _nsgpBloc.sortByProtonAssigned();
+            },
+            icon: Icon(Icons.stars),
+            tooltip: "Sort By Proton",
+          ),
+          IconButton(
+            onPressed: () {
+              _nsgpBloc.sortBySteamAdded();
+            },
+            icon: Icon(Icons.grade),
+            tooltip: "Sort By Added",
           ),
           IconButton(
             onPressed: () {
@@ -118,10 +139,16 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
 
   Widget _createGameCards(BuildContext context, List<VMUserGame> games, List<String> availableProntons) {
     List<ExpansionPanel> widgets = games.map<ExpansionPanel>((VMUserGame game) {
+      var gameAddedData = _nsgpBloc.isProtonAssignedForGame(game);
       return ExpansionPanel(
         headerBuilder: (BuildContext context, bool isExpanded) {
           return ListTile(
-            title: Text(game.userGame.name, style: Theme.of(context).textTheme.headline4, textAlign: TextAlign.left),
+            title: Row(
+              children: [
+                Expanded(child: Text(game.userGame.name, style: Theme.of(context).textTheme.headline4, textAlign: TextAlign.left)),
+                if(gameAddedData[0]) gameAddedData[1] ? const Icon(Icons.task_alt, color:Colors.red) : const Icon(Icons.done,color:Colors.red)
+              ],
+            ),
           );
         },
         body: _buildGameTile(context, game.userGame, availableProntons),
