@@ -28,10 +28,7 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
   void initState() {
     _nsgpBloc = BlocProvider.of<NonSteamGamesCubit>(context);
     _settingsBloc = BlocProvider.of<SettingsCubit>(context);
-    _nsgpBloc.loadData(_settingsBloc.getSettings().currentUserId, _settingsBloc.getSettings().searchPaths);
-
-    //VdfTools.saveConfigVdf([ProtonMapping("3843348", "perra", "", "700"), ProtonMapping("9998989", "JOJOJO", "", "500")]);
-    //VdfTools.loadConfigVdf("");
+    _nsgpBloc.loadData(_settingsBloc.getSettings());
   }
 
   @override
@@ -65,7 +62,7 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
               _nsgpBloc.sortByProtonAssigned();
             },
             icon: Icon(Icons.stars),
-            tooltip: "Sort By Proton",
+            tooltip: "Sort By Proton Assigned",
           ),
           IconButton(
             onPressed: () {
@@ -76,7 +73,7 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
           ),
           IconButton(
             onPressed: () {
-              _nsgpBloc.refresh(_settingsBloc.getSettings().currentUserId, _settingsBloc.getSettings().searchPaths);
+              _nsgpBloc.refresh(_settingsBloc.getSettings());
             },
             icon: Icon(Icons.refresh),
             tooltip: "Refresh",
@@ -96,7 +93,10 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
           ) {
             //print("[SetttingsCubit Consumer] State -> $state");
             if (state is SettingsSaved) {
-              _nsgpBloc.refresh(_settingsBloc.getSettings().currentUserId, (state as SettingsSaved).searchPaths);
+              _nsgpBloc.refresh(state.settings);
+            }
+            else if(state is SettingsLoaded) {
+              _nsgpBloc.refresh(state.settings);
             }
           }, builder: (context, settingsState) {
             return BlocBuilder<NonSteamGamesCubit, NonSteamGamesBaseState>(builder: (context, nsgState) {
@@ -107,23 +107,23 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
     );
   }
 
-  Widget _buildListOfGames(BuildContext context, NonSteamGamesBaseState nsgState /*, SettingsState settingsState*/) {
+  Widget _buildListOfGames(BuildContext context, NonSteamGamesBaseState nsgState) {
     if (nsgState is RetrievingGameData) {
       EasyLoading.show(status:"Loading Games");
       return Container();
     } else if (nsgState is GamesDataRetrieved) {
       EasyLoading.dismiss();
       return SingleChildScrollView(
-          child: _createGameCards(context, (nsgState as GamesDataRetrieved).games, (nsgState as GamesDataRetrieved).availableProntonList));
+          child: _createGameCards(context, (nsgState as GamesDataRetrieved).games, (nsgState as GamesDataRetrieved).availableProntonNames));
     } else if (nsgState is GamesDataChanged) {
       EasyLoading.dismiss();
       return SingleChildScrollView(
-          child: _createGameCards(context, (nsgState as GamesDataChanged).games, (nsgState as GamesDataChanged).availableProntonList));
+          child: _createGameCards(context, (nsgState as GamesDataChanged).games, (nsgState as GamesDataChanged).availableProntonNames));
     } else if (nsgState is GamesFoldingDataChanged) {
       EasyLoading.dismiss();
       GamesFoldingDataChanged foldingDataChanged = nsgState as GamesFoldingDataChanged;
       return SingleChildScrollView(
-          child: _createGameCards(context, (nsgState as GamesFoldingDataChanged).games, (nsgState as GamesFoldingDataChanged).availableProntonList));
+          child: _createGameCards(context, (nsgState as GamesFoldingDataChanged).games, (nsgState as GamesFoldingDataChanged).availableProntonNames));
     }
     /*else if (settingsState is SearchPathsChanged) {
       _nsgpBloc.loadData(settingsState.searchPaths);
@@ -145,7 +145,7 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
           return ListTile(
             title: Row(
               children: [
-                Expanded(child: Text(game.userGame.name, style: Theme.of(context).textTheme.headline4, textAlign: TextAlign.left)),
+                Expanded(child: Text(game.userGame.name, style: Theme.of(context).textTheme.headline5, textAlign: TextAlign.left)),
                 if(gameAddedData[0]) gameAddedData[1] ? const Icon(Icons.task_alt, color:Colors.red) : const Icon(Icons.done,color:Colors.red)
               ],
             ),
@@ -174,7 +174,7 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
     for (UserGameExe uge in gameExePaths) {
       bool added = uge.added;
       gameItems.add(Padding(
-        padding: const EdgeInsets.fromLTRB(64, 8, 0, 8),
+        padding: const EdgeInsets.fromLTRB(64, 0, 0, 0),
         child: Column(
           children: [
             Row(children: [
@@ -185,7 +185,7 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
                 Switch(
                     value: uge.added,
                     onChanged: (value) {
-                      _nsgpBloc.swapExeAdding(uge, _settingsBloc.getSettings().defaultProton);
+                      _nsgpBloc.swapExeAdding(uge, _settingsBloc.getSettings().defaultProtonCode);
                     }),
                 //activeTrackColor: Colors.lightGreenAccent,
                 //activeColor: Colors.green,
@@ -199,7 +199,7 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
     }
 
     return Padding(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       child: Column(
         children: gameItems,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -234,8 +234,8 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
                 items: availableProntons.map<DropdownMenuItem<String>>((String e) {
                   return DropdownMenuItem<String>(value: e, child: Text(e));
                 }).toList(),
-                value: uge.protonVersion ?? "None",
-                onChanged: (String? value) => _nsgpBloc.setProtonDataFor(uge, value),
+                value: _settingsBloc.getProtonNameForCode(uge.protonCode),
+                onChanged: (String? value) => _nsgpBloc.setProtonDataFor(uge, value!),
                 decoration: const InputDecoration(labelText: "Proton"))
           ],
         ),

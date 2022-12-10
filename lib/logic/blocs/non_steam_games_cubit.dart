@@ -23,24 +23,37 @@ class VMUserGame {
   VMUserGame(this.userGame, this.foldingState);
 }
 
+enum SortBy { Name, Added, AllProtonAssigned }
+
+enum SortDirection { Asc, Desc }
+
 class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
   List<VMUserGame> _games = [];
-  List<String> _availableProntons = [];
+  late SettingsCubit _settings;
+
   List<ProtonMapping> _protonMappings = [];
 
-  NonSteamGamesCubit() : super(IninitalState());
+  SortBy _currentSortBy = SortBy.Name;
+  SortDirection _currentNameSortDirection = SortDirection.Asc;
+  SortDirection _currentAddedSortDirection = SortDirection.Asc;
+  SortDirection _currentAllProtonAssignedSortDirection = SortDirection.Asc;
 
-  void loadData(String currentUserId, List<String> gamesPath) async {
+  NonSteamGamesCubit(SettingsCubit settings) : super(IninitalState()) {
+    _settings = settings;
+  }
+
+  void loadData(Settings settings) async {
     emit(RetrievingGameData());
 
-    var result = await Future.wait([_findGames(gamesPath), _loadShortcutsVdfFile(currentUserId), SteamTools.loadProtons(), VdfTools.loadConfigVdf()]);
+    var result = await Future.wait([_findGames(settings.searchPaths), _loadShortcutsVdfFile(settings.currentUserId), VdfTools.loadConfigVdf()]);
     var userGames = result[0] as List<UserGame>;
     _games = userGames.map<VMUserGame>((o) => VMUserGame(o, false)).toList();
 
-    _availableProntons = result[2] as List<String>;
-    _availableProntons.insert(0,"None");
+    List<String> availableProntonNames = [];
+    availableProntonNames.addAll(_settings.getAvailableProtonNames());
+    availableProntonNames.insert(0, "None");
 
-    _protonMappings = result[3] as List<ProtonMapping>;
+    _protonMappings = result[2] as List<ProtonMapping>;
 
     var registeredNonSteamGames = result[1] as List<NonSteamGameExe>;
 
@@ -63,7 +76,7 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
 
           //Find the proton mapping
           ProtonMapping? pm = _protonMappings.firstWhereOrNull((e) => uge.appId.toString() == e.id);
-          if(pm!=null) {
+          if (pm != null) {
             uge.fillProtonMappingData(pm.name, pm.config, pm.priority);
           }
         }
@@ -83,11 +96,11 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
       _games.add(VMUserGame(externalGame, false));
     }
 
-    emit(GamesDataRetrieved(_games, _availableProntons));
+    emit(GamesDataRetrieved(_games, availableProntonNames));
   }
 
-  refresh(String currentUserId, List<String> gamesPath) {
-    loadData(currentUserId, gamesPath);
+  refresh(Settings settings) {
+    loadData(settings);
   }
 
   Future<List<NonSteamGameExe>> loadShortcutsVdfFile(String userId) async {
@@ -126,22 +139,22 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
     return VdfTools.loadShortcutsVdf(vdfAbsolutePath);
   }
 
-  swapExeAdding(UserGameExe uge, String defaultProton) {
+  swapExeAdding(UserGameExe uge, String protonCode) {
     uge.added = !uge.added;
 
     if (uge.added) {
       uge.appId = SteamTools.generateAppId("${uge.startDir}/${uge.relativeExePath}");
-      uge.fillProtonMappingData(defaultProton, "", "250");
+      uge.fillProtonMappingData(protonCode, "", "250");
     } else {
       uge.appId = 0;
       uge.clearProtonMappingData();
     }
-    emit(GamesDataChanged(_games, _availableProntons));
+    emit(GamesDataChanged(_games, _settings.getAvailableProtonNames()));
   }
 
   void swapExpansionStateForItem(int index) {
     _games[index].foldingState = !_games[index].foldingState;
-    emit(GamesFoldingDataChanged(_games, _availableProntons));
+    emit(GamesFoldingDataChanged(_games, _settings.getAvailableProtonNames()));
   }
 
   void saveData(Settings settings) async {
@@ -194,9 +207,9 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
     _games.forEach((e) {
       e.userGame.exeFileEntries.forEach((uge) {
         if (usedProtonMappings.containsKey(uge.appId)) throw Exception("An appId with 2 differnt pronton mappings found!. This is not valid.");
-        if (uge.protonVersion == null) return;
+        if (uge.protonCode == "None") return;
 
-        usedProtonMappings[uge.appId] = ProtonMapping(uge.appId.toString(), uge.protonVersion!, uge.protonConfig, uge.protonPriority!);
+        usedProtonMappings[uge.appId] = ProtonMapping(uge.appId.toString(), uge.protonCode, uge.protonConfig, uge.protonPriority!);
       });
     });
 
@@ -205,72 +218,116 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
     await VdfTools.saveConfigVdf(protonMappings);
   }
 
-  setProtonDataFor(UserGameExe uge, String? value) {
-    assert(value!=null);
+  setProtonDataFor(UserGameExe uge, String value) {
+    //assert(value!=null);
 
-    if(value=="None") {
+    if (value == "None") {
       uge.clearProtonMappingData();
-    }
-    else{
-      uge.fillProtonMappingData(value!,"","250");
+    } else {
+      uge.fillProtonMappingData(_settings.getProtonCodeFromName(value), "", "250");
     }
 
-    emit(GamesDataChanged(_games, _availableProntons));
+    emit(GamesDataChanged(_games, _settings.getAvailableProtonNames()));
   }
 
-  List<bool> isProtonAssignedForGame(VMUserGame vmUserGame)
-  {
-    bool added = false;
-    bool protonAssigned =false;
-    int i =0;
-
+  List<bool> isProtonAssignedForGame(VMUserGame vmUserGame) {
     UserGame ug = vmUserGame.userGame;
 
-    while((!added || !protonAssigned) && i<vmUserGame.userGame.exeFileEntries.length) {
-      UserGameExe exe = ug.exeFileEntries[i];
-      if(exe.added == true) added=true;
-      if(exe.protonVersion!=null) protonAssigned = true;
+    bool added = vmUserGame.userGame.exeFileEntries.firstWhereOrNull((element) => element.added == true) != null;
+    bool allProtonAssigned = vmUserGame.userGame.exeFileEntries.firstWhereOrNull((element) => element.protonCode == "None") == null;
 
-      ++i;
-    }
-
-    return [added,protonAssigned];
-
+    return [added, allProtonAssigned];
   }
 
   void sortByName() {
-    _games.sort((a,b) => a.userGame.name.compareTo(b.userGame.name));
-    emit(GamesDataChanged(_games, _availableProntons));
+    if (_currentSortBy == SortBy.Name) {
+      _currentNameSortDirection = _currentNameSortDirection == SortDirection.Asc ? SortDirection.Desc : SortDirection.Asc;
+    }
+
+    _currentSortBy = SortBy.Name;
+
+    if (_currentNameSortDirection == SortDirection.Desc) {
+      _games.sort((a, b) => a.userGame.name.compareTo(b.userGame.name));
+    } else {
+      _games.sort((a, b) => b.userGame.name.compareTo(a.userGame.name));
+    }
+    emit(GamesDataChanged(_games, _settings.getAvailableProtonNames()));
   }
 
   void sortByProtonAssigned() {
-    _games.sort((a,b) {
-      bool protonAddedA = isProtonAssignedForGame(a)[1];
-      bool protonAddedB = isProtonAssignedForGame(b)[1];
-      if(protonAddedA==protonAddedB) {
-        return 0;
-      } else if(!protonAddedA  && protonAddedB) {
-        return 1;
-      } else {
-        return -1;
-      }
-    });
-    emit(GamesDataChanged(_games, _availableProntons));
+
+    if (_currentSortBy == SortBy.AllProtonAssigned) {
+      _currentAllProtonAssignedSortDirection = _currentAllProtonAssignedSortDirection == SortDirection.Asc ? SortDirection.Desc : SortDirection.Asc;
+    }
+
+    _currentSortBy = SortBy.AllProtonAssigned;
+
+    if (_currentAllProtonAssignedSortDirection == SortDirection.Desc) {
+      _games.sort((a, b) {
+        bool protonAssignedA = isProtonAssignedForGame(a)[1];
+        bool protonAssignedB = isProtonAssignedForGame(b)[1];
+        if (protonAssignedA == protonAssignedB) {
+          return 0;
+        } else if (!protonAssignedA && protonAssignedB) {
+          return 1;
+        } else {
+          return -1;
+        }
+      });
+    } else {
+      _games.sort((a, b) {
+        bool protonAddedA = isProtonAssignedForGame(a)[1];
+        bool protonAddedB = isProtonAssignedForGame(b)[1];
+        if (protonAddedA == protonAddedB) {
+          return 0;
+        } else if (!protonAddedA && protonAddedB) {
+          return -1;
+        } else {
+          return 1;
+        }
+      });
+    }
+    emit(GamesDataChanged(_games, _settings.getAvailableProtonNames()));
   }
 
   void sortBySteamAdded() {
-    _games.sort((a,b) {
-      bool protonAddedA = isProtonAssignedForGame(a)[0];
-      bool protonAddedB = isProtonAssignedForGame(b)[0];
-      if(protonAddedA==protonAddedB) {
-        return 0;
-      } else if(!protonAddedA  && protonAddedB) {
-        return 1;
-      } else {
-        return -1;
-      }
-    });
-    emit(GamesDataChanged(_games, _availableProntons));
+
+    if (_currentSortBy == SortBy.Added) {
+      _currentAddedSortDirection = _currentAddedSortDirection == SortDirection.Asc ? SortDirection.Desc : SortDirection.Asc;
+    }
+
+    _currentSortBy = SortBy.Added;
+
+    if (_currentAddedSortDirection == SortDirection.Desc) {
+      _games.sort((a, b) {
+        bool protonAddedA = isProtonAssignedForGame(a)[0];
+        bool protonAddedB = isProtonAssignedForGame(b)[0];
+        if (protonAddedA == protonAddedB) {
+          return 0;
+        } else if (!protonAddedA && protonAddedB) {
+          return 1;
+        } else {
+          return -1;
+        }
+      });
+    }
+    else
+    {
+      _games.sort((a, b) {
+        bool protonAddedA = isProtonAssignedForGame(a)[0];
+        bool protonAddedB = isProtonAssignedForGame(b)[0];
+        if (protonAddedA == protonAddedB) {
+          return 0;
+        } else if (!protonAddedA && protonAddedB) {
+          return -1;
+        } else {
+          return 1;
+        }
+      });
+    }
+
+
+    emit(GamesDataChanged(_games, _settings.getAvailableProtonNames()));
   }
 
   Future<void> syncWithSteam(Settings settings) async {
@@ -278,12 +335,11 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
 
     await Future.delayed(Duration(seconds: 15));
 
-    if(await SteamTools.closeSteamClient())
+    if (await SteamTools.closeSteamClient())
       print("Steam closed succesfully");
     else
       print("Error closing steam");
 
-    refresh(settings.currentUserId, settings.searchPaths);
+    refresh(settings);
   }
-
 }

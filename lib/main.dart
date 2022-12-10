@@ -10,8 +10,10 @@ import 'package:steamdeck_toolbox/presentation/pages/settings_page.dart';
 late SettingsCubit _settingsCubit;
 
 void main() async {
-  //Close steam torrent
-  SteamTools.closeSteamClient();
+  //Close steam client
+  //SteamTools.closeSteamClient();
+
+  EasyLoading.init();
 
   _settingsCubit = SettingsCubit();
   await _settingsCubit.initialize();
@@ -42,7 +44,7 @@ class MyApp extends StatelessWidget {
     return {
       '/': (context) =>
           BlocProvider(
-            create: (context) => NonSteamGamesCubit(),
+            create: (context) => NonSteamGamesCubit(_settingsCubit),
             child: const NonSteamGamesPage(),
           ),
       // When navigating to the "/second" route, build the SecondScreen widget.

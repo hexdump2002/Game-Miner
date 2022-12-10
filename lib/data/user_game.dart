@@ -13,7 +13,7 @@ class UserGameExe {
   late bool brokenLink;
   late String relativeExePath;
   late String name;
-  String? protonVersion; //If null there's no proton mapping assigned to this executable
+  String protonCode = "None"; //If null there's no proton mapping assigned to this executable
   String protonPriority="0";
   String protonConfig="";
   bool added = false;
@@ -66,20 +66,20 @@ class UserGameExe {
     added = true;
 
     if(protonMapping!=null) {
-      protonVersion=protonMapping.name;
+      protonCode=protonMapping.name;
       protonConfig=protonMapping.config;
       protonPriority = protonMapping.priority;
     }
   }
 
-  void fillProtonMappingData(String protonVersion, String protonConfig, String priority) {
-    this.protonVersion = protonVersion;
+  void fillProtonMappingData(String protonCode, String protonConfig, String priority) {
+    this.protonCode = protonCode;
     this.protonConfig = protonConfig;
     protonPriority = priority;
   }
 
   void clearProtonMappingData() {
-    protonVersion = null;
+    protonCode = "None";
     protonConfig = "";
     protonPriority = "0";
 

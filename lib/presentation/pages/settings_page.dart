@@ -51,7 +51,7 @@ class _SettingsPageState extends State<SettingsPage> {
                             children: const [
                               Text(
                                 "Search Paths",
-                                style: TextStyle(fontSize: 30),
+                                style: TextStyle(fontSize: 20,fontWeight: FontWeight.bold),
                               ),
                             ],
                           ),
@@ -94,7 +94,7 @@ class _SettingsPageState extends State<SettingsPage> {
                               children: const [
                                 Text(
                                   "General Options",
-                                  style: TextStyle(fontSize: 30),
+                                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                                 ),
                               ],
                             ),
@@ -107,11 +107,11 @@ class _SettingsPageState extends State<SettingsPage> {
                             Expanded(child: Text("Default Proton")),
                             Expanded(
                               child: DropdownButtonFormField<String>(
-                                  items: _bloc.getProtons().map<DropdownMenuItem<String>>((String e) {
+                                  items: _bloc.getAvailableProtonNames().map<DropdownMenuItem<String>>((String e) {
                                     return DropdownMenuItem<String>(value: e, child: Text(e));
                                   }).toList(),
-                                  value: _bloc.getSettings().defaultProton,
-                                  onChanged: (String? value) => _bloc.getSettings().defaultProton = value,
+                                  value: _bloc.getProtonNameForCode(_bloc.getSettings().defaultProtonCode),
+                                  onChanged: (String? value) => _bloc.getSettings().defaultProtonCode = _bloc.getProtonCodeFromName(value!),
                                   decoration: const InputDecoration()),
                             )
                     ],

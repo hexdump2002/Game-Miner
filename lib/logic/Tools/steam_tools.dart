@@ -5,7 +5,7 @@ import 'file_tools.dart';
 
 class SteamTools {
 
-  static Future<List<String>> loadManuallyInstalledProtons() async {
+  static Future<List<String>> loadExternalProtons() async {
     late final List<String> protons;
 
     String homeFolder = FileTools.getHomeFolder();
@@ -19,15 +19,17 @@ class SteamTools {
 
   }
 
-  static Future<List<String>> loadProtons() async {
-    List<String>  builtInProtons = ["proton_experimental", "Pronto 6.2", "Proton 5.1"];
-    List<String> protons = await loadManuallyInstalledProtons();
+  /*static Future<List<String>> loadProtons() async {
+    List<String>  builtInProtons = ["proton_experimental##Proton Experimental","proton_7##Proton 7.0-5","proton_63##Proton 6.3-8","proton_513##Proton 5.13-6","proton_5##Proton 5.0-10","proton_411##Proton 4.11-13",
+      "proton_42##Proton 4.2-9","proton_316##Proton 3.16-9","proton_37##Proton 3.7-8","proton_hotfix##Proton Hotfix","steamlinuxruntime##Steam Linux Runtime"];
+    List<String> protons = await loadExternalProtons();
     protons.addAll(builtInProtons);
 
     protons.sort();
 
     return protons;
-  }
+  }*/
+
 
   //The algorithm to generate an app id for steam is not clear. It seems to be dependant on exe path + app name but has a random component
   static int generateAppId(String exePath)  {
