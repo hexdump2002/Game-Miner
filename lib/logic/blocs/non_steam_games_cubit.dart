@@ -130,7 +130,7 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
     uge.added = !uge.added;
 
     if (uge.added) {
-      uge.appId = SteamTools.generateAppId();
+      uge.appId = SteamTools.generateAppId("${uge.startDir}/${uge.relativeExePath}");
       uge.fillProtonMappingData(defaultProton, "", "250");
     } else {
       uge.appId = 0;
@@ -152,7 +152,7 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
     EasyLoading.showSuccess("Steam sync succesfull!");
     refresh(settings.currentUserId, settings.searchPaths);
     EasyLoading.showSuccess("Saving proton mappings");*/
-    //await saveProntonMappings();
+    await saveProntonMappings();
 
     EasyLoading.showSuccess("Data saved!");
   }

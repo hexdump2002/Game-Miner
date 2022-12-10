@@ -153,6 +153,9 @@ class UserGame {
       UserGameExe ef = exeFileEntries[i];
       if (!ef.added) continue;
 
+      //Don't really know if this will go into the bloc id
+      //await raf.writeByte(0);
+
       await _writeBlockId(raf, blockId++);
 
       await _writeInt32BEProperty(raf, "appid", ef.appId);
@@ -174,6 +177,10 @@ class UserGame {
       await _writeInt32BEProperty(raf, "LastPlayTime", ef.lastPlayTime);
       await _writeStringProperty(raf, "FlatpakAppID", ef.flatPackAppId);
 
+      //00 08 08 00 31 30 00 (02) (Numero 10)
+      //00 08 08 00 31 00 (02)    (Numero 1)
+
+
       //Tags are not supported (Tags type is 0)
       await raf.writeByte(0);
       await raf.writeString("tags");
@@ -186,8 +193,18 @@ class UserGame {
   }
 
   Future<void> _writeBlockId(RandomAccessFile raf, int num) async {
-    if (num > 99) {
+    await raf.writeByte(0);
+    await raf.writeString(num.toString());
+    await raf.writeByte(0);
+    /*if (num > 999) {
       throw Exception("Can't write more than 999 non steam games");
+    }
+
+    if(num>99) {
+      await raf.writeByte(num ~/ 100 + 0x30);
+    }
+    else {
+      await raf.writeByte(0);
     }
 
     if (num > 9) {
@@ -197,7 +214,7 @@ class UserGame {
     }
 
     await raf.writeByte(num % 10 + 0x30);
-    await raf.writeByte(0);
+    await raf.writeByte(0);*/
   }
 
   Future<void> _writeStringProperty(RandomAccessFile raf, String propName, String propValue) async {

@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'dart:math';
-
+import 'crc32.dart';
 import 'file_tools.dart';
 
 class SteamTools {
@@ -20,7 +20,7 @@ class SteamTools {
   }
 
   static Future<List<String>> loadProtons() async {
-    List<String>  builtInProtons = ["Proton Experimental", "Pronto 6.2", "Proton 5.1"];
+    List<String>  builtInProtons = ["proton_experimental", "Pronto 6.2", "Proton 5.1"];
     List<String> protons = await loadManuallyInstalledProtons();
     protons.addAll(builtInProtons);
 
@@ -30,9 +30,13 @@ class SteamTools {
   }
 
   //The algorithm to generate an app id for steam is not clear. It seems to be dependant on exe path + app name but has a random component
-  static int generateAppId()  {
-    return Random().nextInt(pow(2, 32) as int);
+  static int generateAppId(String exePath)  {
+    //return Random().nextInt(pow(2, 32) as int);
     //return 0;
+
+    var crc = CRC32.compute(exePath) | 0x80000000;
+    print(crc);
+    return crc;
   }
 
   static Future<String> getUserId() async{
