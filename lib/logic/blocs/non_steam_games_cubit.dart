@@ -122,7 +122,7 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
 
       //Find exe files
       for (UserGame ug in ugs) {
-        List<String> exeFiles = await FileTools.getFolderFilesAsync(ug.path, retrieveRelativePaths: false, recursive: true, regExFilter: r".*\.exe$");
+        List<String> exeFiles = await FileTools.getFolderFilesAsync(ug.path, retrieveRelativePaths: false, recursive: true, regExFilter: r".*\.exe$", regExCaseSensitive: false);
         ug.addExeFiles(exeFiles);
       }
     }
@@ -234,9 +234,9 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
     UserGame ug = vmUserGame.userGame;
 
     bool added = vmUserGame.userGame.exeFileEntries.firstWhereOrNull((element) => element.added == true) != null;
-    bool allProtonAssigned = vmUserGame.userGame.exeFileEntries.firstWhereOrNull((element) => element.protonCode == "None") == null;
+    bool oneExeAddedAndProtonAssigned = vmUserGame.userGame.exeFileEntries.firstWhereOrNull((element) => element.added == true && element.protonCode != "None") != null;
 
-    return [added, allProtonAssigned];
+    return [added, oneExeAddedAndProtonAssigned];
   }
 
   void sortByName() {
@@ -247,9 +247,9 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
     _currentSortBy = SortBy.Name;
 
     if (_currentNameSortDirection == SortDirection.Desc) {
-      _games.sort((a, b) => a.userGame.name.compareTo(b.userGame.name));
+      _games.sort((a, b) => a.userGame.name.toLowerCase().compareTo(b.userGame.name.toLowerCase()));
     } else {
-      _games.sort((a, b) => b.userGame.name.compareTo(a.userGame.name));
+      _games.sort((a, b) => b.userGame.name.toLowerCase().compareTo(a.userGame.name.toLowerCase()));
     }
     emit(GamesDataChanged(_games, _settings.getAvailableProtonNames()));
   }

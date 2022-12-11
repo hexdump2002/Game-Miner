@@ -30,7 +30,7 @@ class FileTools {
     return fileNames;
   }*/
 
-  static Future<List<String>> getFolderFilesAsync(String path, {retrieveRelativePaths = false, bool recursive = true, String regExFilter = "", onlyFolders=false}) async{
+  static Future<List<String>> getFolderFilesAsync(String path, {retrieveRelativePaths = false, bool recursive = true, String regExFilter = "", onlyFolders=false, bool regExCaseSensitive=true}) async{
     final myDir = new Directory(path);
 
     if(!await myDir.exists()) return [];
@@ -44,7 +44,7 @@ class FileTools {
     }
 
     if(regExFilter.isNotEmpty) {
-      RegExp r = RegExp(regExFilter);
+      RegExp r = RegExp(regExFilter,caseSensitive: regExCaseSensitive);
 
       stream = stream.where((event) {
           String fileName = basename(event.path);

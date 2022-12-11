@@ -140,13 +140,15 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
   Widget _createGameCards(BuildContext context, List<VMUserGame> games, List<String> availableProntons) {
     List<ExpansionPanel> widgets = games.map<ExpansionPanel>((VMUserGame game) {
       var gameAddedData = _nsgpBloc.isProtonAssignedForGame(game);
+      var anyExeAdded = gameAddedData[0];
+      var anyExeAddedAndProtonAssigned = gameAddedData[1];
       return ExpansionPanel(
         headerBuilder: (BuildContext context, bool isExpanded) {
           return ListTile(
             title: Row(
               children: [
                 Expanded(child: Text(game.userGame.name, style: Theme.of(context).textTheme.headline5, textAlign: TextAlign.left)),
-                if(gameAddedData[0]) gameAddedData[1] ? const Icon(Icons.task_alt, color:Colors.red) : const Icon(Icons.done,color:Colors.red)
+                _getExeCurrentStateIcon(anyExeAdded, anyExeAddedAndProtonAssigned)
               ],
             ),
           );
@@ -241,6 +243,15 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
         ),
       ),
     );
+  }
+
+  Widget _getExeCurrentStateIcon(bool anyExeAdded, bool anyExeAddedAndProtonAssigned) {
+    if(anyExeAddedAndProtonAssigned) return  const Icon(Icons.thumb_up, color:Colors.green);
+
+    if(anyExeAdded) return  const Icon(Icons.check_circle, color:Colors.orangeAccent);
+
+    return  const Icon(Icons.error_outline, color:Colors.red);
+
   }
 
   /*Widget _waitingForGamesToBeRetrieved(BuildContext context) {

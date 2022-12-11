@@ -11,9 +11,7 @@ late SettingsCubit _settingsCubit;
 
 void main() async {
   //Close steam client
-  //SteamTools.closeSteamClient();
-
-  EasyLoading.init();
+  SteamTools.closeSteamClient();
 
   _settingsCubit = SettingsCubit();
   await _settingsCubit.initialize();
