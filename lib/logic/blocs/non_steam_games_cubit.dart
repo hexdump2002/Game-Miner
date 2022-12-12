@@ -14,6 +14,7 @@ import 'package:steamdeck_toolbox/logic/blocs/settings_cubit.dart';
 import 'dart:io' show Directory, File, FileMode, Platform, RandomAccessFile;
 import 'package:path/path.dart' as p;
 
+import '../../data/game_folder_stats.dart';
 import '../../data/user_game.dart';
 import '../Tools/file_tools.dart';
 
@@ -100,6 +101,8 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
     if (externalGame.exeFileEntries.isNotEmpty) {
       _games.add(VMUserGame(externalGame, false));
     }
+
+    showInfo();
 
     emit(GamesDataRetrieved(_games, availableProntonNames));
   }
@@ -268,19 +271,10 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
 
     _currentSortBy = SortBy.Status;
 
-    List<VMUserGame> notAdded = [], added = [], fullyAdded = [];
-    for (int i = 0; i < _games.length; ++i) {
-      VMUserGame ug = _games[i];
-      var status = getGameStatus(ug);
-      if (status[0] == true && status[1] == true) {
-        fullyAdded.add(ug);
-      } else if (status[0] == true) {
-        added.add(ug);
-      } else {
-        notAdded.add(ug);
-      }
-    }
-
+    var gameCategories = _categorizeGamesByStatus(_games);
+    List<VMUserGame> notAdded = gameCategories['notAdded']!;
+    List<VMUserGame> added = gameCategories['added']!;
+    List<VMUserGame> fullyAdded = gameCategories['fullyAdded']!;
     notAdded.sort((a, b) => a.userGame.name.toLowerCase().compareTo(b.userGame.name.toLowerCase()));
     added.sort((a, b) => a.userGame.name.toLowerCase().compareTo(b.userGame.name.toLowerCase()));
     fullyAdded.sort((a, b) => a.userGame.name.toLowerCase().compareTo(b.userGame.name.toLowerCase()));
@@ -288,15 +282,9 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
     List<VMUserGame> finalList = [];
 
     if (_currentStatusSortDirection == SortDirection.Desc) {
-      finalList
-        ..addAll(notAdded)
-        ..addAll(added)
-        ..addAll(fullyAdded);
+      finalList..addAll(notAdded)..addAll(added)..addAll(fullyAdded);
     } else {
-      finalList
-        ..addAll(fullyAdded)
-        ..addAll(added)
-        ..addAll(notAdded);
+      finalList..addAll(fullyAdded)..addAll(added)..addAll(notAdded);
     }
 
     assert(_games.length == finalList.length);
@@ -321,54 +309,55 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
   void deleteGame(BuildContext context, VMUserGame game) {
     showPlatformDialog(
       context: context,
-      builder: (context) => BasicDialogAlert(
-        title: Text("Delete Game"),
-        content: Row(
-          children: [
-            const Padding(
-              padding: EdgeInsets.all(16.0),
-              child: Icon(
-                Icons.warning,
-                color: Colors.red,
-                size: 100,
-              ),
+      builder: (context) =>
+          BasicDialogAlert(
+            title: Text("Delete Game"),
+            content: Row(
+              children: [
+                const Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Icon(
+                    Icons.warning,
+                    color: Colors.red,
+                    size: 100,
+                  ),
+                ),
+                Expanded(
+                    child: RichText(
+                        text: TextSpan(children: [
+                          TextSpan(text: "You are going to ", style: TextStyle(color: Colors.black)),
+                          TextSpan(text: "DELETE", style: TextStyle(color: Colors.redAccent)),
+                          TextSpan(text: " \"${game.userGame.name}\"", style: TextStyle(color: Colors.blue)),
+                          TextSpan(text: " from our file system.", style: TextStyle(color: Colors.black)),
+                          TextSpan(text: "\nWarning: This action can't be undone", style: TextStyle(color: Colors.red, fontSize: 18, height: 2))
+                        ]))),
+              ],
             ),
-            Expanded(
-                child: RichText(
-                    text: TextSpan(children: [
-              TextSpan(text: "You are going to ", style: TextStyle(color: Colors.black)),
-              TextSpan(text: "DELETE", style: TextStyle(color: Colors.redAccent)),
-              TextSpan(text: " \"${game.userGame.name}\"", style: TextStyle(color: Colors.blue)),
-              TextSpan(text: " from our file system.", style: TextStyle(color: Colors.black)),
-              TextSpan(text: "\nWarning: This action can't be undone", style: TextStyle(color: Colors.red, fontSize: 18, height: 2))
-            ]))),
-          ],
-        ),
-        actions: <Widget>[
-          BasicDialogAction(
-            title: Text("OK"),
-            onPressed: () async {
-              try {
-                await Directory(game.userGame.path).delete(recursive: true);
-                EasyLoading.showSuccess("Game \"${game.userGame.name}\" was deleted");
+            actions: <Widget>[
+              BasicDialogAction(
+                title: Text("OK"),
+                onPressed: () async {
+                  try {
+                    await Directory(game.userGame.path).delete(recursive: true);
+                    EasyLoading.showSuccess("Game \"${game.userGame.name}\" was deleted");
 
-                _games.removeWhere((element) => element.userGame.name == game.userGame.name);
-                emit(GamesDataChanged(_games, _settings.getAvailableProtonNames()));
-              } catch (e) {
-                EasyLoading.showError("Game \"${game.userGame.name}\" couldn't be deleted");
-              }
+                    _games.removeWhere((element) => element.userGame.name == game.userGame.name);
+                    emit(GamesDataChanged(_games, _settings.getAvailableProtonNames()));
+                  } catch (e) {
+                    EasyLoading.showError("Game \"${game.userGame.name}\" couldn't be deleted");
+                  }
 
-              Navigator.pop(context);
-            },
+                  Navigator.pop(context);
+                },
+              ),
+              BasicDialogAction(
+                title: Text("Cancel"),
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+              ),
+            ],
           ),
-          BasicDialogAction(
-            title: Text("Cancel"),
-            onPressed: () {
-              Navigator.pop(context);
-            },
-          ),
-        ],
-      ),
     );
   }
 
@@ -377,67 +366,185 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
 
     showPlatformDialog(
       context: context,
-      builder: (context) => BasicDialogAlert(
-        title: Text("Rename Game"),
-        content: Padding(
-          padding: EdgeInsets.all(8),
-          child: TextField(
-            controller: _genericTextController,
-          ),
-        ),
-        actions: <Widget>[
-          BasicDialogAction(
-              title: Text("OK"),
-              onPressed: () async {
-                var text = _genericTextController.text;
-                RegExp r = RegExp(r'^[\w\-. ]+$');
+      builder: (context) =>
+          BasicDialogAlert(
+            title: Text("Rename Game"),
+            content: Padding(
+              padding: EdgeInsets.all(8),
+              child: TextField(
+                controller: _genericTextController,
+              ),
+            ),
+            actions: <Widget>[
+              BasicDialogAction(
+                  title: Text("OK"),
+                  onPressed: () async {
+                    var text = _genericTextController.text;
+                    RegExp r = RegExp(r'^[\w\-. ]+$');
 
-                if (!r.hasMatch(text)) {
-                  showPlatformDialog(
-                      context: context,
-                      builder: (context) => BasicDialogAlert(
-                              title: Text("Invalid Game Name"),
-                              content: const Padding(
-                                  padding: EdgeInsets.all(8),
-                                  child: Text("The name is not valid. You can use numbers, letters,  and '-','_','.' characters.")),
-                              actions: [
-                                BasicDialogAction(
-                                    title: Text("OK"),
-                                    onPressed: () {
-                                      Navigator.pop(context);
-                                    })
-                              ]));
-                    return;
-                }
+                    if (!r.hasMatch(text)) {
+                      showPlatformDialog(
+                          context: context,
+                          builder: (context) =>
+                              BasicDialogAlert(
+                                  title: Text("Invalid Game Name"),
+                                  content: const Padding(
+                                      padding: EdgeInsets.all(8),
+                                      child: Text("The name is not valid. You can use numbers, letters,  and '-','_','.' characters.")),
+                                  actions: [
+                                    BasicDialogAction(
+                                        title: Text("OK"),
+                                        onPressed: () {
+                                          Navigator.pop(context);
+                                        })
+                                  ]));
+                      return;
+                    }
 
-                try {
-                  game.userGame.name = _genericTextController.text;
+                    try {
+                      game.userGame.name = _genericTextController.text;
 
-                  var oldPath = game.userGame.path;
-                  var containerFolder = p.dirname(game.userGame.path);
+                      var oldPath = game.userGame.path;
+                      var containerFolder = p.dirname(game.userGame.path);
 
-                  game.userGame.path = p.join(containerFolder, game.userGame.name);
+                      game.userGame.path = p.join(containerFolder, game.userGame.name);
 
-                  await Directory(oldPath).rename(game.userGame.path);
+                      await Directory(oldPath).rename(game.userGame.path);
 
-                  EasyLoading.showSuccess("Game \"${game.userGame.name}\" was deleted");
+                      EasyLoading.showSuccess("Game \"${game.userGame.name}\" was deleted");
 
-                  emit(GamesDataChanged(_games, _settings.getAvailableProtonNames()));
-                  EasyLoading.showError("Game renamed!");
+                      emit(GamesDataChanged(_games, _settings.getAvailableProtonNames()));
+                      EasyLoading.showError("Game renamed!");
 
+                      Navigator.pop(context);
+                    } catch (e) {
+                      EasyLoading.showError("Game \"${game.userGame.name}\" couldn't be renamed");
+                    }
+                  }),
+              BasicDialogAction(
+                title: Text("Cancel"),
+                onPressed: () {
                   Navigator.pop(context);
-                } catch (e) {
-                  EasyLoading.showError("Game \"${game.userGame.name}\" couldn't be renamed");
-                }
-              }),
-          BasicDialogAction(
-            title: Text("Cancel"),
-            onPressed: () {
-              Navigator.pop(context);
-            },
+                },
+              ),
+            ],
           ),
-        ],
-      ),
     );
+  }
+
+  Map<String, List<VMUserGame>> _categorizeGamesByStatus(List<VMUserGame> games) {
+    List<VMUserGame> notAdded = [],
+        added = [],
+        fullyAdded = [];
+
+    for (int i = 0; i < _games.length; ++i) {
+      VMUserGame ug = _games[i];
+      var status = getGameStatus(ug);
+      if (status[0] == true && status[1] == true) {
+        fullyAdded.add(ug);
+      } else if (status[0] == true) {
+        added.add(ug);
+      } else {
+        notAdded.add(ug);
+      }
+    }
+
+    return {"added": added, "fullyAdded": fullyAdded, "notAdded": notAdded};
+  }
+
+  Map<String, List<VMUserGame>> _categorizeGamesBySourceFolder(List<VMUserGame> games, searchPaths) {
+    List<String> paths = _settings
+        .getSettings()
+        .searchPaths;
+
+    Map<String, List<VMUserGame>> gamesByPath = {};
+
+    //Add all path as keys
+    paths.forEach((path) {
+      gamesByPath[path] = [];
+    });
+
+    //Add all games to each path
+    _games.forEach((game) {
+      gamesByPath[p.dirname(game.userGame.path)]!.add(game);
+    });
+
+    return gamesByPath;
+  }
+
+  void foldAll() {
+    _games.forEach((e) {
+      e.foldingState = false;
+    });
+
+    emit(GamesDataChanged(_games, _settings.getAvailableProtonNames()));
+  }
+
+  Future<void> showInfo() async {
+    List<String> paths = _settings
+        .getSettings()
+        .searchPaths;
+
+    Map<String, GameFolderStats> stats = {};
+
+    Map<String, List<VMUserGame>> gamesByPath = _categorizeGamesBySourceFolder(_games, _settings
+        .getSettings()
+        .searchPaths);
+
+    for (var path in gamesByPath.keys) {
+      List<VMUserGame> gamesInPath = gamesByPath[path]!;
+
+      var gamesByStatus = _categorizeGamesByStatus(_games);
+
+      List<VMUserGame> nonAdded = gamesByStatus['notAdded']!;
+      List<VMUserGame> added = gamesByStatus['added']!;
+      List<VMUserGame> fullyAdded = gamesByStatus['fullyAdded']!;
+
+      Map<String, int> nonAddedMetaData = await _getGamesFileMetaData(nonAdded);
+      Map<String, int> addedMetaData = await _getGamesFileMetaData(added);
+      Map<String, int> fullyAddedMetaData = await _getGamesFileMetaData(fullyAdded);
+
+      assert( (nonAdded.length+added.length+fullyAdded.length) == _games.length);
+
+      const String fcKey = 'fileCount';
+      const String szKey = 'size';
+      int totalFileCount = nonAddedMetaData[fcKey]! + addedMetaData[fcKey]! + fullyAddedMetaData[fcKey]!;
+      int totalSize = nonAddedMetaData[szKey]! + addedMetaData[szKey]! + fullyAddedMetaData[szKey]!;
+
+      var gs = GameFolderStats(
+          path:path,
+          fileCount:totalFileCount,
+          sizeInBytes:totalSize,
+          nonAddedGamesCount: nonAdded.length,
+          addedGamesCount:added.length,
+          fullyAddedGamesCount: fullyAdded.length,
+          nonAddedGamesFileCount: nonAddedMetaData[fcKey]!,
+          addedGamesFileCount: addedMetaData[fcKey]!,
+          fullyAddedGamesFileCount:fullyAddedMetaData[fcKey]!,
+          nonAddedGamesSizeInBytes:nonAddedMetaData[szKey]!,
+          addedGamesSizeInBytes:addedMetaData[szKey]!,
+          fullyAddedGamesSizeInBytes: fullyAddedMetaData[szKey]!,
+      );
+
+      stats[path] = gs;
+
+      assert(gs.addedGamesCount+gs.fullyAddedGamesCount+gs.nonAddedGamesCount== _games.length);
+      assert(gs.addedGamesFileCount+gs.fullyAddedGamesFileCount+gs.nonAddedGamesFileCount== gs.fileCount);
+      assert(gs.addedGamesSizeInBytes+gs.nonAddedGamesSizeInBytes+gs.fullyAddedGamesSizeInBytes== gs.sizeInBytes);
+    }
+  }
+
+  Future<Map<String, int>> _getGamesFileMetaData(List<VMUserGame> games) async {
+    int fileCount = 0;
+    int totalSize = 0;
+
+    for (var game in games) {
+      var metaData = await FileTools.getFolderMetaData(game.userGame.path,recursive: true);
+      fileCount += metaData['fileCount']!;
+      totalSize += metaData['size']!;
+    }
+
+
+    return {'fileCount': fileCount, 'size': totalSize};
   }
 }

@@ -61,7 +61,14 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
             onPressed: () {
               _nsgpBloc.sortByStatus();
             },
-            icon: Icon(Icons.stars),
+            icon: const Icon(Icons.stars),
+            tooltip: "Sort By Status",
+          ),
+          IconButton(
+            onPressed: () {
+              _nsgpBloc.foldAll();
+            },
+            icon: const Icon(Icons.unfold_less),
             tooltip: "Sort By Status",
           ),
           IconButton(
@@ -74,6 +81,11 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
           IconButton(
             onPressed: () => Navigator.pushNamed(context, '/settings'),
             icon: Icon(Icons.settings),
+            tooltip: "Settings",
+          ),
+          IconButton(
+            onPressed: () => _nsgpBloc.showInfo(),
+            icon: Icon(Icons.info),
             tooltip: "Settings",
           ),
         ],
@@ -258,11 +270,19 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
   }
 
   Widget _getExeCurrentStateIcon(bool anyExeAdded, bool anyExeAddedAndProtonAssigned) {
-    if(anyExeAddedAndProtonAssigned) return  const Icon(Icons.thumb_up, color:Colors.green);
+    /*if(anyExeAddedAndProtonAssigned) return  const Icon(Icons.thumb_up, color:Colors.green);
 
     if(anyExeAdded) return  const Icon(Icons.check_circle, color:Colors.orangeAccent);
 
-    return  const Icon(Icons.error_outline, color:Colors.red);
+    return  const Icon(Icons.error_outline, color:Colors.red);*/
+    Color color;
+    if(anyExeAddedAndProtonAssigned) color = Colors.green;
+    else if (anyExeAdded) color = Colors.orangeAccent;
+    else color = Colors.red;
+
+    Container c = Container(height: 15,width: 15,color:color);
+
+    return  c;
 
   }
 

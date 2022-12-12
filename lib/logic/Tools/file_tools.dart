@@ -70,4 +70,25 @@ class FileTools {
     Map<String, String> envVars = Platform.environment;
     return envVars['HOME']!;
   }
+
+  static Future<Map<String, int>> getFolderMetaData(String dirPath, {bool recursive=false}) async{
+    int fileCount = 0;
+    int totalSize = 0;
+    var dir = Directory(dirPath);
+    try {
+      if (await dir.exists()) {
+        await dir.list(recursive: recursive, followLinks: false)
+            .forEach((FileSystemEntity entity) {
+          if (entity is File) {
+            fileCount++;
+            totalSize += entity.lengthSync();
+          }
+        });
+      }
+    } catch (e) {
+      print(e.toString());
+    }
+
+    return {'fileCount': fileCount, 'size': totalSize};
+  }
 }
