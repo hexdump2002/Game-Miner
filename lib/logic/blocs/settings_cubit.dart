@@ -8,6 +8,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:meta/meta.dart';
 import 'package:steamdeck_toolbox/logic/Tools/steam_tools.dart';
+import 'package:steamdeck_toolbox/logic/Tools/vdf_tools.dart';
 
 part 'settings_state.dart';
 
@@ -58,8 +59,8 @@ class SettingsCubit extends Cubit<SettingsState> {
   Future<void> initialize() async {
     List<ProtonVersion> availableProtons = [];
 
-    List<String> externalProtons = await SteamTools.loadExternalProtons();
-    var externalProtonVersions = externalProtons.map((e) => ProtonVersion(e, e)).toList();
+    List<ProtonMapping> externalProtons = await SteamTools.loadExternalProtons();
+    var externalProtonVersions = externalProtons.map((e) => ProtonVersion(e.id, e.name)).toList();
     availableProtons.addAll(externalProtonVersions);
 
     if (!existsConfig()) {

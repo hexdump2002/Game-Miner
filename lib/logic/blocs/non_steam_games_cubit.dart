@@ -1,15 +1,18 @@
 import 'dart:math';
 
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:collection/collection.dart';
+import 'package:flutter_dialogs/flutter_dialogs.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:meta/meta.dart';
 import 'package:steamdeck_toolbox/data/non_steam_game_exe.dart';
 import 'package:steamdeck_toolbox/logic/Tools/steam_tools.dart';
 import 'package:steamdeck_toolbox/logic/Tools/vdf_tools.dart';
 import 'package:steamdeck_toolbox/logic/blocs/settings_cubit.dart';
-import 'dart:io' show File, FileMode, Platform, RandomAccessFile;
+import 'dart:io' show Directory, File, FileMode, Platform, RandomAccessFile;
+import 'package:path/path.dart' as p;
 
 import '../../data/user_game.dart';
 import '../Tools/file_tools.dart';
@@ -23,7 +26,7 @@ class VMUserGame {
   VMUserGame(this.userGame, this.foldingState);
 }
 
-enum SortBy { Name, Added, AllProtonAssigned }
+enum SortBy { Name, Status }
 
 enum SortDirection { Asc, Desc }
 
@@ -35,8 +38,10 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
 
   SortBy _currentSortBy = SortBy.Name;
   SortDirection _currentNameSortDirection = SortDirection.Asc;
-  SortDirection _currentAddedSortDirection = SortDirection.Asc;
-  SortDirection _currentAllProtonAssignedSortDirection = SortDirection.Asc;
+  SortDirection _currentStatusSortDirection = SortDirection.Asc;
+
+  //Not the best place to stored. Cubits should be platform agnostics
+  TextEditingController _genericTextController = TextEditingController();
 
   NonSteamGamesCubit(SettingsCubit settings) : super(IninitalState()) {
     _settings = settings;
@@ -122,7 +127,8 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
 
       //Find exe files
       for (UserGame ug in ugs) {
-        List<String> exeFiles = await FileTools.getFolderFilesAsync(ug.path, retrieveRelativePaths: false, recursive: true, regExFilter: r".*\.exe$", regExCaseSensitive: false);
+        List<String> exeFiles = await FileTools.getFolderFilesAsync(ug.path,
+            retrieveRelativePaths: false, recursive: true, regExFilter: r".*\.exe$", regExCaseSensitive: false);
         ug.addExeFiles(exeFiles);
       }
     }
@@ -230,11 +236,12 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
     emit(GamesDataChanged(_games, _settings.getAvailableProtonNames()));
   }
 
-  List<bool> isProtonAssignedForGame(VMUserGame vmUserGame) {
+  List<bool> getGameStatus(VMUserGame vmUserGame) {
     UserGame ug = vmUserGame.userGame;
 
     bool added = vmUserGame.userGame.exeFileEntries.firstWhereOrNull((element) => element.added == true) != null;
-    bool oneExeAddedAndProtonAssigned = vmUserGame.userGame.exeFileEntries.firstWhereOrNull((element) => element.added == true && element.protonCode != "None") != null;
+    bool oneExeAddedAndProtonAssigned =
+        vmUserGame.userGame.exeFileEntries.firstWhereOrNull((element) => element.added == true && element.protonCode != "None") != null;
 
     return [added, oneExeAddedAndProtonAssigned];
   }
@@ -254,78 +261,46 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
     emit(GamesDataChanged(_games, _settings.getAvailableProtonNames()));
   }
 
-  void sortByProtonAssigned() {
-
-    if (_currentSortBy == SortBy.AllProtonAssigned) {
-      _currentAllProtonAssignedSortDirection = _currentAllProtonAssignedSortDirection == SortDirection.Asc ? SortDirection.Desc : SortDirection.Asc;
+  void sortByStatus() {
+    if (_currentSortBy == SortBy.Status) {
+      _currentStatusSortDirection = _currentStatusSortDirection == SortDirection.Asc ? SortDirection.Desc : SortDirection.Asc;
     }
 
-    _currentSortBy = SortBy.AllProtonAssigned;
+    _currentSortBy = SortBy.Status;
 
-    if (_currentAllProtonAssignedSortDirection == SortDirection.Desc) {
-      _games.sort((a, b) {
-        bool protonAssignedA = isProtonAssignedForGame(a)[1];
-        bool protonAssignedB = isProtonAssignedForGame(b)[1];
-        if (protonAssignedA == protonAssignedB) {
-          return 0;
-        } else if (!protonAssignedA && protonAssignedB) {
-          return 1;
-        } else {
-          return -1;
-        }
-      });
+    List<VMUserGame> notAdded = [], added = [], fullyAdded = [];
+    for (int i = 0; i < _games.length; ++i) {
+      VMUserGame ug = _games[i];
+      var status = getGameStatus(ug);
+      if (status[0] == true && status[1] == true) {
+        fullyAdded.add(ug);
+      } else if (status[0] == true) {
+        added.add(ug);
+      } else {
+        notAdded.add(ug);
+      }
+    }
+
+    notAdded.sort((a, b) => a.userGame.name.toLowerCase().compareTo(b.userGame.name.toLowerCase()));
+    added.sort((a, b) => a.userGame.name.toLowerCase().compareTo(b.userGame.name.toLowerCase()));
+    fullyAdded.sort((a, b) => a.userGame.name.toLowerCase().compareTo(b.userGame.name.toLowerCase()));
+
+    List<VMUserGame> finalList = [];
+
+    if (_currentStatusSortDirection == SortDirection.Desc) {
+      finalList
+        ..addAll(notAdded)
+        ..addAll(added)
+        ..addAll(fullyAdded);
     } else {
-      _games.sort((a, b) {
-        bool protonAddedA = isProtonAssignedForGame(a)[1];
-        bool protonAddedB = isProtonAssignedForGame(b)[1];
-        if (protonAddedA == protonAddedB) {
-          return 0;
-        } else if (!protonAddedA && protonAddedB) {
-          return -1;
-        } else {
-          return 1;
-        }
-      });
-    }
-    emit(GamesDataChanged(_games, _settings.getAvailableProtonNames()));
-  }
-
-  void sortBySteamAdded() {
-
-    if (_currentSortBy == SortBy.Added) {
-      _currentAddedSortDirection = _currentAddedSortDirection == SortDirection.Asc ? SortDirection.Desc : SortDirection.Asc;
+      finalList
+        ..addAll(fullyAdded)
+        ..addAll(added)
+        ..addAll(notAdded);
     }
 
-    _currentSortBy = SortBy.Added;
-
-    if (_currentAddedSortDirection == SortDirection.Desc) {
-      _games.sort((a, b) {
-        bool protonAddedA = isProtonAssignedForGame(a)[0];
-        bool protonAddedB = isProtonAssignedForGame(b)[0];
-        if (protonAddedA == protonAddedB) {
-          return 0;
-        } else if (!protonAddedA && protonAddedB) {
-          return 1;
-        } else {
-          return -1;
-        }
-      });
-    }
-    else
-    {
-      _games.sort((a, b) {
-        bool protonAddedA = isProtonAssignedForGame(a)[0];
-        bool protonAddedB = isProtonAssignedForGame(b)[0];
-        if (protonAddedA == protonAddedB) {
-          return 0;
-        } else if (!protonAddedA && protonAddedB) {
-          return -1;
-        } else {
-          return 1;
-        }
-      });
-    }
-
+    assert(_games.length == finalList.length);
+    _games = finalList;
 
     emit(GamesDataChanged(_games, _settings.getAvailableProtonNames()));
   }
@@ -341,5 +316,128 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
       print("Error closing steam");
 
     refresh(settings);
+  }
+
+  void deleteGame(BuildContext context, VMUserGame game) {
+    showPlatformDialog(
+      context: context,
+      builder: (context) => BasicDialogAlert(
+        title: Text("Delete Game"),
+        content: Row(
+          children: [
+            const Padding(
+              padding: EdgeInsets.all(16.0),
+              child: Icon(
+                Icons.warning,
+                color: Colors.red,
+                size: 100,
+              ),
+            ),
+            Expanded(
+                child: RichText(
+                    text: TextSpan(children: [
+              TextSpan(text: "You are going to ", style: TextStyle(color: Colors.black)),
+              TextSpan(text: "DELETE", style: TextStyle(color: Colors.redAccent)),
+              TextSpan(text: " \"${game.userGame.name}\"", style: TextStyle(color: Colors.blue)),
+              TextSpan(text: " from our file system.", style: TextStyle(color: Colors.black)),
+              TextSpan(text: "\nWarning: This action can't be undone", style: TextStyle(color: Colors.red, fontSize: 18, height: 2))
+            ]))),
+          ],
+        ),
+        actions: <Widget>[
+          BasicDialogAction(
+            title: Text("OK"),
+            onPressed: () async {
+              try {
+                await Directory(game.userGame.path).delete(recursive: true);
+                EasyLoading.showSuccess("Game \"${game.userGame.name}\" was deleted");
+
+                _games.removeWhere((element) => element.userGame.name == game.userGame.name);
+                emit(GamesDataChanged(_games, _settings.getAvailableProtonNames()));
+              } catch (e) {
+                EasyLoading.showError("Game \"${game.userGame.name}\" couldn't be deleted");
+              }
+
+              Navigator.pop(context);
+            },
+          ),
+          BasicDialogAction(
+            title: Text("Cancel"),
+            onPressed: () {
+              Navigator.pop(context);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  void renameGame(BuildContext context, VMUserGame game) {
+    _genericTextController.text = game.userGame.name;
+
+    showPlatformDialog(
+      context: context,
+      builder: (context) => BasicDialogAlert(
+        title: Text("Rename Game"),
+        content: Padding(
+          padding: EdgeInsets.all(8),
+          child: TextField(
+            controller: _genericTextController,
+          ),
+        ),
+        actions: <Widget>[
+          BasicDialogAction(
+              title: Text("OK"),
+              onPressed: () async {
+                var text = _genericTextController.text;
+                RegExp r = RegExp(r'^[\w\-. ]+$');
+
+                if (!r.hasMatch(text)) {
+                  showPlatformDialog(
+                      context: context,
+                      builder: (context) => BasicDialogAlert(
+                              title: Text("Invalid Game Name"),
+                              content: const Padding(
+                                  padding: EdgeInsets.all(8),
+                                  child: Text("The name is not valid. You can use numbers, letters,  and '-','_','.' characters.")),
+                              actions: [
+                                BasicDialogAction(
+                                    title: Text("OK"),
+                                    onPressed: () {
+                                      Navigator.pop(context);
+                                    })
+                              ]));
+                    return;
+                }
+
+                try {
+                  game.userGame.name = _genericTextController.text;
+
+                  var oldPath = game.userGame.path;
+                  var containerFolder = p.dirname(game.userGame.path);
+
+                  game.userGame.path = p.join(containerFolder, game.userGame.name);
+
+                  await Directory(oldPath).rename(game.userGame.path);
+
+                  EasyLoading.showSuccess("Game \"${game.userGame.name}\" was deleted");
+
+                  emit(GamesDataChanged(_games, _settings.getAvailableProtonNames()));
+                  EasyLoading.showError("Game renamed!");
+
+                  Navigator.pop(context);
+                } catch (e) {
+                  EasyLoading.showError("Game \"${game.userGame.name}\" couldn't be renamed");
+                }
+              }),
+          BasicDialogAction(
+            title: Text("Cancel"),
+            onPressed: () {
+              Navigator.pop(context);
+            },
+          ),
+        ],
+      ),
+    );
   }
 }

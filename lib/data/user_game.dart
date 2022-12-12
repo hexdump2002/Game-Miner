@@ -108,8 +108,8 @@ class UserGameExe {
 }
 
 class UserGame {
-  late final String path;
-  late final String name;
+  late String path;
+  late String name;
   late final bool external;
   final List<UserGameExe> exeFileEntries = [];
 

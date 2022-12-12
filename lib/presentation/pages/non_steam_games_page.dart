@@ -59,17 +59,10 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
           ),
           IconButton(
             onPressed: () {
-              _nsgpBloc.sortByProtonAssigned();
+              _nsgpBloc.sortByStatus();
             },
             icon: Icon(Icons.stars),
-            tooltip: "Sort By Proton Assigned",
-          ),
-          IconButton(
-            onPressed: () {
-              _nsgpBloc.sortBySteamAdded();
-            },
-            icon: Icon(Icons.grade),
-            tooltip: "Sort By Added",
+            tooltip: "Sort By Status",
           ),
           IconButton(
             onPressed: () {
@@ -139,16 +132,35 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
 
   Widget _createGameCards(BuildContext context, List<VMUserGame> games, List<String> availableProntons) {
     List<ExpansionPanel> widgets = games.map<ExpansionPanel>((VMUserGame game) {
-      var gameAddedData = _nsgpBloc.isProtonAssignedForGame(game);
+      var gameAddedData = _nsgpBloc.getGameStatus(game);
       var anyExeAdded = gameAddedData[0];
       var anyExeAddedAndProtonAssigned = gameAddedData[1];
       return ExpansionPanel(
+        canTapOnHeader: true,
         headerBuilder: (BuildContext context, bool isExpanded) {
           return ListTile(
             title: Row(
               children: [
                 Expanded(child: Text(game.userGame.name, style: Theme.of(context).textTheme.headline5, textAlign: TextAlign.left)),
-                _getExeCurrentStateIcon(anyExeAdded, anyExeAddedAndProtonAssigned)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(0,0,24,0),
+                  child: _getExeCurrentStateIcon(anyExeAdded, anyExeAddedAndProtonAssigned),
+                ),
+                IconButton(
+                  onPressed: () {
+                    _nsgpBloc.renameGame(context, game);
+                  },
+                  icon: Icon(Icons.edit),
+                  tooltip: "Rename",
+                ),
+                IconButton(
+                  onPressed: () {
+                    _nsgpBloc.deleteGame(context,game);
+                  },
+                  icon: Icon(Icons.delete),
+                  tooltip: "Delete",
+                ),
+
               ],
             ),
           );

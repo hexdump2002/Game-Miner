@@ -1,21 +1,39 @@
 import 'dart:io';
 import 'dart:math';
+import 'package:steamdeck_toolbox/logic/Tools/vdf_tools.dart';
+
 import 'crc32.dart';
 import 'file_tools.dart';
+import 'package:path/path.dart' as p;
 
 class SteamTools {
 
-  static Future<List<String>> loadExternalProtons() async {
-    late final List<String> protons;
+  static Future<List<ProtonMapping>> loadExternalProtons() async {
 
     String homeFolder = FileTools.getHomeFolder();
     String path = "$homeFolder/.local/share/Steam/compatibilitytools.d";
-    protons =
-    await FileTools.getFolderFilesAsync(path, retrieveRelativePaths: true, recursive: false);
+    var protonFolders =  await FileTools.getFolderFilesAsync(path, retrieveRelativePaths: true, recursive: false);
 
-    protons.sort();
+    List<ProtonMapping> protonMappings = [];
+    //Read manifests
+    for(int i=0; i<protonFolders.length; ++i) {
+      var e = protonFolders[i];
+      var fullPath = p.join(p.join(path, e),"compatibilitytool.vdf");
+      File f = File(fullPath);
+      String json = await f.readAsString();
 
-    return protons;
+      RegExp r = RegExp(r'"compatibilitytools"\n{\s+"compat_tools"\n\s+{\n\s+"(.*)".*\n\s+{[\S\s]*"display_name"\s+"([a-zA-Z0-9-_ ]+)"');
+      var match = r.firstMatch(json);
+
+      if(match==null) throw Exception("Error reading proton manifest for $fullPath");
+
+      protonMappings.add(ProtonMapping(match.group(1)!, match.group(2)!,"","250"));
+
+    };
+
+    protonMappings.sort((ProtonMapping a, ProtonMapping b) => a.name.compareTo(b.name));
+
+    return protonMappings;
 
   }
 
