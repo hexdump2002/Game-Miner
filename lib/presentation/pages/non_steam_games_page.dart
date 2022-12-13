@@ -3,12 +3,16 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:steamdeck_toolbox/data/GlobalStats.dart';
+import 'package:steamdeck_toolbox/data/game_folder_stats.dart';
+import 'package:steamdeck_toolbox/logic/Tools/StringTools.dart';
 import 'package:steamdeck_toolbox/logic/Tools/file_tools.dart';
 import 'package:steamdeck_toolbox/logic/Tools/vdf_tools.dart';
 import 'package:steamdeck_toolbox/logic/blocs/non_steam_games_cubit.dart';
 import 'package:steamdeck_toolbox/logic/blocs/settings_cubit.dart';
 
 import '../../data/user_game.dart';
+import '../../logic/Tools/VMGameTools.dart';
 
 class NonSteamGamesPage extends StatefulWidget {
   const NonSteamGamesPage({Key? key}) : super(key: key);
@@ -84,7 +88,7 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
             tooltip: "Settings",
           ),
           IconButton(
-            onPressed: () => _nsgpBloc.showInfo(),
+            onPressed: () => null /*_nsgpBloc.showInfo()*/,
             icon: Icon(Icons.info),
             tooltip: "Settings",
           ),
@@ -99,36 +103,50 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
             //print("[SetttingsCubit Consumer] State -> $state");
             if (state is SettingsSaved) {
               _nsgpBloc.refresh(state.settings);
-            }
-            else if(state is SettingsLoaded) {
+            } else if (state is SettingsLoaded) {
               _nsgpBloc.refresh(state.settings);
             }
           }, builder: (context, settingsState) {
             return BlocBuilder<NonSteamGamesCubit, NonSteamGamesBaseState>(builder: (context, nsgState) {
               //print("[NonSteamGamesCubit Builder] State -> $nsgState");
-              return Align(alignment: Alignment.topCenter, child: _buildListOfGames(context, nsgState));
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: _buildDataScreen(context, nsgState),
+              );
             });
           })),
     );
   }
 
-  Widget _buildListOfGames(BuildContext context, NonSteamGamesBaseState nsgState) {
+  List<Widget> _buildDataScreen(BuildContext context, NonSteamGamesBaseState nsgState) {
+
     if (nsgState is RetrievingGameData) {
-      EasyLoading.show(status:"Loading Games");
-      return Container();
+      EasyLoading.show(status: "Loading Games");
+      return [Container()];
     } else if (nsgState is GamesDataRetrieved) {
       EasyLoading.dismiss();
-      return SingleChildScrollView(
-          child: _createGameCards(context, (nsgState as GamesDataRetrieved).games, (nsgState as GamesDataRetrieved).availableProntonNames));
+      return [Expanded(
+        child: Align(alignment: Alignment.topCenter,
+          child: SingleChildScrollView(
+              child: _createGameCards(context, nsgState.games, nsgState.availableProntonNames,nsgState.globalStats),
+        )),
+      ),_buildInfoBar(context,nsgState.globalStats)];
     } else if (nsgState is GamesDataChanged) {
-      EasyLoading.dismiss();
-      return SingleChildScrollView(
-          child: _createGameCards(context, (nsgState as GamesDataChanged).games, (nsgState as GamesDataChanged).availableProntonNames));
+      GamesDataChanged gdr = nsgState as GamesDataChanged;
+      return [Expanded(
+        child: Align(alignment: Alignment.topCenter,
+            child: SingleChildScrollView(
+              child: _createGameCards(context, nsgState.games, nsgState.availableProntonNames,nsgState.globalStats),
+            )),
+      ),_buildInfoBar(context,nsgState.globalStats)];
     } else if (nsgState is GamesFoldingDataChanged) {
       EasyLoading.dismiss();
-      GamesFoldingDataChanged foldingDataChanged = nsgState as GamesFoldingDataChanged;
-      return SingleChildScrollView(
-          child: _createGameCards(context, (nsgState as GamesFoldingDataChanged).games, (nsgState as GamesFoldingDataChanged).availableProntonNames));
+      return [Expanded(
+        child: Align(alignment: Alignment.topCenter,
+            child: SingleChildScrollView(
+              child: _createGameCards(context, nsgState.games, nsgState.availableProntonNames,nsgState.globalStats),
+            )),
+      ),_buildInfoBar(context,nsgState.globalStats)];
     }
     /*else if (settingsState is SearchPathsChanged) {
       _nsgpBloc.loadData(settingsState.searchPaths);
@@ -136,17 +154,16 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
     }*/
     else {
       print("[Warning] Unknown state");
-      return Container();
+      return [Container()];
     }
 
     throw Exception("Unknown state type");
   }
 
-  Widget _createGameCards(BuildContext context, List<VMUserGame> games, List<String> availableProntons) {
+  Widget _createGameCards(BuildContext context, List<VMUserGame> games, List<String> availableProntons, GlobalStats globalStats) {
     List<ExpansionPanel> widgets = games.map<ExpansionPanel>((VMUserGame game) {
-      var gameAddedData = _nsgpBloc.getGameStatus(game);
-      var anyExeAdded = gameAddedData[0];
-      var anyExeAddedAndProtonAssigned = gameAddedData[1];
+      var gameAddedStatus = VMGameTools.getGameStatus(game);
+
       return ExpansionPanel(
         canTapOnHeader: true,
         headerBuilder: (BuildContext context, bool isExpanded) {
@@ -155,8 +172,8 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
               children: [
                 Expanded(child: Text(game.userGame.name, style: Theme.of(context).textTheme.headline5, textAlign: TextAlign.left)),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(0,0,24,0),
-                  child: _getExeCurrentStateIcon(anyExeAdded, anyExeAddedAndProtonAssigned),
+                  padding: const EdgeInsets.fromLTRB(0, 0, 24, 0),
+                  child: _getExeCurrentStateIcon(gameAddedStatus),
                 ),
                 IconButton(
                   onPressed: () {
@@ -167,12 +184,11 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
                 ),
                 IconButton(
                   onPressed: () {
-                    _nsgpBloc.deleteGame(context,game);
+                    _nsgpBloc.deleteGame(context, game);
                   },
                   icon: Icon(Icons.delete),
                   tooltip: "Delete",
                 ),
-
               ],
             ),
           );
@@ -269,24 +285,96 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
     );
   }
 
-  Widget _getExeCurrentStateIcon(bool anyExeAdded, bool anyExeAddedAndProtonAssigned) {
+  Widget _getExeCurrentStateIcon(VMGameAddedStatus gameAddedStatus) {
     /*if(anyExeAddedAndProtonAssigned) return  const Icon(Icons.thumb_up, color:Colors.green);
 
     if(anyExeAdded) return  const Icon(Icons.check_circle, color:Colors.orangeAccent);
 
     return  const Icon(Icons.error_outline, color:Colors.red);*/
     Color color;
-    if(anyExeAddedAndProtonAssigned) color = Colors.green;
-    else if (anyExeAdded) color = Colors.orangeAccent;
-    else color = Colors.red;
+    if (gameAddedStatus == VMGameAddedStatus.FullyAdded)
+      color = Colors.green;
+    else if (gameAddedStatus == VMGameAddedStatus.Added)
+      color = Colors.orangeAccent;
+    else
+      color = Colors.red;
 
-    Container c = Container(height: 15,width: 15,color:color);
+    Container c = Container(height: 15, width: 15, color: color);
 
-    return  c;
-
+    return c;
   }
 
-  /*Widget _waitingForGamesToBeRetrieved(BuildContext context) {
+  Widget _buildInfoBar(BuildContext context, GlobalStats stats) {
+    return Container(
+        color: Colors.blueGrey,
+        padding: EdgeInsets.all(8),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                "${stats.getGameCount()} Registered Games",
+                style: const TextStyle(color: Colors.white),
+              ),
+            ),
+            Container(height: 15, width: 15, color: Colors.red),
+            Padding(
+              padding: EdgeInsets.fromLTRB(8,0,8,0),
+              child: Text(
+                stats.getNonAddedGameCount().toString(),
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+            Container(height: 15, width: 15, color: Colors.orange),
+            Padding(
+              padding: EdgeInsets.fromLTRB(8,0,8,0),
+              child: Text(
+                stats.getAddedGameCount().toString(),
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+            Container(height: 15, width: 15, color: Colors.green),
+            Padding(
+              padding: EdgeInsets.fromLTRB(8,0,8,0),
+              child: Text(
+                stats.getFullyAddedGameCount().toString(),
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8.0,0,8,0),
+              child: Row(
+                children: [
+                  Icon(Icons.sd_card),
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(8,0,0,0),
+                    child: Text(
+                      "${StringTools.bytesToStorageUnity(stats.getSSDFreeSpace())} / ${StringTools.bytesToStorageUnity(stats.getSSDTotalSize())}",
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8.0,0,8,0),
+              child: Row(
+                children:  [
+                  Icon(Icons.storage),
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(8,0,0,0),
+                    child: Text("${StringTools.bytesToStorageUnity(stats.getSSDFreeSpace())} / ${StringTools.bytesToStorageUnity(stats.getSSDTotalSize())}",
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+          ],
+        ));
+  }
+
+/*Widget _waitingForGamesToBeRetrieved(BuildContext context) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: const [

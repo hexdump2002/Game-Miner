@@ -10,20 +10,23 @@ class RetrievingGameData extends NonSteamGamesBaseState{}
 class GamesDataRetrieved extends NonSteamGamesBaseState{
   final List<VMUserGame> games;
   final List<String> availableProntonNames;
+  final GlobalStats globalStats;
 
-  GamesDataRetrieved(this.games, this.availableProntonNames);
+  GamesDataRetrieved(this.games, this.availableProntonNames, this.globalStats);
 }
 
 class GamesDataChanged extends NonSteamGamesBaseState{
   final List<VMUserGame> games;
   final List<String> availableProntonNames;
+  final GlobalStats globalStats;
 
-  GamesDataChanged(this.games, this.availableProntonNames);
+  GamesDataChanged(this.games, this.availableProntonNames, this.globalStats);
 }
 
 class GamesFoldingDataChanged extends NonSteamGamesBaseState{
   final List<VMUserGame> games;
   final List<String> availableProntonNames;
+  final GlobalStats globalStats;
 
-  GamesFoldingDataChanged(this.games, this.availableProntonNames);
+  GamesFoldingDataChanged(this.games, this.availableProntonNames, this.globalStats);
 }

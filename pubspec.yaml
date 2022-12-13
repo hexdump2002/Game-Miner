@@ -41,6 +41,7 @@ dependencies:
   file_picker: ^5.2.3
   flutter_easyloading: ^3.0.5
   flutter_dialogs: ^3.0.0
+  universal_disk_space: ^0.2.3
 
 dev_dependencies:
   flutter_test:

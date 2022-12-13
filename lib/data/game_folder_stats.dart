@@ -29,4 +29,6 @@ class GameFolderStats {
       required this.nonAddedGamesFileCount,
       required this.addedGamesFileCount,
       required this.fullyAddedGamesFileCount});
+
+  int getGameCount() => nonAddedGamesCount+ addedGamesCount + fullyAddedGamesCount;
 }

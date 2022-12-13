@@ -7,7 +7,9 @@ import 'package:collection/collection.dart';
 import 'package:flutter_dialogs/flutter_dialogs.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:meta/meta.dart';
+import 'package:steamdeck_toolbox/data/GlobalStats.dart';
 import 'package:steamdeck_toolbox/data/non_steam_game_exe.dart';
+import 'package:steamdeck_toolbox/logic/Tools/StringTools.dart';
 import 'package:steamdeck_toolbox/logic/Tools/steam_tools.dart';
 import 'package:steamdeck_toolbox/logic/Tools/vdf_tools.dart';
 import 'package:steamdeck_toolbox/logic/blocs/settings_cubit.dart';
@@ -16,6 +18,7 @@ import 'package:path/path.dart' as p;
 
 import '../../data/game_folder_stats.dart';
 import '../../data/user_game.dart';
+import '../Tools/VMGameTools.dart';
 import '../Tools/file_tools.dart';
 
 part 'non_steam_games_state.dart';
@@ -28,7 +31,6 @@ class VMUserGame {
 }
 
 enum SortBy { Name, Status }
-
 enum SortDirection { Asc, Desc }
 
 class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
@@ -40,6 +42,8 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
   SortBy _currentSortBy = SortBy.Name;
   SortDirection _currentNameSortDirection = SortDirection.Asc;
   SortDirection _currentStatusSortDirection = SortDirection.Asc;
+
+  late GlobalStats _globalStats;
 
   //Not the best place to stored. Cubits should be platform agnostics
   TextEditingController _genericTextController = TextEditingController();
@@ -102,9 +106,11 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
       _games.add(VMUserGame(externalGame, false));
     }
 
-    showInfo();
+    _globalStats = GlobalStats();
+    await _globalStats.initialize(_settings.getSettings().searchPaths, _games);
 
-    emit(GamesDataRetrieved(_games, availableProntonNames));
+
+    emit(GamesDataRetrieved(_games, availableProntonNames, _globalStats));
   }
 
   refresh(Settings settings) {
@@ -154,16 +160,20 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
     if (uge.added) {
       uge.appId = SteamTools.generateAppId("${uge.startDir}/${uge.relativeExePath}");
       uge.fillProtonMappingData(protonCode, "", "250");
+      //_globalStats.MoveGameByStatus(uge, VMGameAddedStatus.Added);
     } else {
       uge.appId = 0;
       uge.clearProtonMappingData();
+      //_globalStats.MoveGameByStatus(uge, VMGameAddedStatus.NonAdded);
     }
-    emit(GamesDataChanged(_games, _settings.getAvailableProtonNames()));
+
+
+    emit(GamesDataChanged(_games, _settings.getAvailableProtonNames(), _globalStats));
   }
 
   void swapExpansionStateForItem(int index) {
     _games[index].foldingState = !_games[index].foldingState;
-    emit(GamesFoldingDataChanged(_games, _settings.getAvailableProtonNames()));
+    emit(GamesFoldingDataChanged(_games, _settings.getAvailableProtonNames(), _globalStats));
   }
 
   void saveData(Settings settings) async {
@@ -236,62 +246,9 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
       uge.fillProtonMappingData(_settings.getProtonCodeFromName(value), "", "250");
     }
 
-    emit(GamesDataChanged(_games, _settings.getAvailableProtonNames()));
+    emit(GamesDataChanged(_games, _settings.getAvailableProtonNames(), _globalStats));
   }
 
-  List<bool> getGameStatus(VMUserGame vmUserGame) {
-    UserGame ug = vmUserGame.userGame;
-
-    bool added = vmUserGame.userGame.exeFileEntries.firstWhereOrNull((element) => element.added == true) != null;
-    bool oneExeAddedAndProtonAssigned =
-        vmUserGame.userGame.exeFileEntries.firstWhereOrNull((element) => element.added == true && element.protonCode != "None") != null;
-
-    return [added, oneExeAddedAndProtonAssigned];
-  }
-
-  void sortByName() {
-    if (_currentSortBy == SortBy.Name) {
-      _currentNameSortDirection = _currentNameSortDirection == SortDirection.Asc ? SortDirection.Desc : SortDirection.Asc;
-    }
-
-    _currentSortBy = SortBy.Name;
-
-    if (_currentNameSortDirection == SortDirection.Desc) {
-      _games.sort((a, b) => a.userGame.name.toLowerCase().compareTo(b.userGame.name.toLowerCase()));
-    } else {
-      _games.sort((a, b) => b.userGame.name.toLowerCase().compareTo(a.userGame.name.toLowerCase()));
-    }
-    emit(GamesDataChanged(_games, _settings.getAvailableProtonNames()));
-  }
-
-  void sortByStatus() {
-    if (_currentSortBy == SortBy.Status) {
-      _currentStatusSortDirection = _currentStatusSortDirection == SortDirection.Asc ? SortDirection.Desc : SortDirection.Asc;
-    }
-
-    _currentSortBy = SortBy.Status;
-
-    var gameCategories = _categorizeGamesByStatus(_games);
-    List<VMUserGame> notAdded = gameCategories['notAdded']!;
-    List<VMUserGame> added = gameCategories['added']!;
-    List<VMUserGame> fullyAdded = gameCategories['fullyAdded']!;
-    notAdded.sort((a, b) => a.userGame.name.toLowerCase().compareTo(b.userGame.name.toLowerCase()));
-    added.sort((a, b) => a.userGame.name.toLowerCase().compareTo(b.userGame.name.toLowerCase()));
-    fullyAdded.sort((a, b) => a.userGame.name.toLowerCase().compareTo(b.userGame.name.toLowerCase()));
-
-    List<VMUserGame> finalList = [];
-
-    if (_currentStatusSortDirection == SortDirection.Desc) {
-      finalList..addAll(notAdded)..addAll(added)..addAll(fullyAdded);
-    } else {
-      finalList..addAll(fullyAdded)..addAll(added)..addAll(notAdded);
-    }
-
-    assert(_games.length == finalList.length);
-    _games = finalList;
-
-    emit(GamesDataChanged(_games, _settings.getAvailableProtonNames()));
-  }
 
   Future<void> syncWithSteam(Settings settings) async {
     SteamTools.openSteamClient();
@@ -342,7 +299,7 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
                     EasyLoading.showSuccess("Game \"${game.userGame.name}\" was deleted");
 
                     _games.removeWhere((element) => element.userGame.name == game.userGame.name);
-                    emit(GamesDataChanged(_games, _settings.getAvailableProtonNames()));
+                    emit(GamesDataChanged(_games, _settings.getAvailableProtonNames(), _globalStats));
                   } catch (e) {
                     EasyLoading.showError("Game \"${game.userGame.name}\" couldn't be deleted");
                   }
@@ -413,7 +370,7 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
 
                       EasyLoading.showSuccess("Game \"${game.userGame.name}\" was deleted");
 
-                      emit(GamesDataChanged(_games, _settings.getAvailableProtonNames()));
+                      emit(GamesDataChanged(_games, _settings.getAvailableProtonNames(), _globalStats));
                       EasyLoading.showError("Game renamed!");
 
                       Navigator.pop(context);
@@ -432,119 +389,38 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
     );
   }
 
-  Map<String, List<VMUserGame>> _categorizeGamesByStatus(List<VMUserGame> games) {
-    List<VMUserGame> notAdded = [],
-        added = [],
-        fullyAdded = [];
-
-    for (int i = 0; i < _games.length; ++i) {
-      VMUserGame ug = _games[i];
-      var status = getGameStatus(ug);
-      if (status[0] == true && status[1] == true) {
-        fullyAdded.add(ug);
-      } else if (status[0] == true) {
-        added.add(ug);
-      } else {
-        notAdded.add(ug);
-      }
-    }
-
-    return {"added": added, "fullyAdded": fullyAdded, "notAdded": notAdded};
-  }
-
-  Map<String, List<VMUserGame>> _categorizeGamesBySourceFolder(List<VMUserGame> games, searchPaths) {
-    List<String> paths = _settings
-        .getSettings()
-        .searchPaths;
-
-    Map<String, List<VMUserGame>> gamesByPath = {};
-
-    //Add all path as keys
-    paths.forEach((path) {
-      gamesByPath[path] = [];
-    });
-
-    //Add all games to each path
-    _games.forEach((game) {
-      gamesByPath[p.dirname(game.userGame.path)]!.add(game);
-    });
-
-    return gamesByPath;
-  }
-
   void foldAll() {
     _games.forEach((e) {
       e.foldingState = false;
     });
 
-    emit(GamesDataChanged(_games, _settings.getAvailableProtonNames()));
+    emit(GamesDataChanged(_games, _settings.getAvailableProtonNames(), _globalStats));
   }
 
-  Future<void> showInfo() async {
-    List<String> paths = _settings
-        .getSettings()
-        .searchPaths;
-
-    Map<String, GameFolderStats> stats = {};
-
-    Map<String, List<VMUserGame>> gamesByPath = _categorizeGamesBySourceFolder(_games, _settings
-        .getSettings()
-        .searchPaths);
-
-    for (var path in gamesByPath.keys) {
-      List<VMUserGame> gamesInPath = gamesByPath[path]!;
-
-      var gamesByStatus = _categorizeGamesByStatus(_games);
-
-      List<VMUserGame> nonAdded = gamesByStatus['notAdded']!;
-      List<VMUserGame> added = gamesByStatus['added']!;
-      List<VMUserGame> fullyAdded = gamesByStatus['fullyAdded']!;
-
-      Map<String, int> nonAddedMetaData = await _getGamesFileMetaData(nonAdded);
-      Map<String, int> addedMetaData = await _getGamesFileMetaData(added);
-      Map<String, int> fullyAddedMetaData = await _getGamesFileMetaData(fullyAdded);
-
-      assert( (nonAdded.length+added.length+fullyAdded.length) == _games.length);
-
-      const String fcKey = 'fileCount';
-      const String szKey = 'size';
-      int totalFileCount = nonAddedMetaData[fcKey]! + addedMetaData[fcKey]! + fullyAddedMetaData[fcKey]!;
-      int totalSize = nonAddedMetaData[szKey]! + addedMetaData[szKey]! + fullyAddedMetaData[szKey]!;
-
-      var gs = GameFolderStats(
-          path:path,
-          fileCount:totalFileCount,
-          sizeInBytes:totalSize,
-          nonAddedGamesCount: nonAdded.length,
-          addedGamesCount:added.length,
-          fullyAddedGamesCount: fullyAdded.length,
-          nonAddedGamesFileCount: nonAddedMetaData[fcKey]!,
-          addedGamesFileCount: addedMetaData[fcKey]!,
-          fullyAddedGamesFileCount:fullyAddedMetaData[fcKey]!,
-          nonAddedGamesSizeInBytes:nonAddedMetaData[szKey]!,
-          addedGamesSizeInBytes:addedMetaData[szKey]!,
-          fullyAddedGamesSizeInBytes: fullyAddedMetaData[szKey]!,
-      );
-
-      stats[path] = gs;
-
-      assert(gs.addedGamesCount+gs.fullyAddedGamesCount+gs.nonAddedGamesCount== _games.length);
-      assert(gs.addedGamesFileCount+gs.fullyAddedGamesFileCount+gs.nonAddedGamesFileCount== gs.fileCount);
-      assert(gs.addedGamesSizeInBytes+gs.nonAddedGamesSizeInBytes+gs.fullyAddedGamesSizeInBytes== gs.sizeInBytes);
+  void sortByName() {
+    if (_currentSortBy == SortBy.Name) {
+      _currentNameSortDirection = _currentNameSortDirection == SortDirection.Asc ? SortDirection.Desc : SortDirection.Asc;
     }
+    _currentSortBy = SortBy.Name;
+
+    _games = VMGameTools.sortByName(_currentStatusSortDirection, _games);
+
+    emit(GamesDataChanged(_games, _settings.getAvailableProtonNames(), _globalStats));
+
+
   }
 
-  Future<Map<String, int>> _getGamesFileMetaData(List<VMUserGame> games) async {
-    int fileCount = 0;
-    int totalSize = 0;
-
-    for (var game in games) {
-      var metaData = await FileTools.getFolderMetaData(game.userGame.path,recursive: true);
-      fileCount += metaData['fileCount']!;
-      totalSize += metaData['size']!;
+  void sortByStatus() {
+    if (_currentSortBy == SortBy.Status) {
+      _currentStatusSortDirection = _currentStatusSortDirection == SortDirection.Asc ? SortDirection.Desc : SortDirection.Asc;
     }
 
+    _currentSortBy = SortBy.Status;
 
-    return {'fileCount': fileCount, 'size': totalSize};
+    _games = VMGameTools.sortByStatus(_currentStatusSortDirection, _games);
+
+    emit(GamesDataChanged(_games, _settings.getAvailableProtonNames(), _globalStats));
   }
+
+
 }
