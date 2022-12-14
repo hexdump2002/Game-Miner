@@ -15,6 +15,7 @@ import 'package:steamdeck_toolbox/logic/Tools/vdf_tools.dart';
 import 'package:steamdeck_toolbox/logic/blocs/settings_cubit.dart';
 import 'dart:io' show Directory, File, FileMode, Platform, RandomAccessFile;
 import 'package:path/path.dart' as p;
+import 'package:universal_disk_space/universal_disk_space.dart';
 
 import '../../data/game_folder_stats.dart';
 import '../../data/user_game.dart';
@@ -31,6 +32,7 @@ class VMUserGame {
 }
 
 enum SortBy { Name, Status }
+
 enum SortDirection { Asc, Desc }
 
 class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
@@ -39,11 +41,17 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
 
   List<ProtonMapping> _protonMappings = [];
 
-  SortBy _currentSortBy = SortBy.Name;
-  SortDirection _currentNameSortDirection = SortDirection.Asc;
-  SortDirection _currentStatusSortDirection = SortDirection.Asc;
+  //Some page stats
+  int _ssdTotalSizeInBytes = 0;
+  int _sdTotalCardInBytes = 0;
+  int _ssdFreeSizeInBytes = 0;
+  int _sdCardFreeInBytes = 0;
+  int _nonAddedGamesCount = 0;
+  int _addedGamesCount = 0;
+  int _fullyAddedGamesCount = 0;
 
-  late GlobalStats _globalStats;
+  List<bool> _sortStates= [true, false];
+  List<bool> _sortDirectionStates= [false, true];
 
   //Not the best place to stored. Cubits should be platform agnostics
   TextEditingController _genericTextController = TextEditingController();
@@ -55,7 +63,8 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
   void loadData(Settings settings) async {
     emit(RetrievingGameData());
 
-    var result = await Future.wait([_findGames(settings.searchPaths), _loadShortcutsVdfFile(settings.currentUserId), VdfTools.loadConfigVdf()]);
+    var result = await Future.wait(
+        [_findGames(settings.searchPaths), _loadShortcutsVdfFile(settings.currentUserId), VdfTools.loadConfigVdf(), _refreshStorageSize()]);
     var userGames = result[0] as List<UserGame>;
     _games = userGames.map<VMUserGame>((o) => VMUserGame(o, false)).toList();
 
@@ -106,11 +115,13 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
       _games.add(VMUserGame(externalGame, false));
     }
 
-    _globalStats = GlobalStats();
-    await _globalStats.initialize(_settings.getSettings().searchPaths, _games);
+    //_globalStats = GlobalStats();
+    //await _globalStats.initialize(_settings.getSettings().searchPaths, _games);
 
-
-    emit(GamesDataRetrieved(_games, availableProntonNames, _globalStats));
+    _games = VMGameTools.sortByName(SortDirection.Asc, _games);
+    _refreshGameCount();
+    emit(GamesDataRetrieved(_games, _settings.getAvailableProtonNames(), _nonAddedGamesCount, _addedGamesCount, _fullyAddedGamesCount,
+        _ssdFreeSizeInBytes, _sdCardFreeInBytes, _ssdTotalSizeInBytes, _sdTotalCardInBytes, _sortStates, _sortDirectionStates));
   }
 
   refresh(Settings settings) {
@@ -167,13 +178,16 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
       //_globalStats.MoveGameByStatus(uge, VMGameAddedStatus.NonAdded);
     }
 
+    _refreshGameCount();
 
-    emit(GamesDataChanged(_games, _settings.getAvailableProtonNames(), _globalStats));
+    emit(GamesDataChanged(_games, _settings.getAvailableProtonNames(), _nonAddedGamesCount, _addedGamesCount, _fullyAddedGamesCount,
+        _ssdFreeSizeInBytes, _sdCardFreeInBytes, _ssdTotalSizeInBytes, _sdTotalCardInBytes, _sortStates, _sortDirectionStates));
   }
 
   void swapExpansionStateForItem(int index) {
     _games[index].foldingState = !_games[index].foldingState;
-    emit(GamesFoldingDataChanged(_games, _settings.getAvailableProtonNames(), _globalStats));
+    emit(GamesFoldingDataChanged(_games, _settings.getAvailableProtonNames(), _nonAddedGamesCount, _addedGamesCount, _fullyAddedGamesCount,
+        _ssdFreeSizeInBytes, _sdCardFreeInBytes, _ssdTotalSizeInBytes, _sdTotalCardInBytes, _sortStates, _sortDirectionStates));
   }
 
   void saveData(Settings settings) async {
@@ -246,9 +260,9 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
       uge.fillProtonMappingData(_settings.getProtonCodeFromName(value), "", "250");
     }
 
-    emit(GamesDataChanged(_games, _settings.getAvailableProtonNames(), _globalStats));
+    emit(GamesDataChanged(_games, _settings.getAvailableProtonNames(), _nonAddedGamesCount, _addedGamesCount, _fullyAddedGamesCount,
+        _ssdFreeSizeInBytes, _sdCardFreeInBytes, _ssdTotalSizeInBytes, _sdTotalCardInBytes, _sortStates, _sortDirectionStates));
   }
-
 
   Future<void> syncWithSteam(Settings settings) async {
     SteamTools.openSteamClient();
@@ -266,55 +280,57 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
   void deleteGame(BuildContext context, VMUserGame game) {
     showPlatformDialog(
       context: context,
-      builder: (context) =>
-          BasicDialogAlert(
-            title: Text("Delete Game"),
-            content: Row(
-              children: [
-                const Padding(
-                  padding: EdgeInsets.all(16.0),
-                  child: Icon(
-                    Icons.warning,
-                    color: Colors.red,
-                    size: 100,
-                  ),
-                ),
-                Expanded(
-                    child: RichText(
-                        text: TextSpan(children: [
-                          TextSpan(text: "You are going to ", style: TextStyle(color: Colors.black)),
-                          TextSpan(text: "DELETE", style: TextStyle(color: Colors.redAccent)),
-                          TextSpan(text: " \"${game.userGame.name}\"", style: TextStyle(color: Colors.blue)),
-                          TextSpan(text: " from our file system.", style: TextStyle(color: Colors.black)),
-                          TextSpan(text: "\nWarning: This action can't be undone", style: TextStyle(color: Colors.red, fontSize: 18, height: 2))
-                        ]))),
-              ],
+      builder: (context) => BasicDialogAlert(
+        title: Text("Delete Game"),
+        content: Row(
+          children: [
+            const Padding(
+              padding: EdgeInsets.all(16.0),
+              child: Icon(
+                Icons.warning,
+                color: Colors.red,
+                size: 100,
+              ),
             ),
-            actions: <Widget>[
-              BasicDialogAction(
-                title: Text("OK"),
-                onPressed: () async {
-                  try {
-                    await Directory(game.userGame.path).delete(recursive: true);
-                    EasyLoading.showSuccess("Game \"${game.userGame.name}\" was deleted");
+            Expanded(
+                child: RichText(
+                    text: TextSpan(children: [
+              TextSpan(text: "You are going to ", style: TextStyle(color: Colors.black)),
+              TextSpan(text: "DELETE", style: TextStyle(color: Colors.redAccent)),
+              TextSpan(text: " \"${game.userGame.name}\"", style: TextStyle(color: Colors.blue)),
+              TextSpan(text: " from your file system.", style: TextStyle(color: Colors.black)),
+              TextSpan(text: "\nWarning: This action can't be undone", style: TextStyle(color: Colors.red, fontSize: 18, height: 2))
+            ]))),
+          ],
+        ),
+        actions: <Widget>[
+          BasicDialogAction(
+            title: Text("OK"),
+            onPressed: () async {
+              try {
+                await Directory(game.userGame.path).delete(recursive: true);
+                EasyLoading.showSuccess("Game \"${game.userGame.name}\" was deleted");
 
-                    _games.removeWhere((element) => element.userGame.name == game.userGame.name);
-                    emit(GamesDataChanged(_games, _settings.getAvailableProtonNames(), _globalStats));
-                  } catch (e) {
-                    EasyLoading.showError("Game \"${game.userGame.name}\" couldn't be deleted");
-                  }
+                _games.removeWhere((element) => element.userGame.name == game.userGame.name);
+                await _refreshStorageSize();
+                _refreshGameCount();
+                emit(GamesDataChanged(_games, _settings.getAvailableProtonNames(), _nonAddedGamesCount, _addedGamesCount, _fullyAddedGamesCount,
+                    _ssdFreeSizeInBytes, _sdCardFreeInBytes, _ssdTotalSizeInBytes, _sdTotalCardInBytes, _sortStates, _sortDirectionStates));
+              } catch (e) {
+                EasyLoading.showError("Game \"${game.userGame.name}\" couldn't be deleted");
+              }
 
-                  Navigator.pop(context);
-                },
-              ),
-              BasicDialogAction(
-                title: Text("Cancel"),
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-              ),
-            ],
+              Navigator.pop(context);
+            },
           ),
+          BasicDialogAction(
+            title: Text("Cancel"),
+            onPressed: () {
+              Navigator.pop(context);
+            },
+          ),
+        ],
+      ),
     );
   }
 
@@ -323,69 +339,68 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
 
     showPlatformDialog(
       context: context,
-      builder: (context) =>
-          BasicDialogAlert(
-            title: Text("Rename Game"),
-            content: Padding(
-              padding: EdgeInsets.all(8),
-              child: TextField(
-                controller: _genericTextController,
-              ),
-            ),
-            actions: <Widget>[
-              BasicDialogAction(
-                  title: Text("OK"),
-                  onPressed: () async {
-                    var text = _genericTextController.text;
-                    RegExp r = RegExp(r'^[\w\-. ]+$');
-
-                    if (!r.hasMatch(text)) {
-                      showPlatformDialog(
-                          context: context,
-                          builder: (context) =>
-                              BasicDialogAlert(
-                                  title: Text("Invalid Game Name"),
-                                  content: const Padding(
-                                      padding: EdgeInsets.all(8),
-                                      child: Text("The name is not valid. You can use numbers, letters,  and '-','_','.' characters.")),
-                                  actions: [
-                                    BasicDialogAction(
-                                        title: Text("OK"),
-                                        onPressed: () {
-                                          Navigator.pop(context);
-                                        })
-                                  ]));
-                      return;
-                    }
-
-                    try {
-                      game.userGame.name = _genericTextController.text;
-
-                      var oldPath = game.userGame.path;
-                      var containerFolder = p.dirname(game.userGame.path);
-
-                      game.userGame.path = p.join(containerFolder, game.userGame.name);
-
-                      await Directory(oldPath).rename(game.userGame.path);
-
-                      EasyLoading.showSuccess("Game \"${game.userGame.name}\" was deleted");
-
-                      emit(GamesDataChanged(_games, _settings.getAvailableProtonNames(), _globalStats));
-                      EasyLoading.showError("Game renamed!");
-
-                      Navigator.pop(context);
-                    } catch (e) {
-                      EasyLoading.showError("Game \"${game.userGame.name}\" couldn't be renamed");
-                    }
-                  }),
-              BasicDialogAction(
-                title: Text("Cancel"),
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-              ),
-            ],
+      builder: (context) => BasicDialogAlert(
+        title: Text("Rename Game"),
+        content: Padding(
+          padding: EdgeInsets.all(8),
+          child: TextField(
+            controller: _genericTextController,
           ),
+        ),
+        actions: <Widget>[
+          BasicDialogAction(
+              title: Text("OK"),
+              onPressed: () async {
+                var text = _genericTextController.text;
+                RegExp r = RegExp(r'^[\w\-. ]+$');
+
+                if (!r.hasMatch(text)) {
+                  showPlatformDialog(
+                      context: context,
+                      builder: (context) => BasicDialogAlert(
+                              title: Text("Invalid Game Name"),
+                              content: const Padding(
+                                  padding: EdgeInsets.all(8),
+                                  child: Text("The name is not valid. You can use numbers, letters,  and '-','_','.' characters.")),
+                              actions: [
+                                BasicDialogAction(
+                                    title: Text("OK"),
+                                    onPressed: () {
+                                      Navigator.pop(context);
+                                    })
+                              ]));
+                  return;
+                }
+
+                try {
+                  game.userGame.name = _genericTextController.text;
+
+                  var oldPath = game.userGame.path;
+                  var containerFolder = p.dirname(game.userGame.path);
+
+                  game.userGame.path = p.join(containerFolder, game.userGame.name);
+
+                  await Directory(oldPath).rename(game.userGame.path);
+
+                  EasyLoading.showSuccess("Game \"${game.userGame.name}\" was deleted");
+
+                  emit(GamesDataChanged(_games, _settings.getAvailableProtonNames(), _nonAddedGamesCount, _addedGamesCount, _fullyAddedGamesCount,
+                      _ssdFreeSizeInBytes, _sdCardFreeInBytes, _ssdTotalSizeInBytes, _sdTotalCardInBytes, _sortStates, _sortDirectionStates));
+                  EasyLoading.showError("Game renamed!");
+
+                  Navigator.pop(context);
+                } catch (e) {
+                  EasyLoading.showError("Game \"${game.userGame.name}\" couldn't be renamed");
+                }
+              }),
+          BasicDialogAction(
+            title: Text("Cancel"),
+            onPressed: () {
+              Navigator.pop(context);
+            },
+          ),
+        ],
+      ),
     );
   }
 
@@ -394,33 +409,57 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
       e.foldingState = false;
     });
 
-    emit(GamesDataChanged(_games, _settings.getAvailableProtonNames(), _globalStats));
+    emit(GamesDataChanged(_games, _settings.getAvailableProtonNames(), _nonAddedGamesCount, _addedGamesCount, _fullyAddedGamesCount,
+        _ssdFreeSizeInBytes, _sdCardFreeInBytes, _ssdTotalSizeInBytes, _sdTotalCardInBytes, _sortStates, _sortDirectionStates));
   }
 
-  void sortByName() {
-    if (_currentSortBy == SortBy.Name) {
-      _currentNameSortDirection = _currentNameSortDirection == SortDirection.Asc ? SortDirection.Desc : SortDirection.Asc;
-    }
-    _currentSortBy = SortBy.Name;
+  void sortByName({SortDirection? direction}) {
+    _sortStates = [true, false];
+    _games = VMGameTools.sortByName(_sortDirectionStates[0] ? SortDirection.Desc: SortDirection.Asc , _games);
 
-    _games = VMGameTools.sortByName(_currentStatusSortDirection, _games);
-
-    emit(GamesDataChanged(_games, _settings.getAvailableProtonNames(), _globalStats));
-
-
+    emit(GamesDataChanged(_games, _settings.getAvailableProtonNames(), _nonAddedGamesCount, _addedGamesCount, _fullyAddedGamesCount,
+        _ssdFreeSizeInBytes, _sdCardFreeInBytes, _ssdTotalSizeInBytes, _sdTotalCardInBytes, _sortStates, _sortDirectionStates));
   }
 
   void sortByStatus() {
-    if (_currentSortBy == SortBy.Status) {
-      _currentStatusSortDirection = _currentStatusSortDirection == SortDirection.Asc ? SortDirection.Desc : SortDirection.Asc;
-    }
+    _sortStates = [false, true];
 
-    _currentSortBy = SortBy.Status;
+    _games = VMGameTools.sortByStatus(_sortDirectionStates[0] ? SortDirection.Desc: SortDirection.Asc, _games);
 
-    _games = VMGameTools.sortByStatus(_currentStatusSortDirection, _games);
-
-    emit(GamesDataChanged(_games, _settings.getAvailableProtonNames(), _globalStats));
+    emit(GamesDataChanged(_games, _settings.getAvailableProtonNames(), _nonAddedGamesCount, _addedGamesCount, _fullyAddedGamesCount,
+        _ssdFreeSizeInBytes, _sdCardFreeInBytes, _ssdTotalSizeInBytes, _sdTotalCardInBytes, _sortStates, _sortDirectionStates));
   }
 
+  Future<void> _refreshStorageSize() async {
+    final diskSpace = DiskSpace();
+    await diskSpace.scan();
+    var disks = diskSpace.disks;
+    var homeDisk = diskSpace.getDisk(Directory('/home'));
+    _ssdFreeSizeInBytes = homeDisk.availableSpace;
+    _ssdTotalSizeInBytes = homeDisk.totalSize;
+  }
 
+  void _refreshGameCount() {
+    Map<String, List<VMUserGame>> data = VMGameTools.categorizeGamesByStatus(_games);
+    _nonAddedGamesCount = data["notAdded"]!.length;
+    _addedGamesCount = data["added"]!.length;
+    ;
+    _fullyAddedGamesCount = data["fullyAdded"]!.length;
+    ;
+  }
+
+  List<bool> getSortStates() { return _sortStates;}
+  List<bool> getSortDirectionStates() { return _sortDirectionStates;}
+
+  setSortDirection(SortDirection sd) {
+    _sortDirectionStates = sd==SortDirection.Asc ? [true,false] : [false,true];
+
+    if(_sortStates[0]) {
+      sortByName();
+    } else {
+      sortByStatus();
+    }
+    emit(GamesDataChanged(_games, _settings.getAvailableProtonNames(), _nonAddedGamesCount, _addedGamesCount, _fullyAddedGamesCount,
+        _ssdFreeSizeInBytes, _sdCardFreeInBytes, _ssdTotalSizeInBytes, _sdTotalCardInBytes, _sortStates, _sortDirectionStates));
+  }
 }

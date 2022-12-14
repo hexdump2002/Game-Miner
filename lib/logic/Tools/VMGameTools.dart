@@ -64,7 +64,7 @@ class VMGameTools {
 
   static List<VMUserGame> sortByName(SortDirection sortDirection, List<VMUserGame> games) {
 
-    if (sortDirection == SortDirection.Desc) {
+    if (sortDirection == SortDirection.Asc) {
       games.sort((a, b) => a.userGame.name.toLowerCase().compareTo(b.userGame.name.toLowerCase()));
     } else {
       games.sort((a, b) => b.userGame.name.toLowerCase().compareTo(a.userGame.name.toLowerCase()));

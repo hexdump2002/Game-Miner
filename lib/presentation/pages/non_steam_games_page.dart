@@ -43,6 +43,39 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
         // the App.build method, and use it to set our appbar title.
         title: Text("Non Steam Games Manager"),
         actions: [
+          BlocBuilder<NonSteamGamesCubit, NonSteamGamesBaseState>(builder: (context, nsgState) {
+    return Row(children: [
+          ToggleButtons(
+              direction: Axis.horizontal,
+              onPressed: (int index) {
+                index == 0 ? _nsgpBloc.sortByName() : _nsgpBloc.sortByStatus();
+              },
+              borderRadius: const BorderRadius.all(Radius.circular(8)),
+              borderColor: Colors.blue,
+              selectedBorderColor: Colors.blue[200],
+              selectedColor: Colors.white,
+              fillColor: Colors.blue[300],
+              color: Colors.blue[300],
+              children: const [Tooltip(message:"Sort By Name", child: Icon(Icons.receipt)), Tooltip(message: "Sort By Status",child: Icon(Icons.stars))],
+              isSelected: _nsgpBloc.getSortStates()
+
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(0,0,16,0),
+            child: ToggleButtons(
+            direction: Axis.horizontal,
+            onPressed: (int index) {
+              index == 0 ? _nsgpBloc.setSortDirection(SortDirection.Asc): _nsgpBloc.setSortDirection(SortDirection.Desc);
+            },
+            borderRadius: const BorderRadius.all(Radius.circular(8)),
+            borderColor: Colors.blue,
+            selectedBorderColor: Colors.blue[200],
+            selectedColor: Colors.white,
+            fillColor: Colors.blue[300],
+            color: Colors.blue[300],
+            children: const [Tooltip(message:"Descending", child: Icon(Icons.south)), Tooltip(message: "Ascending",child: Icon(Icons.north))],
+            isSelected: _nsgpBloc.getSortDirectionStates()),
+          ),
           IconButton(
             onPressed: () {
               if (_formKey.currentState!.validate()) {
@@ -54,7 +87,7 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
             icon: Icon(Icons.save),
             tooltip: "Save",
           ),
-          IconButton(
+          /*IconButton(
             onPressed: () {
               _nsgpBloc.sortByName();
             },
@@ -67,13 +100,13 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
             },
             icon: const Icon(Icons.stars),
             tooltip: "Sort By Status",
-          ),
+          ),*/
           IconButton(
             onPressed: () {
               _nsgpBloc.foldAll();
             },
             icon: const Icon(Icons.unfold_less),
-            tooltip: "Sort By Status",
+            tooltip: "Fold All",
           ),
           IconButton(
             onPressed: () {
@@ -91,15 +124,15 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
             onPressed: () => null /*_nsgpBloc.showInfo()*/,
             icon: Icon(Icons.info),
             tooltip: "Settings",
-          ),
+          )]);
+  },
+),
         ],
       ),
       body: Container(
           alignment: Alignment.center,
-          child: BlocConsumer<SettingsCubit, SettingsState>(listener: (
-            context,
-            state,
-          ) {
+          child: BlocConsumer<SettingsCubit, SettingsState>(listener: (context,
+              state,) {
             //print("[SetttingsCubit Consumer] State -> $state");
             if (state is SettingsSaved) {
               _nsgpBloc.refresh(state.settings);
@@ -114,39 +147,52 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
                 children: _buildDataScreen(context, nsgState),
               );
             });
-          })),
+          })
+      )
+      ,
     );
   }
 
   List<Widget> _buildDataScreen(BuildContext context, NonSteamGamesBaseState nsgState) {
-
     if (nsgState is RetrievingGameData) {
       EasyLoading.show(status: "Loading Games");
       return [Container()];
     } else if (nsgState is GamesDataRetrieved) {
       EasyLoading.dismiss();
-      return [Expanded(
-        child: Align(alignment: Alignment.topCenter,
-          child: SingleChildScrollView(
-              child: _createGameCards(context, nsgState.games, nsgState.availableProntonNames,nsgState.globalStats),
-        )),
-      ),_buildInfoBar(context,nsgState.globalStats)];
+      return [
+        Expanded(
+          child: Align(
+              alignment: Alignment.topCenter,
+              child: SingleChildScrollView(
+                child: _createGameCards(context, nsgState),
+              )),
+        ),
+        _buildInfoBar(context, nsgState)
+      ];
     } else if (nsgState is GamesDataChanged) {
       GamesDataChanged gdr = nsgState as GamesDataChanged;
-      return [Expanded(
-        child: Align(alignment: Alignment.topCenter,
-            child: SingleChildScrollView(
-              child: _createGameCards(context, nsgState.games, nsgState.availableProntonNames,nsgState.globalStats),
-            )),
-      ),_buildInfoBar(context,nsgState.globalStats)];
+      return [
+        Expanded(
+          child: Align(
+              alignment: Alignment.topCenter,
+              child: SingleChildScrollView(
+                child: _createGameCards(context, nsgState),
+              )),
+        ),
+        _buildInfoBar(context, nsgState)
+      ];
     } else if (nsgState is GamesFoldingDataChanged) {
       EasyLoading.dismiss();
-      return [Expanded(
-        child: Align(alignment: Alignment.topCenter,
-            child: SingleChildScrollView(
-              child: _createGameCards(context, nsgState.games, nsgState.availableProntonNames,nsgState.globalStats),
-            )),
-      ),_buildInfoBar(context,nsgState.globalStats)];
+      return [
+        Expanded(
+          child: Align(
+              alignment: Alignment.topCenter,
+              child: SingleChildScrollView(
+                child: _createGameCards(context, nsgState),
+              )),
+        ),
+        _buildInfoBar(context, nsgState)
+      ];
     }
     /*else if (settingsState is SearchPathsChanged) {
       _nsgpBloc.loadData(settingsState.searchPaths);
@@ -160,8 +206,8 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
     throw Exception("Unknown state type");
   }
 
-  Widget _createGameCards(BuildContext context, List<VMUserGame> games, List<String> availableProntons, GlobalStats globalStats) {
-    List<ExpansionPanel> widgets = games.map<ExpansionPanel>((VMUserGame game) {
+  Widget _createGameCards(BuildContext context, BaseDataChanged state) {
+    List<ExpansionPanel> widgets = state.games.map<ExpansionPanel>((VMUserGame game) {
       var gameAddedStatus = VMGameTools.getGameStatus(game);
 
       return ExpansionPanel(
@@ -170,7 +216,10 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
           return ListTile(
             title: Row(
               children: [
-                Expanded(child: Text(game.userGame.name, style: Theme.of(context).textTheme.headline5, textAlign: TextAlign.left)),
+                Expanded(child: Text(game.userGame.name, style: Theme
+                    .of(context)
+                    .textTheme
+                    .headline5, textAlign: TextAlign.left)),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(0, 0, 24, 0),
                   child: _getExeCurrentStateIcon(gameAddedStatus),
@@ -193,7 +242,7 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
             ),
           );
         },
-        body: _buildGameTile(context, game.userGame, availableProntons),
+        body: _buildGameTile(context, game.userGame, state.availableProntonNames),
         isExpanded: game.foldingState,
       );
     }).toList();
@@ -221,13 +270,18 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
           children: [
             Row(children: [
               Expanded(
-                child: Text(uge.relativeExePath, style: Theme.of(context).textTheme.headline6, textAlign: TextAlign.left),
+                child: Text(uge.relativeExePath, style: Theme
+                    .of(context)
+                    .textTheme
+                    .headline6, textAlign: TextAlign.left),
               ),
               Row(children: [
                 Switch(
                     value: uge.added,
                     onChanged: (value) {
-                      _nsgpBloc.swapExeAdding(uge, _settingsBloc.getSettings().defaultProtonCode);
+                      _nsgpBloc.swapExeAdding(uge, _settingsBloc
+                          .getSettings()
+                          .defaultProtonCode);
                     }),
                 //activeTrackColor: Colors.lightGreenAccent,
                 //activeColor: Colors.green,
@@ -304,7 +358,7 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
     return c;
   }
 
-  Widget _buildInfoBar(BuildContext context, GlobalStats stats) {
+  Widget _buildInfoBar(BuildContext context, BaseDataChanged state) {
     return Container(
         color: Colors.blueGrey,
         padding: EdgeInsets.all(8),
@@ -312,43 +366,43 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
           children: [
             Expanded(
               child: Text(
-                "${stats.getGameCount()} Registered Games",
+                "${state.nonAddedGamesCount + state.addedGamesCount + state.fullyAddedGamesCount} Discovered Games",
                 style: const TextStyle(color: Colors.white),
               ),
             ),
             Container(height: 15, width: 15, color: Colors.red),
             Padding(
-              padding: EdgeInsets.fromLTRB(8,0,8,0),
+              padding: EdgeInsets.fromLTRB(8, 0, 8, 0),
               child: Text(
-                stats.getNonAddedGameCount().toString(),
+                state.nonAddedGamesCount.toString(),
                 style: TextStyle(color: Colors.white),
               ),
             ),
             Container(height: 15, width: 15, color: Colors.orange),
             Padding(
-              padding: EdgeInsets.fromLTRB(8,0,8,0),
+              padding: EdgeInsets.fromLTRB(8, 0, 8, 0),
               child: Text(
-                stats.getAddedGameCount().toString(),
+                state.addedGamesCount.toString(),
                 style: TextStyle(color: Colors.white),
               ),
             ),
             Container(height: 15, width: 15, color: Colors.green),
             Padding(
-              padding: EdgeInsets.fromLTRB(8,0,8,0),
+              padding: EdgeInsets.fromLTRB(8, 0, 8, 0),
               child: Text(
-                stats.getFullyAddedGameCount().toString(),
+                state.fullyAddedGamesCount.toString(),
                 style: TextStyle(color: Colors.white),
               ),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(8.0,0,8,0),
+              padding: const EdgeInsets.fromLTRB(8.0, 0, 8, 0),
               child: Row(
                 children: [
                   Icon(Icons.sd_card),
                   Padding(
-                    padding: EdgeInsets.fromLTRB(8,0,0,0),
+                    padding: EdgeInsets.fromLTRB(8, 0, 0, 0),
                     child: Text(
-                      "${StringTools.bytesToStorageUnity(stats.getSSDFreeSpace())} / ${StringTools.bytesToStorageUnity(stats.getSSDTotalSize())}",
+                      "${StringTools.bytesToStorageUnity(state.freeSSDSpace)} / ${StringTools.bytesToStorageUnity(state.freeSSDSpace)}",
                       style: TextStyle(color: Colors.white),
                     ),
                   ),
@@ -356,20 +410,20 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(8.0,0,8,0),
+              padding: const EdgeInsets.fromLTRB(8.0, 0, 8, 0),
               child: Row(
-                children:  [
+                children: [
                   Icon(Icons.storage),
                   Padding(
-                    padding: EdgeInsets.fromLTRB(8,0,0,0),
-                    child: Text("${StringTools.bytesToStorageUnity(stats.getSSDFreeSpace())} / ${StringTools.bytesToStorageUnity(stats.getSSDTotalSize())}",
+                    padding: EdgeInsets.fromLTRB(8, 0, 0, 0),
+                    child: Text(
+                      "${StringTools.bytesToStorageUnity(state.freeSSDSpace)} / ${StringTools.bytesToStorageUnity(state.totalSSDSpace)}",
                       style: TextStyle(color: Colors.white),
                     ),
                   ),
                 ],
               ),
             ),
-
           ],
         ));
   }
