@@ -84,6 +84,7 @@ class SettingsCubit extends Cubit<SettingsState> {
 
       availableProtons.addAll(_settings.builtInProtons);
       _settings.availableProtons.addAll(availableProtons);
+
       emit(SettingsLoaded(_settings));
     } else {
       load(availableProtons);
@@ -115,6 +116,10 @@ class SettingsCubit extends Cubit<SettingsState> {
 
     if (_settings.defaultProtonCode!="None" && _settings.availableProtons.firstWhereOrNull((element) => element.protonCode == _settings.defaultProtonCode) == null) {
       throw Exception("The default configured proton is not valid");
+    }
+
+    for(int i=0; i<10; ++i ){
+      _settings.searchPaths.add("sdlkjfdljkdfsjkdsfkjlsdf");
     }
 
     emit(SettingsLoaded(_settings));

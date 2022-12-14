@@ -110,34 +110,33 @@ class UserGameExe {
 class UserGame {
   late String path;
   late String name;
-  late final bool external;
+  bool isExternal = false;
+  int gameSize = 0;
   final List<UserGameExe> exeFileEntries = [];
 
   //User Folders Game (Internal)
   UserGame(this.path) {
     List<String> pathComponents = pathLib.split(path);
     name = pathComponents.last;
-    external = false;
+    isExternal = false;
   }
 
   //Game not in User Folders (External)
   UserGame.asExternal() {
     path = "";
     name = "External";
-    external = true;
+    isExternal = true;
   }
 
   void addExeFile(String absoluteFilePath) {
-    if (external) throw Exception("Can't add an internal exe to an external game");
+    if (isExternal) throw Exception("Can't add an internal exe to an external game");
 
     exeFileEntries.add(UserGameExe(path, absoluteFilePath, false));
   }
 
   void addExternalExeFile(NonSteamGameExe nonSteamGameExe, ProtonMapping? pm) {
-    if (!external) throw Exception("Can't add an interal exe to an external game");
-
     var uge = UserGameExe.asExternal(nonSteamGameExe, protonMapping: pm);
-
+    isExternal = true;
     exeFileEntries.add(uge);
   }
 
@@ -160,7 +159,7 @@ class UserGame {
 
       await _writeInt32BEProperty(raf, "appid", ef.appId);
       await _writeStringProperty(raf, "AppName", ef.name);
-      external
+      isExternal
           ? await _writeStringProperty(raf, "Exe", "\"${ef.relativeExePath}\"")
           : await _writeStringProperty(raf, "Exe", "\"$path/${ef.relativeExePath}\"");
       await _writeStringProperty(raf, "StartDir", "\"${ef.startDir}\"");

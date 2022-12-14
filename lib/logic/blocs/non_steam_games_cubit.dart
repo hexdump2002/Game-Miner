@@ -7,7 +7,7 @@ import 'package:collection/collection.dart';
 import 'package:flutter_dialogs/flutter_dialogs.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:meta/meta.dart';
-import 'package:steamdeck_toolbox/data/GlobalStats.dart';
+import 'package:steamdeck_toolbox/data/Stats.dart';
 import 'package:steamdeck_toolbox/data/non_steam_game_exe.dart';
 import 'package:steamdeck_toolbox/logic/Tools/StringTools.dart';
 import 'package:steamdeck_toolbox/logic/Tools/steam_tools.dart';
@@ -49,12 +49,15 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
   int _nonAddedGamesCount = 0;
   int _addedGamesCount = 0;
   int _fullyAddedGamesCount = 0;
+  int _addedExternalCount = 0;
 
-  List<bool> _sortStates= [true, false];
+  List<bool> _sortStates= [true, false,false];
   List<bool> _sortDirectionStates= [false, true];
 
   //Not the best place to stored. Cubits should be platform agnostics
   TextEditingController _genericTextController = TextEditingController();
+
+
 
   NonSteamGamesCubit(SettingsCubit settings) : super(IninitalState()) {
     _settings = settings;
@@ -67,6 +70,12 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
         [_findGames(settings.searchPaths), _loadShortcutsVdfFile(settings.currentUserId), VdfTools.loadConfigVdf(), _refreshStorageSize()]);
     var userGames = result[0] as List<UserGame>;
     _games = userGames.map<VMUserGame>((o) => VMUserGame(o, false)).toList();
+    
+    var folderStats = await Stats.getGamesFolderStats(_games);
+    assert(folderStats.statsByGame.length == _games.length);
+    for(int i=0; i<folderStats.statsByGame.length; ++i) {
+      _games[i].userGame.gameSize = folderStats.statsByGame[i].size;
+    }
 
     List<String> availableProntonNames = [];
     availableProntonNames.addAll(_settings.getAvailableProtonNames());
@@ -76,7 +85,7 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
 
     var registeredNonSteamGames = result[1] as List<NonSteamGameExe>;
 
-    UserGame externalGame = UserGame.asExternal();
+    List<UserGame> externalGames = [];
 
     //Fill all needed data in user games
     for (NonSteamGameExe nsg in registeredNonSteamGames) {
@@ -107,20 +116,21 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
       if (!finished) {
         //Add external exe and provid proton mapping
         ProtonMapping? pm = _protonMappings.firstWhereOrNull((e) => nsg.appId.toString() == e.id);
-        externalGame.addExternalExeFile(nsg, pm);
+        UserGame ug = UserGame(nsg.appName);
+        ug.addExternalExeFile(nsg, pm);
+        externalGames.add(ug);
+        _games.add(VMUserGame(ug, false));
       }
     }
 
-    if (externalGame.exeFileEntries.isNotEmpty) {
+    /*if (externalGame.exeFileEntries.isNotEmpty) {
       _games.add(VMUserGame(externalGame, false));
-    }
+    }*/
 
-    //_globalStats = GlobalStats();
-    //await _globalStats.initialize(_settings.getSettings().searchPaths, _games);
 
     _games = VMGameTools.sortByName(SortDirection.Asc, _games);
     _refreshGameCount();
-    emit(GamesDataRetrieved(_games, _settings.getAvailableProtonNames(), _nonAddedGamesCount, _addedGamesCount, _fullyAddedGamesCount,
+    emit(GamesDataRetrieved(_games, _settings.getAvailableProtonNames(), _nonAddedGamesCount, _addedGamesCount, _fullyAddedGamesCount, _addedExternalCount,
         _ssdFreeSizeInBytes, _sdCardFreeInBytes, _ssdTotalSizeInBytes, _sdTotalCardInBytes, _sortStates, _sortDirectionStates));
   }
 
@@ -180,13 +190,13 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
 
     _refreshGameCount();
 
-    emit(GamesDataChanged(_games, _settings.getAvailableProtonNames(), _nonAddedGamesCount, _addedGamesCount, _fullyAddedGamesCount,
+    emit(GamesDataChanged(_games, _settings.getAvailableProtonNames(), _nonAddedGamesCount, _addedGamesCount, _fullyAddedGamesCount, _addedExternalCount,
         _ssdFreeSizeInBytes, _sdCardFreeInBytes, _ssdTotalSizeInBytes, _sdTotalCardInBytes, _sortStates, _sortDirectionStates));
   }
 
   void swapExpansionStateForItem(int index) {
     _games[index].foldingState = !_games[index].foldingState;
-    emit(GamesFoldingDataChanged(_games, _settings.getAvailableProtonNames(), _nonAddedGamesCount, _addedGamesCount, _fullyAddedGamesCount,
+    emit(GamesFoldingDataChanged(_games, _settings.getAvailableProtonNames(), _nonAddedGamesCount, _addedGamesCount, _fullyAddedGamesCount, _addedExternalCount,
         _ssdFreeSizeInBytes, _sdCardFreeInBytes, _ssdTotalSizeInBytes, _sdTotalCardInBytes, _sortStates, _sortDirectionStates));
   }
 
@@ -260,7 +270,9 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
       uge.fillProtonMappingData(_settings.getProtonCodeFromName(value), "", "250");
     }
 
-    emit(GamesDataChanged(_games, _settings.getAvailableProtonNames(), _nonAddedGamesCount, _addedGamesCount, _fullyAddedGamesCount,
+    _refreshGameCount();
+
+    emit(GamesDataChanged(_games, _settings.getAvailableProtonNames(), _nonAddedGamesCount, _addedGamesCount, _fullyAddedGamesCount, _addedExternalCount,
         _ssdFreeSizeInBytes, _sdCardFreeInBytes, _ssdTotalSizeInBytes, _sdTotalCardInBytes, _sortStates, _sortDirectionStates));
   }
 
@@ -311,10 +323,10 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
                 await Directory(game.userGame.path).delete(recursive: true);
                 EasyLoading.showSuccess("Game \"${game.userGame.name}\" was deleted");
 
-                _games.removeWhere((element) => element.userGame.name == game.userGame.name);
+                _games.removeWhere((element) => element.userGame.exeFileEntries[0] == game.userGame.exeFileEntries[0]);
                 await _refreshStorageSize();
                 _refreshGameCount();
-                emit(GamesDataChanged(_games, _settings.getAvailableProtonNames(), _nonAddedGamesCount, _addedGamesCount, _fullyAddedGamesCount,
+                emit(GamesDataChanged(_games, _settings.getAvailableProtonNames(), _nonAddedGamesCount, _addedGamesCount, _fullyAddedGamesCount, _addedExternalCount,
                     _ssdFreeSizeInBytes, _sdCardFreeInBytes, _ssdTotalSizeInBytes, _sdTotalCardInBytes, _sortStates, _sortDirectionStates));
               } catch (e) {
                 EasyLoading.showError("Game \"${game.userGame.name}\" couldn't be deleted");
@@ -384,7 +396,7 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
 
                   EasyLoading.showSuccess("Game \"${game.userGame.name}\" was deleted");
 
-                  emit(GamesDataChanged(_games, _settings.getAvailableProtonNames(), _nonAddedGamesCount, _addedGamesCount, _fullyAddedGamesCount,
+                  emit(GamesDataChanged(_games, _settings.getAvailableProtonNames(), _nonAddedGamesCount, _addedGamesCount, _fullyAddedGamesCount, _addedExternalCount,
                       _ssdFreeSizeInBytes, _sdCardFreeInBytes, _ssdTotalSizeInBytes, _sdTotalCardInBytes, _sortStates, _sortDirectionStates));
                   EasyLoading.showError("Game renamed!");
 
@@ -409,43 +421,48 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
       e.foldingState = false;
     });
 
-    emit(GamesDataChanged(_games, _settings.getAvailableProtonNames(), _nonAddedGamesCount, _addedGamesCount, _fullyAddedGamesCount,
+    emit(GamesDataChanged(_games, _settings.getAvailableProtonNames(), _nonAddedGamesCount, _addedGamesCount, _fullyAddedGamesCount, _addedExternalCount,
         _ssdFreeSizeInBytes, _sdCardFreeInBytes, _ssdTotalSizeInBytes, _sdTotalCardInBytes, _sortStates, _sortDirectionStates));
   }
 
   void sortByName({SortDirection? direction}) {
-    _sortStates = [true, false];
+    _sortStates = [true, false, false];
     _games = VMGameTools.sortByName(_sortDirectionStates[0] ? SortDirection.Desc: SortDirection.Asc , _games);
 
-    emit(GamesDataChanged(_games, _settings.getAvailableProtonNames(), _nonAddedGamesCount, _addedGamesCount, _fullyAddedGamesCount,
+    emit(GamesDataChanged(_games, _settings.getAvailableProtonNames(), _nonAddedGamesCount, _addedGamesCount, _fullyAddedGamesCount, _addedExternalCount,
         _ssdFreeSizeInBytes, _sdCardFreeInBytes, _ssdTotalSizeInBytes, _sdTotalCardInBytes, _sortStates, _sortDirectionStates));
   }
 
   void sortByStatus() {
-    _sortStates = [false, true];
+    _sortStates = [false, true,false];
 
     _games = VMGameTools.sortByStatus(_sortDirectionStates[0] ? SortDirection.Desc: SortDirection.Asc, _games);
 
-    emit(GamesDataChanged(_games, _settings.getAvailableProtonNames(), _nonAddedGamesCount, _addedGamesCount, _fullyAddedGamesCount,
+    emit(GamesDataChanged(_games, _settings.getAvailableProtonNames(), _nonAddedGamesCount, _addedGamesCount, _fullyAddedGamesCount, _addedExternalCount,
+        _ssdFreeSizeInBytes, _sdCardFreeInBytes, _ssdTotalSizeInBytes, _sdTotalCardInBytes, _sortStates, _sortDirectionStates));
+  }
+
+  void sortBySize() {
+    _sortStates = [false, false,true];
+
+    _games = VMGameTools.sortBySize(_sortDirectionStates[0] ? SortDirection.Desc: SortDirection.Asc, _games);
+
+    emit(GamesDataChanged(_games, _settings.getAvailableProtonNames(), _nonAddedGamesCount, _addedGamesCount, _fullyAddedGamesCount, _addedExternalCount,
         _ssdFreeSizeInBytes, _sdCardFreeInBytes, _ssdTotalSizeInBytes, _sdTotalCardInBytes, _sortStates, _sortDirectionStates));
   }
 
   Future<void> _refreshStorageSize() async {
-    final diskSpace = DiskSpace();
-    await diskSpace.scan();
-    var disks = diskSpace.disks;
-    var homeDisk = diskSpace.getDisk(Directory('/home'));
-    _ssdFreeSizeInBytes = homeDisk.availableSpace;
-    _ssdTotalSizeInBytes = homeDisk.totalSize;
+    var data = await Stats.getStorageStats(_games);
+    _ssdFreeSizeInBytes = data['ssdFreeSpace']!;
+    _ssdTotalSizeInBytes = data['ssdTotalSpace']!;
   }
 
   void _refreshGameCount() {
-    Map<String, List<VMUserGame>> data = VMGameTools.categorizeGamesByStatus(_games);
-    _nonAddedGamesCount = data["notAdded"]!.length;
-    _addedGamesCount = data["added"]!.length;
-    ;
-    _fullyAddedGamesCount = data["fullyAdded"]!.length;
-    ;
+    var data = Stats.getGameStatusStats(_games);
+    _nonAddedGamesCount = data["notAdded"]!;
+    _addedGamesCount = data["added"]!;
+    _fullyAddedGamesCount = data["fullyAdded"]!;
+    _addedExternalCount = data["addedExternal"]!;
   }
 
   List<bool> getSortStates() { return _sortStates;}
@@ -456,10 +473,14 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
 
     if(_sortStates[0]) {
       sortByName();
-    } else {
-      sortByStatus();
+    } else if (_sortStates[1]){
+        sortByStatus();
     }
-    emit(GamesDataChanged(_games, _settings.getAvailableProtonNames(), _nonAddedGamesCount, _addedGamesCount, _fullyAddedGamesCount,
+    else{
+      sortBySize();
+    }
+
+    emit(GamesDataChanged(_games, _settings.getAvailableProtonNames(), _nonAddedGamesCount, _addedGamesCount, _fullyAddedGamesCount, _addedExternalCount,
         _ssdFreeSizeInBytes, _sdCardFreeInBytes, _ssdTotalSizeInBytes, _sdTotalCardInBytes, _sortStates, _sortDirectionStates));
   }
 }

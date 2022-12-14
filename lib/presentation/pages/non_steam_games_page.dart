@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
-import 'package:steamdeck_toolbox/data/GlobalStats.dart';
+import 'package:steamdeck_toolbox/data/Stats.dart';
 import 'package:steamdeck_toolbox/data/game_folder_stats.dart';
 import 'package:steamdeck_toolbox/logic/Tools/StringTools.dart';
 import 'package:steamdeck_toolbox/logic/Tools/file_tools.dart';
@@ -43,51 +43,63 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
         // the App.build method, and use it to set our appbar title.
         title: Text("Non Steam Games Manager"),
         actions: [
-          BlocBuilder<NonSteamGamesCubit, NonSteamGamesBaseState>(builder: (context, nsgState) {
-    return Row(children: [
-          ToggleButtons(
-              direction: Axis.horizontal,
-              onPressed: (int index) {
-                index == 0 ? _nsgpBloc.sortByName() : _nsgpBloc.sortByStatus();
-              },
-              borderRadius: const BorderRadius.all(Radius.circular(8)),
-              borderColor: Colors.blue,
-              selectedBorderColor: Colors.blue[200],
-              selectedColor: Colors.white,
-              fillColor: Colors.blue[300],
-              color: Colors.blue[300],
-              children: const [Tooltip(message:"Sort By Name", child: Icon(Icons.receipt)), Tooltip(message: "Sort By Status",child: Icon(Icons.stars))],
-              isSelected: _nsgpBloc.getSortStates()
-
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(0,0,16,0),
-            child: ToggleButtons(
-            direction: Axis.horizontal,
-            onPressed: (int index) {
-              index == 0 ? _nsgpBloc.setSortDirection(SortDirection.Asc): _nsgpBloc.setSortDirection(SortDirection.Desc);
-            },
-            borderRadius: const BorderRadius.all(Radius.circular(8)),
-            borderColor: Colors.blue,
-            selectedBorderColor: Colors.blue[200],
-            selectedColor: Colors.white,
-            fillColor: Colors.blue[300],
-            color: Colors.blue[300],
-            children: const [Tooltip(message:"Descending", child: Icon(Icons.south)), Tooltip(message: "Ascending",child: Icon(Icons.north))],
-            isSelected: _nsgpBloc.getSortDirectionStates()),
-          ),
-          IconButton(
-            onPressed: () {
-              if (_formKey.currentState!.validate()) {
-                _nsgpBloc.saveData(_settingsBloc.getSettings());
-              } else {
-                print("There are errors in the form. Fix them!");
-              }
-            },
-            icon: Icon(Icons.save),
-            tooltip: "Save",
-          ),
-          /*IconButton(
+          BlocBuilder<NonSteamGamesCubit, NonSteamGamesBaseState>(
+            builder: (context, nsgState) {
+              return Row(children: [
+                ToggleButtons(
+                    direction: Axis.horizontal,
+                    onPressed: (int index) {
+                      if (index == 0) {
+                        _nsgpBloc.sortByName();
+                      } else if (index == 1) {
+                        _nsgpBloc.sortByStatus();
+                      } else if (index == 2) {
+                        _nsgpBloc.sortBySize();
+                      }
+                    },
+                    borderRadius: const BorderRadius.all(Radius.circular(8)),
+                    borderColor: Colors.blue,
+                    selectedBorderColor: Colors.blue[200],
+                    selectedColor: Colors.white,
+                    fillColor: Colors.blue[300],
+                    color: Colors.blue[300],
+                    children: const [
+                      Tooltip(message: "Sort By Name", child: Icon(Icons.receipt)),
+                      Tooltip(message: "Sort By Status", child: Icon(Icons.stars)),
+                      Tooltip(message: "Sort By Size", child: Icon(Icons.storage))
+                    ],
+                    isSelected: _nsgpBloc.getSortStates()),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(0, 0, 16, 0),
+                  child: ToggleButtons(
+                      direction: Axis.horizontal,
+                      onPressed: (int index) {
+                        index == 0 ? _nsgpBloc.setSortDirection(SortDirection.Asc) : _nsgpBloc.setSortDirection(SortDirection.Desc);
+                      },
+                      borderRadius: const BorderRadius.all(Radius.circular(8)),
+                      borderColor: Colors.blue,
+                      selectedBorderColor: Colors.blue[200],
+                      selectedColor: Colors.white,
+                      fillColor: Colors.blue[300],
+                      color: Colors.blue[300],
+                      children: const [
+                        Tooltip(message: "Descending", child: Icon(Icons.south)),
+                        Tooltip(message: "Ascending", child: Icon(Icons.north))
+                      ],
+                      isSelected: _nsgpBloc.getSortDirectionStates()),
+                ),
+                IconButton(
+                  onPressed: () {
+                    if (_formKey.currentState!.validate()) {
+                      _nsgpBloc.saveData(_settingsBloc.getSettings());
+                    } else {
+                      print("There are errors in the form. Fix them!");
+                    }
+                  },
+                  icon: Icon(Icons.save),
+                  tooltip: "Save",
+                ),
+                /*IconButton(
             onPressed: () {
               _nsgpBloc.sortByName();
             },
@@ -101,38 +113,41 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
             icon: const Icon(Icons.stars),
             tooltip: "Sort By Status",
           ),*/
-          IconButton(
-            onPressed: () {
-              _nsgpBloc.foldAll();
+                IconButton(
+                  onPressed: () {
+                    _nsgpBloc.foldAll();
+                  },
+                  icon: const Icon(Icons.unfold_less),
+                  tooltip: "Fold All",
+                ),
+                IconButton(
+                  onPressed: () {
+                    _nsgpBloc.refresh(_settingsBloc.getSettings());
+                  },
+                  icon: Icon(Icons.refresh),
+                  tooltip: "Refresh",
+                ),
+                IconButton(
+                  onPressed: () => Navigator.pushNamed(context, '/settings'),
+                  icon: Icon(Icons.settings),
+                  tooltip: "Settings",
+                ),
+                IconButton(
+                  onPressed: () => null /*_nsgpBloc.showInfo()*/,
+                  icon: Icon(Icons.info),
+                  tooltip: "Settings",
+                )
+              ]);
             },
-            icon: const Icon(Icons.unfold_less),
-            tooltip: "Fold All",
           ),
-          IconButton(
-            onPressed: () {
-              _nsgpBloc.refresh(_settingsBloc.getSettings());
-            },
-            icon: Icon(Icons.refresh),
-            tooltip: "Refresh",
-          ),
-          IconButton(
-            onPressed: () => Navigator.pushNamed(context, '/settings'),
-            icon: Icon(Icons.settings),
-            tooltip: "Settings",
-          ),
-          IconButton(
-            onPressed: () => null /*_nsgpBloc.showInfo()*/,
-            icon: Icon(Icons.info),
-            tooltip: "Settings",
-          )]);
-  },
-),
         ],
       ),
       body: Container(
           alignment: Alignment.center,
-          child: BlocConsumer<SettingsCubit, SettingsState>(listener: (context,
-              state,) {
+          child: BlocConsumer<SettingsCubit, SettingsState>(listener: (
+            context,
+            state,
+          ) {
             //print("[SetttingsCubit Consumer] State -> $state");
             if (state is SettingsSaved) {
               _nsgpBloc.refresh(state.settings);
@@ -147,9 +162,7 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
                 children: _buildDataScreen(context, nsgState),
               );
             });
-          })
-      )
-      ,
+          })),
     );
   }
 
@@ -216,10 +229,11 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
           return ListTile(
             title: Row(
               children: [
-                Expanded(child: Text(game.userGame.name, style: Theme
-                    .of(context)
-                    .textTheme
-                    .headline5, textAlign: TextAlign.left)),
+                Expanded( child: Text(game.userGame.name, style: Theme.of(context).textTheme.headline5, textAlign: TextAlign.left)),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(0, 0, 24, 0),
+                  child: Text(StringTools.bytesToStorageUnity(game.userGame.gameSize)),
+                ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(0, 0, 24, 0),
                   child: _getExeCurrentStateIcon(gameAddedStatus),
@@ -270,18 +284,13 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
           children: [
             Row(children: [
               Expanded(
-                child: Text(uge.relativeExePath, style: Theme
-                    .of(context)
-                    .textTheme
-                    .headline6, textAlign: TextAlign.left),
+                child: Text(uge.relativeExePath, style: Theme.of(context).textTheme.headline6, textAlign: TextAlign.left),
               ),
               Row(children: [
                 Switch(
                     value: uge.added,
                     onChanged: (value) {
-                      _nsgpBloc.swapExeAdding(uge, _settingsBloc
-                          .getSettings()
-                          .defaultProtonCode);
+                      _nsgpBloc.swapExeAdding(uge, _settingsBloc.getSettings().defaultProtonCode);
                     }),
                 //activeTrackColor: Colors.lightGreenAccent,
                 //activeColor: Colors.green,
@@ -350,8 +359,11 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
       color = Colors.green;
     else if (gameAddedStatus == VMGameAddedStatus.Added)
       color = Colors.orangeAccent;
-    else
+    else if (gameAddedStatus == VMGameAddedStatus.NonAdded)
       color = Colors.red;
+    else {
+      color = Colors.blue.shade200;
+    }
 
     Container c = Container(height: 15, width: 15, color: color);
 
@@ -366,7 +378,7 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
           children: [
             Expanded(
               child: Text(
-                "${state.nonAddedGamesCount + state.addedGamesCount + state.fullyAddedGamesCount} Discovered Games",
+                "${state.notAddedGamesCount + state.addedGamesCount + state.fullyAddedGamesCount} Discovered Games",
                 style: const TextStyle(color: Colors.white),
               ),
             ),
@@ -374,7 +386,7 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
             Padding(
               padding: EdgeInsets.fromLTRB(8, 0, 8, 0),
               child: Text(
-                state.nonAddedGamesCount.toString(),
+                state.notAddedGamesCount.toString(),
                 style: TextStyle(color: Colors.white),
               ),
             ),
@@ -394,6 +406,13 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
                 style: TextStyle(color: Colors.white),
               ),
             ),
+            Container(height: 15, width: 15, color: Colors.blue.shade200),
+            Padding(
+                padding: EdgeInsets.fromLTRB(8, 0, 8, 0),
+                child: Text(
+                  state.addedExternal.toString(),
+                  style: TextStyle(color: Colors.white),
+                )),
             Padding(
               padding: const EdgeInsets.fromLTRB(8.0, 0, 8, 0),
               child: Row(

@@ -40,7 +40,7 @@ class _SettingsPageState extends State<SettingsPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
-                  flex: 2,
+                  flex: 3,
                   child: Card(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
@@ -61,23 +61,54 @@ class _SettingsPageState extends State<SettingsPage> {
                             buildWhen: (previous, current) => current is SearchPathsChanged,
                             builder: (context, state) {
                               return state is SearchPathsChanged
-                                  ? ListView(
-                                      children: (state as SearchPathsChanged)
-                                          .searchPaths
-                                          .map<ListTile>((e) => ListTile(
-                                                title: Text(e),
-                                                trailing: IconButton(onPressed: () => _bloc.removePath(e), icon: const Icon(Icons.delete)),
-                                              ))
-                                          .toList(),
-                                    )
+                                  ? Column(
+                                    children: [
+                                      Expanded(
+                                        child: ListView(
+                                          shrinkWrap: true,
+                                            children: (state as SearchPathsChanged)
+                                                .searchPaths
+                                                .map<ListTile>((e) => ListTile(
+                                                      visualDensity: VisualDensity(horizontal: -4, vertical: -4),
+                                                      title: Text(e),
+                                                      trailing: IconButton(onPressed: () => _bloc.removePath(e), icon: const Icon(Icons.delete)),
+                                                    ))
+                                                .toList(),
+                                          ),
+                                      ),
+                                      Padding(
+                                        padding: const EdgeInsets.fromLTRB(16, 16, 8, 8),
+                                        child: Row(
+                                          crossAxisAlignment: CrossAxisAlignment.center,
+                                          children: [
+                                            Expanded(
+                                              child: Row(
+                                                crossAxisAlignment: CrossAxisAlignment.center,
+                                                children: [
+                                                  Container(
+                                                    padding: EdgeInsets.fromLTRB(8, 4, 8, 4),
+                                                    decoration: const BoxDecoration(
+                                                        color: Colors.grey,
+                                                        borderRadius: BorderRadius.all(Radius.circular(40))
+                                                    ),
+                                                    child: Text(
+                                                      "${state.searchPaths.length} Folders",
+                                                      style: TextStyle(fontSize: 15, color: Colors.white),
+                                                    ),
+                                                  )
+                                                ],
+                                              ),
+                                            ),
+                                            ElevatedButton(onPressed: () => _bloc.pickPath(), child: Text("Add Path")),
+                                          ],
+                                        ),
+                                      )
+                                    ],
+                                  )
                                   : Container();
                             },
                           ),
                         ),
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(0, 16, 8, 16),
-                          child: ElevatedButton(onPressed: () => _bloc.pickPath(), child: Text("Add Path")),
-                        )
                       ],
                     ),
                   ),

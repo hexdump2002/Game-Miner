@@ -11,9 +11,10 @@ class RetrievingGameData extends NonSteamGamesBaseState {}
 class BaseDataChanged extends NonSteamGamesBaseState {
   final List<VMUserGame> games;
   final List<String> availableProntonNames;
-  final int nonAddedGamesCount;
+  final int notAddedGamesCount;
   final int addedGamesCount;
   final int fullyAddedGamesCount;
+  final int addedExternal;
   final int freeSSDSpace;
   final int freeSDCardSpace;
   final int totalSSDSpace;
@@ -21,16 +22,18 @@ class BaseDataChanged extends NonSteamGamesBaseState {
   final List<bool> sortStates;
   final List<bool> sortDirectionStates;
 
-  BaseDataChanged(this.games, this.availableProntonNames, this.nonAddedGamesCount, this.addedGamesCount, this.fullyAddedGamesCount, this.freeSSDSpace,
+
+  BaseDataChanged(this.games, this.availableProntonNames, this.notAddedGamesCount, this.addedGamesCount, this.fullyAddedGamesCount, this.addedExternal,this.freeSSDSpace,
       this.freeSDCardSpace, this.totalSSDSpace, this.totalSDCardSpace, this.sortStates, this.sortDirectionStates);
 }
 
 class GamesDataRetrieved extends BaseDataChanged {
-  GamesDataRetrieved(List<VMUserGame> games,
+  GamesDataRetrieved( List<VMUserGame> games,
       List<String> availableProntonNames,
       int nonAddedGamesCount,
       int addedGamesCount,
       int fullyAddedGamesCount,
+      int addedExternal,
       int freeSSDSpace,
       int freeSDCardSpace,
       int totalSSDSpace,
@@ -43,6 +46,7 @@ class GamesDataRetrieved extends BaseDataChanged {
       nonAddedGamesCount,
       addedGamesCount,
       fullyAddedGamesCount,
+      addedExternal,
       freeSSDSpace,
       freeSDCardSpace,
       totalSSDSpace,
@@ -58,14 +62,26 @@ class GamesDataChanged extends BaseDataChanged {
       int nonAddedGamesCount,
       int addedGamesCount,
       int fullyAddedGamesCount,
+      int addedExternal,
       int freeSSDSpace,
       int freeSDCardSpace,
       int totalSSDSpace,
       int totalSDCardSpace,
       List<bool> sortStates,
       List<bool> sortDirectionStates)
-      : super(games, availableProntonNames, nonAddedGamesCount, addedGamesCount, fullyAddedGamesCount, freeSSDSpace, freeSDCardSpace, totalSSDSpace,
-      totalSDCardSpace, sortStates,sortDirectionStates);
+      : super(
+      games,
+      availableProntonNames,
+      nonAddedGamesCount,
+      addedGamesCount,
+      fullyAddedGamesCount,
+      addedExternal,
+      freeSSDSpace,
+      freeSDCardSpace,
+      totalSSDSpace,
+      totalSDCardSpace,
+      sortStates,
+      sortDirectionStates);
 }
 
 class GamesFoldingDataChanged extends BaseDataChanged {
@@ -75,12 +91,24 @@ class GamesFoldingDataChanged extends BaseDataChanged {
       int nonAddedGamesCount,
       int addedGamesCount,
       int fullyAddedGamesCount,
+      int addedExternal,
       int freeSSDSpace,
       int freeSDCardSpace,
       int totalSSDSpace,
       int totalSDCardSpace,
       List<bool> sortStates,
       List<bool> sortDirectionStates)
-      : super(games, availableProntonNames, nonAddedGamesCount, addedGamesCount, fullyAddedGamesCount, freeSSDSpace, freeSDCardSpace, totalSSDSpace,
-      totalSDCardSpace, sortStates,sortDirectionStates);
+      : super(
+      games,
+      availableProntonNames,
+      nonAddedGamesCount,
+      addedGamesCount,
+      fullyAddedGamesCount,
+      addedExternal,
+      freeSSDSpace,
+      freeSDCardSpace,
+      totalSSDSpace,
+      totalSDCardSpace,
+      sortStates,
+      sortDirectionStates);
 }
