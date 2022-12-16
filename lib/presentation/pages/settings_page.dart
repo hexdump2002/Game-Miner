@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:steamdeck_toolbox/logic/blocs/settings_cubit.dart';
@@ -24,7 +25,7 @@ class _SettingsPageState extends State<SettingsPage> {
         appBar: AppBar(
           // Here we take the value from the MyHomePage object that was created by
           // the App.build method, and use it to set our appbar title.
-          title: Text("Non Steam Games Manager"),
+          title: Text("Game Miner"),
           actions: [
             IconButton(
               onPressed: () => _bloc.save(),
@@ -48,9 +49,9 @@ class _SettingsPageState extends State<SettingsPage> {
                         Padding(
                           padding: const EdgeInsets.all(8.0),
                           child: Row(
-                            children: const [
+                            children: [
                               Text(
-                                "Search Paths",
+                                tr("search_paths"),
                                 style: TextStyle(fontSize: 20,fontWeight: FontWeight.bold),
                               ),
                             ],
@@ -92,14 +93,14 @@ class _SettingsPageState extends State<SettingsPage> {
                                                         borderRadius: BorderRadius.all(Radius.circular(40))
                                                     ),
                                                     child: Text(
-                                                      "${state.searchPaths.length} Folders",
+                                                      "${state.searchPaths.length} ${tr("folders")}",
                                                       style: TextStyle(fontSize: 15, color: Colors.white),
                                                     ),
                                                   )
                                                 ],
                                               ),
                                             ),
-                                            ElevatedButton(onPressed: () => _bloc.pickPath(), child: Text("Add Path")),
+                                            ElevatedButton(onPressed: () => _bloc.pickPath(), child: Text(tr('add_path'))),
                                           ],
                                         ),
                                       )
@@ -122,9 +123,9 @@ class _SettingsPageState extends State<SettingsPage> {
                           Padding(
                             padding: const EdgeInsets.all(8.0),
                             child: Row(
-                              children: const [
+                              children:  [
                                 Text(
-                                  "General Options",
+                                  tr("general_options"),
                                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                                 ),
                               ],
@@ -135,7 +136,7 @@ class _SettingsPageState extends State<SettingsPage> {
                             child: Row(
                     children: [
 
-                            Expanded(child: Text("Default Proton")),
+                            Expanded(child: Text(tr("default_proton"))),
                             Expanded(
                               child: DropdownButtonFormField<String>(
                                   items: _bloc.getAvailableProtonNames().map<DropdownMenuItem<String>>((String e) {

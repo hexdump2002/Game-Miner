@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:collection/collection.dart';
 
 import 'package:bloc/bloc.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:meta/meta.dart';
@@ -118,22 +119,18 @@ class SettingsCubit extends Cubit<SettingsState> {
       throw Exception("The default configured proton is not valid");
     }
 
-    for(int i=0; i<10; ++i ){
-      _settings.searchPaths.add("sdlkjfdljkdfsjkdsfkjlsdf");
-    }
-
     emit(SettingsLoaded(_settings));
   }
 
   void save() {
-    EasyLoading.show(status: "Saving Settings");
+    EasyLoading.show(status: "saving_shortcuts");
     String json = jsonEncode(_settings);
     Directory appFolder = Directory.current;
     String fullPath = "${appFolder.path}/$_configFilePath";
     File(fullPath)
       ..createSync(recursive: true)
       ..writeAsStringSync(json);
-    EasyLoading.showSuccess("Settings saved");
+    EasyLoading.showSuccess(tr("settings_saved"));
     emit(SettingsSaved(_settings));
   }
 

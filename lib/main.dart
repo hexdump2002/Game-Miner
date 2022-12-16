@@ -1,3 +1,5 @@
+import 'package:easy_localization/easy_localization.dart';
+import 'package:easy_localization_loader/easy_localization_loader.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:steamdeck_toolbox/logic/Tools/steam_tools.dart';
@@ -6,6 +8,7 @@ import 'package:steamdeck_toolbox/logic/blocs/settings_cubit.dart';
 import 'package:steamdeck_toolbox/presentation/pages/non_steam_games_page.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:steamdeck_toolbox/presentation/pages/settings_page.dart';
+import 'package:steamdeck_toolbox/presentation/pages/splash_page.dart';
 
 late SettingsCubit _settingsCubit;
 
@@ -15,7 +18,19 @@ void main() async {
 
   _settingsCubit = SettingsCubit();
   await _settingsCubit.initialize();
-  runApp(const MyApp());
+
+  // ...
+  // Needs to be called so that we can await for EasyLocalization.ensureInitialized();
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await EasyLocalization.ensureInitialized();
+  
+  runApp(EasyLocalization(
+      child: MyApp(),
+      supportedLocales: [Locale('en'), Locale('es')],
+      path: 'assets/translations',
+      fallbackLocale: Locale('en')
+  ));
 }
 
 class MyApp extends StatelessWidget {
@@ -27,6 +42,9 @@ class MyApp extends StatelessWidget {
     return BlocProvider(
       create: (context) => _settingsCubit,
       child: MaterialApp(
+        localizationsDelegates: context.localizationDelegates,
+        supportedLocales: context.supportedLocales,
+        locale: context.locale,
         title: 'Flutter Demo',
         theme: ThemeData(
           primarySwatch: Colors.blue,
@@ -40,7 +58,8 @@ class MyApp extends StatelessWidget {
 
   _buildRoutes() {
     return {
-      '/': (context) =>
+      '/': (context) => SplashPage(),
+      '/main': (context) =>
           BlocProvider(
             create: (context) => NonSteamGamesCubit(_settingsCubit),
             child: const NonSteamGamesPage(),

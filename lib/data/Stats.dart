@@ -37,12 +37,13 @@ class Stats {
     await diskSpace.scan();
     var disks = diskSpace.disks;
     var homeDisk = diskSpace.getDisk(Directory('/home'));
+    var sdDisk = diskSpace.getDisk(Directory('/run/media/mmcblk0p1'));
 
     return {
       "ssdFreeSpace": homeDisk.availableSpace,
       "ssdTotalSpace": homeDisk.totalSize,
-      "sdFreeSpace": homeDisk.availableSpace,
-      "sdTotalSpace": homeDisk.totalSize
+      "sdFreeSpace": sdDisk.availableSpace,
+      "sdTotalSpace": sdDisk.totalSize
     };
   }
 

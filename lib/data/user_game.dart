@@ -105,6 +105,10 @@ class UserGameExe {
     flatPackAppId = nsg.flatPackAppId;
 
   }
+
+  String getAbsolutePath() {
+    return p.join(startDir, relativeExePath);
+  }
 }
 
 class UserGame {
