@@ -24,13 +24,37 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await EasyLocalization.ensureInitialized();
-  
-  runApp(EasyLocalization(
-      child: MyApp(),
-      supportedLocales: [Locale('en'), Locale('es')],
-      path: 'assets/translations',
-      fallbackLocale: Locale('en')
-  ));
+
+  runApp(EasyLocalization(child: MyApp(), supportedLocales: [Locale('en'), Locale('es')], path: 'assets/translations', fallbackLocale: Locale('en')));
+  EasyLoading.instance.userInteractions = false;
+}
+
+class CustomTheme extends ThemeExtension<CustomTheme> {
+  final Color? gameCardHeaderPath;
+  final Color? gameCardExeOptionsBg;
+  final Color? infoBarBgColor;
+
+  const CustomTheme({required this.gameCardHeaderPath, required this.gameCardExeOptionsBg, required this.infoBarBgColor});
+
+  @override
+  CustomTheme copyWith({Color? gameCardHeaderPath, Color? gameCardExeOptionBg}) {
+    return CustomTheme(
+        gameCardHeaderPath: gameCardHeaderPath ?? this.gameCardHeaderPath,
+        gameCardExeOptionsBg: gameCardExeOptionsBg ?? this.gameCardExeOptionsBg,
+        infoBarBgColor: infoBarBgColor ?? this.infoBarBgColor);
+  }
+
+  @override
+  CustomTheme lerp(ThemeExtension<CustomTheme>? other, double t) {
+    if (other is! CustomTheme) {
+      return this;
+    }
+
+    return CustomTheme(
+        gameCardHeaderPath: Color.lerp(gameCardHeaderPath, other.gameCardHeaderPath, t),
+        gameCardExeOptionsBg: Color.lerp(gameCardExeOptionsBg, other.gameCardExeOptionsBg, t),
+        infoBarBgColor: Color.lerp(infoBarBgColor, other.gameCardExeOptionsBg, t));
+  }
 }
 
 class MyApp extends StatelessWidget {
@@ -41,32 +65,56 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) => _settingsCubit,
-      child: MaterialApp(
-        localizationsDelegates: context.localizationDelegates,
-        supportedLocales: context.supportedLocales,
-        locale: context.locale,
-        title: 'Flutter Demo',
-        theme: ThemeData(
-          primarySwatch: Colors.blue,
-        ),
-        initialRoute: "/",
-        routes: _buildRoutes(),
-        builder: EasyLoading.init(),
+      child: BlocBuilder<SettingsCubit, SettingsState>(
+        buildWhen: (previous, current) => current is SettingsSaved || current is SettingsLoaded,
+        builder: (context, state) {
+          ThemeData ta = _getLightTheme();
+          if(state is SettingsSaved && state.settings.darkTheme) {
+            ta= _getDarkTheme();
+          }
+          else if(state is SettingsLoaded && state.settings.darkTheme) {
+            ta = _getDarkTheme();
+          }
+          return MaterialApp(
+            localizationsDelegates: context.localizationDelegates,
+            supportedLocales: context.supportedLocales,
+            locale: context.locale,
+            title: 'Flutter Demo',
+            theme: ta,
+            initialRoute: "/",
+            routes: _buildRoutes(),
+            builder: EasyLoading.init(),
+          );
+        },
       ),
+    );
+  }
+
+  ThemeData _getDarkTheme() {
+    return ThemeData.dark().copyWith(
+      extensions: <ThemeExtension<CustomTheme>>[
+        CustomTheme(gameCardHeaderPath: Colors.grey.shade400, gameCardExeOptionsBg: Colors.grey.shade700, infoBarBgColor: Colors.grey.shade600),
+      ],
+    );
+  }
+
+  ThemeData _getLightTheme() {
+    return ThemeData.light().copyWith(
+      extensions: <ThemeExtension<CustomTheme>>[
+        CustomTheme(gameCardHeaderPath: Colors.grey.shade600, gameCardExeOptionsBg: Colors.grey.shade200, infoBarBgColor: Colors.blueGrey),
+      ],
     );
   }
 
   _buildRoutes() {
     return {
       '/': (context) => SplashPage(),
-      '/main': (context) =>
-          BlocProvider(
+      '/main': (context) => BlocProvider(
             create: (context) => NonSteamGamesCubit(_settingsCubit),
             child: const NonSteamGamesPage(),
           ),
       // When navigating to the "/second" route, build the SecondScreen widget.
-      '/settings': (context) =>
-          SettingsPage(),
+      '/settings': (context) => SettingsPage(),
     };
   }
 }

@@ -27,6 +27,7 @@ class ProtonVersion {
   Map<String, dynamic> toJson() {
     return {'code': protonCode, 'name': protonName};
   }
+
 }
 
 class Settings {
@@ -35,6 +36,7 @@ class Settings {
   final List<ProtonVersion> availableProtons = [];
   String defaultProtonCode = "None";
   late String currentUserId;
+  bool darkTheme = false;
 
   Settings();
 
@@ -44,10 +46,19 @@ class Settings {
     builtInProtons = json['builtinProtons'].map<ProtonVersion>((e) {
       return ProtonVersion(e['code'],e['name']);
     }).toList();
+    darkTheme = json['darkTheme'];
   }
 
   Map<String, dynamic> toJson() {
-    return {'searchPaths': searchPaths, 'defaultProtonCode': defaultProtonCode, 'builtinProtons': builtInProtons};
+    return {'searchPaths': searchPaths, 'defaultProtonCode': defaultProtonCode, 'builtinProtons': builtInProtons, 'darkTheme':darkTheme};
+  }
+
+  List<String> getAvailableProtonNames() {
+    var availableProtonNames = availableProtons.map((e) => e.protonName).toList();
+    availableProtonNames.sort();
+    availableProtonNames.insert(0,"None");
+
+    return availableProtonNames;
   }
 }
 
@@ -95,15 +106,7 @@ class SettingsCubit extends Cubit<SettingsState> {
   }
 
   void refresh() {
-    emit(SearchPathsChanged(_settings.searchPaths));
-  }
-
-  List<String> getAvailableProtonNames() {
-    var availableProtonNames = _settings.availableProtons.map((e) => e.protonName).toList();
-    availableProtonNames.sort();
-    availableProtonNames.insert(0,"None");
-
-    return availableProtonNames;
+    emit(SettingsChangedState(_settings));
   }
 
   void load(List<ProtonVersion> externalProtons) {
@@ -148,7 +151,7 @@ class SettingsCubit extends Cubit<SettingsState> {
 
     if (selectedDirectory != null) {
       _settings.searchPaths.add(selectedDirectory);
-      emit(SearchPathsChanged(_settings.searchPaths));
+      emit(SearchPathsChanged(_settings));
     } else {
       // User canceled the picker
     }
@@ -156,7 +159,7 @@ class SettingsCubit extends Cubit<SettingsState> {
 
   removePath(String e) {
     _settings.searchPaths.remove(e);
-    emit(SearchPathsChanged(_settings.searchPaths));
+    emit(SearchPathsChanged(_settings));
   }
 
   String getProtonNameForCode(String protonCode) {
@@ -170,5 +173,14 @@ class SettingsCubit extends Cubit<SettingsState> {
 
     return _settings.availableProtons.firstWhere((e) => e.protonName == protonName).protonCode;
   }
+
+  void setDarkThemeState(bool state) {
+    _settings.darkTheme = state;
+    emit(GeneralOptionsChanged(_settings));
+  }
+
+/*  bool getDarkThemeState() {
+    return _settings.darkTheme;
+  }*/
 
 }

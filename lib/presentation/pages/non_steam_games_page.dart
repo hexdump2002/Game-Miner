@@ -11,6 +11,7 @@ import 'package:steamdeck_toolbox/logic/Tools/file_tools.dart';
 import 'package:steamdeck_toolbox/logic/Tools/vdf_tools.dart';
 import 'package:steamdeck_toolbox/logic/blocs/non_steam_games_cubit.dart';
 import 'package:steamdeck_toolbox/logic/blocs/settings_cubit.dart';
+import 'package:steamdeck_toolbox/main.dart';
 
 import '../../data/user_game.dart';
 import '../../logic/Tools/VMGameTools.dart';
@@ -150,6 +151,7 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
             state,
           ) {
             //print("[SetttingsCubit Consumer] State -> $state");
+            //print("[SetttingsCubit Consumer] State -> $state");
             if (state is SettingsSaved) {
               _nsgpBloc.refresh(state.settings);
             } else if (state is SettingsLoaded) {
@@ -168,6 +170,9 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
   }
 
   List<Widget> _buildDataScreen(BuildContext context, NonSteamGamesBaseState nsgState) {
+
+    CustomTheme themeExtension = Theme.of(context).extension<CustomTheme>()!;
+
     if (nsgState is RetrievingGameData) {
       EasyLoading.show(status: tr("loading_games"));
       return [Container()];
@@ -178,10 +183,10 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
           child: Align(
               alignment: Alignment.topCenter,
               child: SingleChildScrollView(
-                child: _createGameCards(context, nsgState),
+                child: _createGameCards(context, nsgState,themeExtension),
               )),
         ),
-        _buildInfoBar(context, nsgState)
+        _buildInfoBar(context, nsgState, themeExtension)
       ];
     } else if (nsgState is GamesDataChanged) {
       GamesDataChanged gdr = nsgState as GamesDataChanged;
@@ -190,10 +195,10 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
           child: Align(
               alignment: Alignment.topCenter,
               child: SingleChildScrollView(
-                child: _createGameCards(context, nsgState),
+                child: _createGameCards(context, nsgState,themeExtension),
               )),
         ),
-        _buildInfoBar(context, nsgState)
+        _buildInfoBar(context, nsgState, themeExtension)
       ];
     } else if (nsgState is GamesFoldingDataChanged) {
       EasyLoading.dismiss();
@@ -202,10 +207,10 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
           child: Align(
               alignment: Alignment.topCenter,
               child: SingleChildScrollView(
-                child: _createGameCards(context, nsgState),
+                child: _createGameCards(context, nsgState, themeExtension),
               )),
         ),
-        _buildInfoBar(context, nsgState)
+        _buildInfoBar(context, nsgState, themeExtension)
       ];
     }
     /*else if (settingsState is SearchPathsChanged) {
@@ -220,7 +225,8 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
     throw Exception("Unknown state type");
   }
 
-  Widget _createGameCards(BuildContext context, BaseDataChanged state) {
+  Widget _createGameCards(BuildContext context, BaseDataChanged state, CustomTheme themeExtension) {
+
     List<ExpansionPanel> widgets = state.games.map<ExpansionPanel>((VMUserGame game) {
       var gameAddedStatus = VMGameTools.getGameStatus(game);
 
@@ -228,36 +234,42 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
         canTapOnHeader: true,
         headerBuilder: (BuildContext context, bool isExpanded) {
           return ListTile(
-            title: Row(
+            title: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(child: Text(game.userGame.name, style: Theme.of(context).textTheme.headline5, textAlign: TextAlign.left)),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(0, 0, 24, 0),
-                  child: game.userGame.isExternal ? null : Text(StringTools.bytesToStorageUnity(game.userGame.gameSize)),
+                Row(
+                  children: [
+                    Expanded(child: Text(game.userGame.name, style: Theme.of(context).textTheme.headline5, textAlign: TextAlign.left)),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(0, 0, 24, 0),
+                      child: game.userGame.isExternal ? null : Text(StringTools.bytesToStorageUnity(game.userGame.gameSize)),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(0, 0, 24, 0),
+                      child: _getExeCurrentStateIcon(gameAddedStatus),
+                    ),
+                    IconButton(
+                      onPressed: () {
+                        _nsgpBloc.renameGame(context, game);
+                      },
+                      icon: Icon(Icons.edit),
+                      tooltip: "Rename",
+                    ),
+                    IconButton(
+                      onPressed: () {
+                        _nsgpBloc.deleteGame(context, game);
+                      },
+                      icon: Icon(Icons.delete),
+                      tooltip: tr("delete"),
+                    ),
+                  ],
                 ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(0, 0, 24, 0),
-                  child: _getExeCurrentStateIcon(gameAddedStatus),
-                ),
-                IconButton(
-                  onPressed: () {
-                    _nsgpBloc.renameGame(context, game);
-                  },
-                  icon: Icon(Icons.edit),
-                  tooltip: "Rename",
-                ),
-                IconButton(
-                  onPressed: () {
-                    _nsgpBloc.deleteGame(context, game);
-                  },
-                  icon: Icon(Icons.delete),
-                  tooltip: tr("delete"),
-                ),
+                if(game.foldingState) Text("${game.userGame.path}",textAlign: TextAlign.left, style: TextStyle(color:themeExtension.gameCardHeaderPath, fontSize: 13),)
               ],
             ),
           );
         },
-        body: _buildGameTile(context, game.userGame, state.availableProntonNames),
+        body: _buildGameTile(context, themeExtension,  game.userGame, state.availableProntonNames),
         isExpanded: game.foldingState,
       );
     }).toList();
@@ -272,7 +284,7 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
     );
   }
 
-  Widget _buildGameTile(BuildContext context, UserGame ug, List<String> availableProtons) {
+  Widget _buildGameTile(BuildContext context, CustomTheme themeExtension, UserGame ug, List<String> availableProtons) {
     List<Widget> gameItems = [];
 
     List<UserGameExe> gameExePaths = ug.exeFileEntries;
@@ -309,7 +321,7 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
                 //IconButton(onPressed: uge.added ? () => true: null, icon: Icon(Icons.settings))
               ])
             ]),
-            if (uge.added) _buildGameExeForm(uge, availableProtons)
+            if (uge.added) _buildGameExeForm(uge, themeExtension, availableProtons)
           ],
         ),
       ));
@@ -324,9 +336,9 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
     );
   }
 
-  Widget _buildGameExeForm(UserGameExe uge, List<String> availableProntons) {
+  Widget _buildGameExeForm(UserGameExe uge, CustomTheme themeExtension, List<String> availableProntons) {
     return Container(
-      color: Color.fromARGB(255, 230, 230, 230),
+      color: themeExtension.gameCardExeOptionsBg,
       margin: EdgeInsets.fromLTRB(16, 8, 128, 8),
       child: Padding(
         padding: const EdgeInsets.all(8.0),
@@ -382,9 +394,9 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
     return c;
   }
 
-  Widget _buildInfoBar(BuildContext context, BaseDataChanged state) {
+  Widget _buildInfoBar(BuildContext context, BaseDataChanged state, CustomTheme themeExtension) {
     return Container(
-        color: Colors.blueGrey,
+        color: themeExtension.infoBarBgColor,
         padding: EdgeInsets.all(8),
         child: Row(
           children: [

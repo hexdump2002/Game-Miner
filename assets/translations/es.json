@@ -4,7 +4,7 @@
   "sort_by_size": "Ordenar por tamaño",
   "descending": "Descendente",
   "ascending": "Ascendente",
-  "delete": "Borrar",
+  "delete_game": "Borrar juego",
   "edit": "Editor",
   "add_remove_steam": "Añadir/Quitar de steam",
   "save": "Guardar",
@@ -27,11 +27,13 @@
   "folder_no_contains_exe":"Este directorio no contiene ficheros exe. ¿Es correcto?",
   "please_enter_text": "Por favor, introduce algún texto",
   "saving_shortcuts": "Guardando atajos",
-  "loading_games": "Guardando juegos",
+  "loading_games": "Cargando juegos",
   "data_saved": "Datos grabados!",
   "rename_game": "Renombrar juego",
   "invalid_game_name": "Nombre de juego invalido",
   "game_renamed": "El juego fue renombrado!",
   "game_couldnt_be_renamed": "El juego '{}' no pudo ser renombrado",
-  "game_was_deleted": "El juego '{}' fue borrado"
+  "game_was_deleted": "El juego '{}' fue borrado",
+  "game_couldnt_be_deleted": "El juego '{}' no pudo ser borrado",
+  "dark_theme": "Tema oscuro"
 }

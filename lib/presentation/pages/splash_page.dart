@@ -32,8 +32,8 @@ class _SplashPageState extends State<SplashPage> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Image.asset('assets/images/logo.png'),
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
+                  const Padding(
+                    padding: EdgeInsets.all(16.0),
                     child: Text("Developed by HexDump", style: TextStyle(color:Colors.white, fontSize: 25),),
                   ),
                   Text("Main tester: excitecube", style: TextStyle(color:Colors.grey.shade400, fontSize: 20))

@@ -1,25 +1,38 @@
 part of 'settings_cubit.dart';
 
 @immutable
-abstract class SettingsState {}
+abstract class SettingsState {
+}
 
 class SettingsInitial extends SettingsState {}
 
-class SearchPathsChanged extends SettingsState {
-  late final  List<String> searchPaths;
+class SettingsChangedState extends SettingsState{
+  final Settings settings;
+  SettingsChangedState(this.settings);
+}
 
-  SearchPathsChanged(this.searchPaths);
+class SearchPathsChanged extends SettingsState {
+  final Settings settings;
+  SearchPathsChanged(this.settings) ;
 }
 
 class SettingsLoaded extends SettingsState {
-  late final  Settings settings;
-
-  SettingsLoaded(settings);
+  final Settings settings;
+  SettingsLoaded(this.settings);
 }
 
 
 class SettingsSaved extends SettingsState {
-  late final  Settings settings;
-
+  final Settings settings;
   SettingsSaved(this.settings);
+}
+
+class SettingsThemeChanged extends SettingsState {
+  final Settings settings;
+  SettingsThemeChanged(this.settings);
+}
+
+class GeneralOptionsChanged extends SettingsState {
+  final Settings settings;
+  GeneralOptionsChanged(this.settings);
 }

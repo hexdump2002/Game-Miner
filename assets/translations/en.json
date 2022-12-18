@@ -4,7 +4,7 @@
   "sort_by_size": "Sort by size",
   "descending": "Descending",
   "ascending": "Ascending",
-  "delete": "Delete",
+  "delete_game": "Delete game",
   "edit": "Edit",
   "add_remove_steam": "Add/Remove from steam",
   "save": "Save",
@@ -20,7 +20,7 @@
   "folders": "Folders",
   "settings_saved": "Settings saved",
   "going_to": "You are going to",
-  "delete_capitals": "DELETE",
+  "delete_capitals": " DELETE",
   "from_file_system": " from your file system.",
   "warning_action_undone": "\nWarning: This action can't be undone",
   "cancel":"Cancel",
@@ -32,6 +32,8 @@
   "rename_game": "Game renamed",
   "invalid_game_name": "Invalid Game Name",
   "game_was_deleted": "Game '{}' was deleted",
+  "game_couldnt_be_deleted": "Game '{}' couldn't be deleted",
   "game_renamed": "Game was renamed!",
-  "game_couldnt_be_renamed": "Game '{}' couldn't be renamed"
+  "game_couldnt_be_renamed": "Game '{}' couldn't be renamed",
+  "dark_theme": "Dark Theme"
 }
