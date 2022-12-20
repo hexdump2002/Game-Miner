@@ -5,7 +5,7 @@ import 'dart:typed_data';
 import 'package:tuple/tuple.dart';
 
 final Uint8List shortcutsValueTypeCode = Uint8List.fromList([0,1,2]); //0 for list, 1 for string, 2 for u32
-final Uint8List k_entry_end_mark = Uint8List.fromList([00,0x74,0x61,0x67,0x73,0x00,0x08,0x08]);
+final Uint8List k_entry_end_mark = Uint8List.fromList([0x08,0x08]);
 
 
 class NonSteamGameExe {
@@ -27,6 +27,7 @@ class NonSteamGameExe {
   int lastPlayTime = 0;
   String flatPackAppId = "";
   String exePath = "";
+  List<String> tags = [];
 
   NonSteamGameExe();
 
@@ -39,7 +40,7 @@ class NonSteamGameExe {
     return Tuple2(nsg, from);
   }
 
-  void _assignValue(String propertyName, String propertyValue)
+  void _assignValue(String propertyName, dynamic propertyValue)
   {
     switch(propertyName)
     {
@@ -47,9 +48,9 @@ class NonSteamGameExe {
       case "appid" : {appId = _convertBEIntStringToInt(propertyValue);}break;
       case "AppName"  : {appName = propertyValue;}break;
       case "StartDir" : {startDir = _cleanPathString(propertyValue);}break;
-      case "icon" : {icon = propertyValue;}break;
+      case "icon" : {icon = _removeQuotes(propertyValue);}break;
       case "ShortcutPath" : {shortcutPath = propertyValue;}break;
-      case "LaunchOptions" : {launchOptions = propertyValue;}break;
+      case "LaunchOptions" : {launchOptions = _removeQuotes(propertyValue);}break;
       case "IsHidden" : {isHidden = _convertStrToBool(propertyValue);}break;
       case "AllowDesktopConfig" : {allowDdesktopCconfig = _convertStrToBool(propertyValue);}break;
       case "AllowOverlay" : {allowOverlay = _convertStrToBool(propertyValue);}break;
@@ -60,6 +61,7 @@ class NonSteamGameExe {
       case "LastPlayTime" : {lastPlayTime = _convertBEIntStringToInt(propertyValue);}break;
       case "FlatpakAppID" : {flatPackAppId = propertyValue;}break;
       case "Exe" : { propertyValue = _cleanPathString(propertyValue); exePath = propertyValue;}break;
+      case "tags": {tags = propertyValue; } break;
       default: throw Exception("$propertyName with value $propertyValue is not a known steam game property");
     }
   }
@@ -69,6 +71,13 @@ class NonSteamGameExe {
   }
   
   String _cleanPathString(String str)
+  {
+    if(str.startsWith("\"")) str=str.substring(1,str.length);
+    if(str.endsWith("\"")) str=str.substring(0,str.length-1);
+    return str;
+  }
+
+  String _removeQuotes(String str)
   {
     if(str.startsWith("\"")) str=str.substring(1,str.length);
     if(str.endsWith("\"")) str=str.substring(0,str.length-1);
@@ -90,8 +99,6 @@ class NonSteamGameExe {
     var entryId = tuple.item1;
     movingFrom = tuple.item2;
 
-    print("Entry ID = $entryId");
-
     while (!finished) {
       var readPropertyRetVal = _readProperty(buffer, movingFrom,consumeData);
       _assignValue(readPropertyRetVal.item1, readPropertyRetVal.item2);
@@ -110,7 +117,7 @@ class NonSteamGameExe {
 
 
 
-  Tuple3<String, String, int> _readProperty(Uint8List buffer, int from, bool consumeData) {
+  Tuple3<String, dynamic, int> _readProperty(Uint8List buffer, int from, bool consumeData) {
 
     var movingFrom = from;
 
@@ -124,9 +131,15 @@ class NonSteamGameExe {
     movingFrom = readStrRetVal.item2;
     var propertyName = readStrRetVal.item1;
 
-    var propertyValue = "";
+    dynamic propertyValue;
 
     switch (propertyType)  {
+      case 0x00:
+      {
+        Tuple2<List<String>,int> readListVal = _readList(buffer,movingFrom, consumeData);
+        movingFrom = readListVal.item2;
+        propertyValue = readListVal.item1;
+      } break;
       case 0x01:
       {
         var readStrRetVal = _readString(buffer, movingFrom, consumeData);
@@ -145,7 +158,7 @@ class NonSteamGameExe {
 
     if(consumeData) from = movingFrom;
 
-    return Tuple3(propertyName, propertyValue, movingFrom);
+    return Tuple3(propertyName, propertyValue, from);
   }
 
 
@@ -183,5 +196,39 @@ class NonSteamGameExe {
     if (consumeData) { from = index;}
 
     return Tuple2(str, from);
+  }
+
+  Tuple2<List<String>,int> _readList(Uint8List buffer, int movingFrom, bool consumeData) {
+    var index = movingFrom;
+
+
+    bool finish = false;
+    List<String> tags = [];
+
+    while(!finish) {
+      if(buffer[index]!=01) {
+        finish=true;
+      }
+      else {
+        //Skip firstbyte that should be a 01 (I guess it means more data comes)
+        ++index;
+
+        //Read string (list index)
+        Tuple2<String, int> stringTuple = _readString(buffer, index, consumeData);
+        index = stringTuple.item2;
+        String indexValue = stringTuple.item1;
+
+        //Read string (tag value)
+        stringTuple = _readString(buffer, index, consumeData);
+        index = stringTuple.item2;
+        String tagValue = stringTuple.item1;
+
+        tags.add(tagValue);
+      }
+    }
+
+    if (consumeData) { movingFrom = index;}
+
+    return Tuple2(tags, movingFrom);
   }
 }

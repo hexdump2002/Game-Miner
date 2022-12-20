@@ -30,7 +30,7 @@ class _SettingsPageState extends State<SettingsPage> {
             IconButton(
               onPressed: () => _bloc.save(),
               icon: Icon(Icons.save),
-              tooltip: "Save",
+              tooltip: tr("save"),
             ),
           ],
         ),

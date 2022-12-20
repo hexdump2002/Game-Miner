@@ -5,6 +5,7 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:steamdeck_toolbox/logic/Tools/steam_tools.dart';
 import 'package:steamdeck_toolbox/logic/blocs/non_steam_games_cubit.dart';
 import 'package:steamdeck_toolbox/logic/blocs/settings_cubit.dart';
+import 'package:steamdeck_toolbox/presentation/pages/game_artworks_page.dart';
 import 'package:steamdeck_toolbox/presentation/pages/non_steam_games_page.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:steamdeck_toolbox/presentation/pages/settings_page.dart';
@@ -108,13 +109,14 @@ class MyApp extends StatelessWidget {
 
   _buildRoutes() {
     return {
-      '/': (context) => SplashPage(),
+      '/': (context) => /*GameArtworksPage()*/SplashPage(),
       '/main': (context) => BlocProvider(
             create: (context) => NonSteamGamesCubit(_settingsCubit),
             child: const NonSteamGamesPage(),
           ),
       // When navigating to the "/second" route, build the SecondScreen widget.
       '/settings': (context) => SettingsPage(),
+      '/gameArtworks': (context) => SettingsPage(),
     };
   }
 }

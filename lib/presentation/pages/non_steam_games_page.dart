@@ -253,7 +253,7 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
                         _nsgpBloc.renameGame(context, game);
                       },
                       icon: Icon(Icons.edit),
-                      tooltip: "Rename",
+                      tooltip: tr("rename_game"),
                     ),
                     IconButton(
                       onPressed: () {

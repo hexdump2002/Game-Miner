@@ -34,6 +34,8 @@ class UserGameExe {
   int lastPlayTime = 0;
   String flatPackAppId = "";
 
+  List <String> tags = [];
+
   UserGameExe(String enclosingFolderPath, String absoluteExePath, this.brokenLink) {
     relativeExePath = absoluteExePath.substring(enclosingFolderPath.length + 1);
 
@@ -62,6 +64,7 @@ class UserGameExe {
     devkitOverrideAppId = nonSteamGameExe.devkitOverrideAppId;
     lastPlayTime = nonSteamGameExe.lastPlayTime;
     flatPackAppId = nonSteamGameExe.flatPackAppId;
+    tags = nonSteamGameExe.tags;
 
     added = true;
 
@@ -103,7 +106,7 @@ class UserGameExe {
     devkitOverrideAppId = nsg.devkitOverrideAppId;
     lastPlayTime = nsg.lastPlayTime;
     flatPackAppId = nsg.flatPackAppId;
-
+    tags = nsg.tags;
   }
 
   String getAbsolutePath() {
@@ -179,6 +182,7 @@ class UserGame {
       await _writeStringProperty(raf, "DevkitOverrideAppID", ef.devkitOverrideAppId);
       await _writeInt32BEProperty(raf, "LastPlayTime", ef.lastPlayTime);
       await _writeStringProperty(raf, "FlatpakAppID", ef.flatPackAppId);
+      await _writeListProperty(raf, "tags", ef.tags);
 
       //00 08 08 00 31 30 00 (02) (Numero 10)
       //00 08 08 00 31 00 (02)    (Numero 1)
@@ -243,5 +247,19 @@ class UserGame {
   Future<void> _writeBoolProperty(RandomAccessFile raf, String propName, bool value) async {
     int intValue = value ? 1 : 0;
     await _writeInt32BEProperty(raf, propName, intValue);
+  }
+
+  Future<void> _writeListProperty(RandomAccessFile raf, String propName, List<String> tags) async {
+    await raf.writeByte(0x00);
+    await raf.writeString(propName);
+    await raf.writeByte(0);
+    for(int i=0; i<tags.length; ++i) {
+      await raf.writeByte(0x01); //more items comming?
+      await raf.writeString(i.toString());
+      await raf.writeByte(0);
+      await raf.writeString(tags[i]);
+      await raf.writeByte(0);
+    }
+
   }
 }

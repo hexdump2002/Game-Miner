@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Generator for metainfo & .desktop files:
+    https://www.freedesktop.org/software/appstream/metainfocreator/#/
+-->
+<component type="desktop-application">
+    <id>com.hexdump.GameMiner</id>
+    <name>Game Miner</name>
+    <summary>Manage your non steam games library with easy</summary>
+    <developer_name>HexDump</developer_name>
+    <!-- <url type="homepage">https://github.com/Merrit/flutter_flatpak_example</url> -->
+    <metadata_license>MIT</metadata_license>
+    <project_license>MIT</project_license>
+    <supports>
+        <control>pointing</control>
+        <control>keyboard</control>
+        <control>touch</control>
+    </supports>
+    <description>
+        <p>Manage your non steam games library with easy!</p>
+        <p>Features</p>
+        <ul>
+            <li>Add/Remove non steam games in batch fast and easily</li>
+            <li>Manage games from differnt sources</li>
+            <li>Know exactly how much space takes up</li>
+            <li>Know the state of your steam shortcuts</li>
+            <li>Slick interface</li>
+            <li></li>
+        </ul>
+    </description>
+    <launchable type="desktop-id">com.hexdump.GameMiner.desktop</launchable>
+    <screenshots>
+        <screenshot type="default">
+            <image>https://imgur.com/a/4ehaPEJ</image>
+        </screenshot>
+    </screenshots>
+    <content_rating type="oars-1.1" />
+    <releases>
+        <release version="0.7.0" date="2022-12-19" />
+    </releases>
+</component>

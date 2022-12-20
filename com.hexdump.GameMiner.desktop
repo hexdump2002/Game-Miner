@@ -1,0 +1,13 @@
+[Desktop Entry]
+Version=0.7
+Type=Application
+
+Name=Game Miner
+Comment=Manage your non steam games library with easy
+Categories=Utility;Amusement;
+
+Icon=com.hexdump.GameMiner
+Exec=game_miner
+Terminal=false
+
+StartupWMClass=game_miner

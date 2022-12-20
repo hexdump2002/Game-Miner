@@ -156,7 +156,7 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
       //Find exe files
       for (UserGame ug in ugs) {
         List<String> exeFiles = await FileTools.getFolderFilesAsync(ug.path,
-            retrieveRelativePaths: false, recursive: true, regExFilter: r".*\.exe$", regExCaseSensitive: false);
+            retrieveRelativePaths: false, recursive: true, regExFilter: r".*\.(exe|sh|bat)$", regExCaseSensitive: false);
         ug.addExeFiles(exeFiles);
       }
     }

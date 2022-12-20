@@ -1,0 +1,59 @@
+{
+  "app-id": "com.hexdump.GameMiner",
+  "runtime": "org.freedesktop.Platform",
+  "runtime-version": "21.08",
+  "sdk": "org.freedesktop.Sdk",
+  "command": "steamdeck_toolbox",
+  "separate-locales": false,
+  "finish-args": [
+    "--share=ipc",
+    "--socket=fallback-x11",
+    "--socket=wayland",
+    "--device=dri",
+    "--socket=pulseaudio",
+    "--share=network"
+  ],
+  "modules": [
+    {
+      "name": "game_miner",
+      "buildsystem": "simple",
+      "only-arches": [
+        "x86_64"
+      ],
+      "build-commands": [
+        "mkdir -p GameMiner",
+        "tar -xf GameMiner-Linux-Portable.tar.gz -C GameMiner",
+        "cp -r GameMiner /app/",
+        "chmod +x /app/GameMiner/steamdeck_toolbox",
+        "mkdir -p /app/bin",
+        "ln -s /app/GameMiner/steamdeck_toolbox /app/bin/steamdeck_toolbox",
+        "mkdir -p /app/share/metainfo",
+        "cp -r com.hexdump.GameMiner.metainfo.xml /app/share/metainfo/",
+        "mkdir -p /app/share/icons/hicolor/scalable/apps",
+        "cp -r icon.jpg /app/share/icons/hicolor/scalable/apps/com.hexdump.GameMiner",
+        "mkdir -p /app/share/applications",
+        "cp -r com.hexdump.GameMiner.desktop /app/share/applications/",
+        "mkdir -p /app/share/appdata",
+        "cp -r com.hexdump.GameMiner.metainfo.xml /app/share/appdata/"
+      ],
+      "sources": [
+        {
+          "type": "file",
+          "path": "com.hexdump.GameMiner.metainfo.xml"
+        },
+        {
+          "type": "file",
+          "path": "com.hexdump.GameMiner.desktop"
+        },
+        {
+          "type": "file",
+          "path": "icon.jpg"
+        },
+        {
+          "type": "file",
+          "path": "GameMiner-Linux-Portable.tar.gz"
+        }
+      ]
+    }
+  ]
+}
