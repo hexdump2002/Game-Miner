@@ -23,7 +23,7 @@ class NonSteamGameExe {
   bool openVr = false;
   bool devkit = false;
   String devkitGameId = "";
-  String devkitOverrideAppId = "";
+  int devkitOverrideAppId = 0;
   int lastPlayTime = 0;
   String flatPackAppId = "";
   String exePath = "";
@@ -45,22 +45,22 @@ class NonSteamGameExe {
     switch(propertyName)
     {
       case "entry_id": {entryId = propertyValue;}break;
-      case "appid" : {appId = _convertBEIntStringToInt(propertyValue);}break;
+      case "appid" : {appId = propertyValue;}break;
       case "AppName"  : {appName = propertyValue;}break;
-      case "StartDir" : {startDir = _cleanPathString(propertyValue);}break;
-      case "icon" : {icon = _removeQuotes(propertyValue);}break;
+      case "StartDir" : {startDir = /*_cleanPathString(*/propertyValue/*)*/;}break;
+      case "icon" : {icon = /*_removeQuotes(*/propertyValue/*)*/;}break;
       case "ShortcutPath" : {shortcutPath = propertyValue;}break;
-      case "LaunchOptions" : {launchOptions = _removeQuotes(propertyValue);}break;
-      case "IsHidden" : {isHidden = _convertStrToBool(propertyValue);}break;
-      case "AllowDesktopConfig" : {allowDdesktopCconfig = _convertStrToBool(propertyValue);}break;
-      case "AllowOverlay" : {allowOverlay = _convertStrToBool(propertyValue);}break;
-      case "OpenVR" : {openVr = _convertStrToBool(propertyValue);}break;
-      case "Devkit" : {devkit = _convertStrToBool(propertyValue);}break;
+      case "LaunchOptions" : {launchOptions = /*_removeQuotes(*/propertyValue/*)*/;}break;
+      case "IsHidden" : {isHidden = _convertIntToBool(propertyValue);}break;
+      case "AllowDesktopConfig" : {allowDdesktopCconfig = _convertIntToBool(propertyValue);}break;
+      case "AllowOverlay" : {allowOverlay = _convertIntToBool(propertyValue);}break;
+      case "OpenVR" : {openVr = _convertIntToBool(propertyValue);}break;
+      case "Devkit" : {devkit = _convertIntToBool(propertyValue);}break;
       case "DevkitGameID" : {devkitGameId = propertyValue;}break;
       case "DevkitOverrideAppID" : {devkitOverrideAppId = propertyValue;}break;
-      case "LastPlayTime" : {lastPlayTime = _convertBEIntStringToInt(propertyValue);}break;
+      case "LastPlayTime" : {lastPlayTime = propertyValue;}break;
       case "FlatpakAppID" : {flatPackAppId = propertyValue;}break;
-      case "Exe" : { propertyValue = _cleanPathString(propertyValue); exePath = propertyValue;}break;
+      case "Exe" : { propertyValue = /*_cleanPathString(propertyValue);*/ exePath = propertyValue;}break;
       case "tags": {tags = propertyValue; } break;
       default: throw Exception("$propertyName with value $propertyValue is not a known steam game property");
     }
@@ -150,7 +150,7 @@ class NonSteamGameExe {
       {
         var value = dataView.getUint32(movingFrom,Endian.little);
         movingFrom += 4;
-        propertyValue = value.toString();
+        propertyValue = value;
       } break;
       default:
         assert(false, "Unknown vdf value type");
@@ -230,5 +230,9 @@ class NonSteamGameExe {
     if (consumeData) { movingFrom = index;}
 
     return Tuple2(tags, movingFrom);
+  }
+
+  bool _convertIntToBool(propertyValue) {
+    return propertyValue == 0 ? false:true;
   }
 }

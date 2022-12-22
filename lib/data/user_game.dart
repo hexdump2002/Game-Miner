@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:ffi';
 import 'dart:io';
 import 'dart:math';
@@ -30,7 +31,7 @@ class UserGameExe {
   bool openVr = false;
   bool devkit = false;
   String devkitGameId = "";
-  String devkitOverrideAppId = "";
+  int devkitOverrideAppId = 0;
   int lastPlayTime = 0;
   String flatPackAppId = "";
 
@@ -165,21 +166,21 @@ class UserGame {
       await _writeBlockId(raf, blockId++);
 
       await _writeInt32BEProperty(raf, "appid", ef.appId);
-      await _writeStringProperty(raf, "AppName", ef.name);
+      await _writeStringProperty(raf, "AppName", ef.name, addQuotes:false);
       isExternal
-          ? await _writeStringProperty(raf, "Exe", "\"${ef.relativeExePath}\"")
-          : await _writeStringProperty(raf, "Exe", "\"$path/${ef.relativeExePath}\"");
-      await _writeStringProperty(raf, "StartDir", "\"${ef.startDir}\"");
-      await _writeStringProperty(raf, "icon", "\"${ef.icon}\"");
+          ? await _writeStringProperty(raf, "Exe", "${ef.relativeExePath}")
+          : await _writeStringProperty(raf, "Exe", "$path/${ef.relativeExePath}");
+      await _writeStringProperty(raf, "StartDir", "${ef.startDir}");
+      await _writeStringProperty(raf, "icon", "${ef.icon}");
       await _writeStringProperty(raf, "ShortcutPath", "${ef.shortcutPath}");
-      await _writeStringProperty(raf, "LaunchOptions", "\"${ef.launchOptions}\"");
+      await _writeStringProperty(raf, "LaunchOptions", "${ef.launchOptions}");
       await _writeBoolProperty(raf, "IsHidden", ef.isHidden);
       await _writeBoolProperty(raf, "AllowDesktopConfig", ef.allowDdesktopConfig);
       await _writeBoolProperty(raf, "AllowOverlay", ef.allowOverlay);
       await _writeBoolProperty(raf, "OpenVR", ef.openVr);
       await _writeBoolProperty(raf, "Devkit", ef.devkit);
       await _writeStringProperty(raf, "DevkitGameID", ef.devkitGameId);
-      await _writeStringProperty(raf, "DevkitOverrideAppID", ef.devkitOverrideAppId);
+      await _writeInt32BEProperty(raf, "DevkitOverrideAppID", ef.devkitOverrideAppId);
       await _writeInt32BEProperty(raf, "LastPlayTime", ef.lastPlayTime);
       await _writeStringProperty(raf, "FlatpakAppID", ef.flatPackAppId);
       await _writeListProperty(raf, "tags", ef.tags);
@@ -189,9 +190,9 @@ class UserGame {
 
 
       //Tags are not supported (Tags type is 0)
-      await raf.writeByte(0);
+      /*await raf.writeByte(0);7
       await raf.writeString("tags");
-      await raf.writeByte(0);
+      await raf.writeByte(0);*/
       await raf.writeByte(8);
       await raf.writeByte(8);
     }
@@ -201,7 +202,7 @@ class UserGame {
 
   Future<void> _writeBlockId(RandomAccessFile raf, int num) async {
     await raf.writeByte(0);
-    await raf.writeString(num.toString());
+    await raf.writeString(num.toString(), encoding:Latin1Codec());
     await raf.writeByte(0);
     /*if (num > 999) {
       throw Exception("Can't write more than 999 non steam games");
@@ -224,18 +225,22 @@ class UserGame {
     await raf.writeByte(0);*/
   }
 
-  Future<void> _writeStringProperty(RandomAccessFile raf, String propName, String propValue) async {
+  Future<void> _writeStringProperty(RandomAccessFile raf, String propName, String propValue, {bool addQuotes = false}) async {
     await raf.writeByte(0x01);
-    await raf.writeString(propName);
+    await raf.writeString(propName, encoding:Latin1Codec());
     await raf.writeByte(0);
-    await raf.writeString(propValue);
+
+    if(propValue.isNotEmpty && addQuotes) {
+      propValue = "\"$propValue\"";
+    }
+    await raf.writeString(propValue, encoding:Latin1Codec());
     await raf.writeByte(0);
   }
 
   Future<void> _writeInt32BEProperty(RandomAccessFile raf, String propName, int value) async {
     await raf.writeByte(0x02);
 
-    await raf.writeString(propName);
+    await raf.writeString(propName, encoding:Latin1Codec());
     await raf.writeByte(0);
 
     await raf.writeByte((value & 0x000000FF));
@@ -251,13 +256,13 @@ class UserGame {
 
   Future<void> _writeListProperty(RandomAccessFile raf, String propName, List<String> tags) async {
     await raf.writeByte(0x00);
-    await raf.writeString(propName);
+    await raf.writeString(propName, encoding:Latin1Codec());
     await raf.writeByte(0);
     for(int i=0; i<tags.length; ++i) {
       await raf.writeByte(0x01); //more items comming?
-      await raf.writeString(i.toString());
+      await raf.writeString(i.toString(), encoding:Latin1Codec());
       await raf.writeByte(0);
-      await raf.writeString(tags[i]);
+      await raf.writeString(tags[i], encoding:Latin1Codec());
       await raf.writeByte(0);
     }
 

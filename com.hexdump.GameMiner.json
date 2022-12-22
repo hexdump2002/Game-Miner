@@ -11,7 +11,9 @@
     "--socket=wayland",
     "--device=dri",
     "--socket=pulseaudio",
-    "--share=network"
+    "--share=network",
+    "--filesystem=host",
+    "--filesystem=home"
   ],
   "modules": [
     {

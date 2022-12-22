@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:math';
 import 'package:steamdeck_toolbox/logic/Tools/vdf_tools.dart';
 
 import 'crc32.dart';
@@ -61,7 +60,8 @@ class SteamTools {
 
   static Future<String> getUserId() async{
     String homeFolder = FileTools.getHomeFolder();
-    String path = "$homeFolder/.steam/steam/userdata";
+    //String path = "$homeFolder/.local/Steam/steam/userdata";
+    String path = "$homeFolder/.local/share/Steam/userdata"; //Changed because of flatpak
 
     //Todo, check for empty folder
     var folders = await FileTools.getFolderFilesAsync(path,retrieveRelativePaths: true, recursive: false,regExFilter: "",onlyFolders: true);

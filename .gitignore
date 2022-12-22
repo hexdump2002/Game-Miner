@@ -22,3 +22,7 @@ doc/api/
 
 
 settings.cfg
+/FlutterApp-Linux-Portable.tar.gz
+/build-dir/
+/.flatpak-builder/
+/GameMiner-Linux-Portable.tar.gz

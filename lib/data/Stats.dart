@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:steamdeck_toolbox/data/game_folder_stats.dart';
 import 'package:steamdeck_toolbox/logic/Tools/VMGameTools.dart';
 import 'package:steamdeck_toolbox/logic/blocs/non_steam_games_cubit.dart';
 import 'package:universal_disk_space/universal_disk_space.dart';
@@ -36,7 +35,8 @@ class Stats {
     final diskSpace = DiskSpace();
     await diskSpace.scan();
     var disks = diskSpace.disks;
-    var homeDisk = diskSpace.getDisk(Directory('/home'));
+    //Originally it was just /home but it didn't worked when I created a flatpak bundle
+    var homeDisk = diskSpace.getDisk(Directory('/home/hexdump/.var/app'));
     var sdDisk = diskSpace.getDisk(Directory('/run/media/mmcblk0p1'));
 
     return {
