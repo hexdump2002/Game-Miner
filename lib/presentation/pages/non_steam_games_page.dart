@@ -4,6 +4,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:expandable/expandable.dart';
 import 'package:steamdeck_toolbox/data/Stats.dart';
 import 'package:steamdeck_toolbox/data/game_folder_stats.dart';
 import 'package:steamdeck_toolbox/logic/Tools/StringTools.dart';
@@ -66,7 +67,7 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
                     fillColor: Colors.blue[300],
                     color: Colors.blue[300],
                     isSelected: _nsgpBloc.getSortStates(),
-                    children:  [
+                    children: [
                       Tooltip(message: tr("sort_by_name"), child: const Icon(Icons.receipt)),
                       Tooltip(message: tr("sort_by_status"), child: const Icon(Icons.stars)),
                       Tooltip(message: tr("sort_by_size"), child: const Icon(Icons.storage))
@@ -85,7 +86,7 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
                       fillColor: Colors.blue[300],
                       color: Colors.blue[300],
                       isSelected: _nsgpBloc.getSortDirectionStates(),
-                      children:  [
+                      children: [
                         Tooltip(message: tr("descending"), child: const Icon(Icons.south)),
                         Tooltip(message: tr("ascending"), child: const Icon(Icons.north))
                       ]),
@@ -170,7 +171,6 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
   }
 
   List<Widget> _buildDataScreen(BuildContext context, NonSteamGamesBaseState nsgState) {
-
     CustomTheme themeExtension = Theme.of(context).extension<CustomTheme>()!;
 
     if (nsgState is RetrievingGameData) {
@@ -182,9 +182,7 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
         Expanded(
           child: Align(
               alignment: Alignment.topCenter,
-              child: SingleChildScrollView(
-                child: _createGameCards(context, nsgState,themeExtension),
-              )),
+              child: _createGameCards(context, nsgState, themeExtension)),
         ),
         _buildInfoBar(context, nsgState, themeExtension)
       ];
@@ -194,9 +192,7 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
         Expanded(
           child: Align(
               alignment: Alignment.topCenter,
-              child: SingleChildScrollView(
-                child: _createGameCards(context, nsgState,themeExtension),
-              )),
+              child: _createGameCards(context, nsgState, themeExtension)),
         ),
         _buildInfoBar(context, nsgState, themeExtension)
       ];
@@ -206,9 +202,7 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
         Expanded(
           child: Align(
               alignment: Alignment.topCenter,
-              child: SingleChildScrollView(
-                child: _createGameCards(context, nsgState, themeExtension),
-              )),
+              child: _createGameCards(context, nsgState, themeExtension)),
         ),
         _buildInfoBar(context, nsgState, themeExtension)
       ];
@@ -226,6 +220,61 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
   }
 
   Widget _createGameCards(BuildContext context, BaseDataChanged state, CustomTheme themeExtension) {
+    var games = state.games;
+
+    return Form(
+        key: _formKey,
+        child: ListView.builder(
+            itemCount: games.length,
+            itemBuilder: (BuildContext context, int index) {
+              var game = games[index];
+              return ExpandablePanel(
+                header: ListTile(
+                    title: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(child: Text(game.userGame.name, style: Theme.of(context).textTheme.headline5, textAlign: TextAlign.left)),
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(0, 0, 24, 0),
+                              child: game.userGame.isExternal ? null : Text(StringTools.bytesToStorageUnity(game.userGame.gameSize)),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(0, 0, 24, 0),
+                              child: _getExeCurrentStateIcon(VMGameTools.getGameStatus(game)),
+                            ),
+                            IconButton(
+                              onPressed: () {
+                                _nsgpBloc.renameGame(context, game);
+                              },
+                              icon: Icon(Icons.edit),
+                              tooltip: tr("rename_game"),
+                            ),
+                            IconButton(
+                              onPressed: () {
+                                _nsgpBloc.deleteGame(context, game);
+                              },
+                              icon: Icon(Icons.delete),
+                              tooltip: tr("delete"),
+                            ),
+                          ],
+                        ),
+                        if (game.foldingState)
+                          Text(
+                            "${game.userGame.path}",
+                            textAlign: TextAlign.left,
+                            style: TextStyle(color: themeExtension.gameCardHeaderPath, fontSize: 13),
+                          )
+                      ],
+                    ),
+                  ),  expanded: _buildGameTile(context, themeExtension, game.userGame, state.availableProntonNames),
+                  collapsed: Container(),
+              );
+                }));
+  }
+
+/*Widget _createGameCards(BuildContext context, BaseDataChanged state, CustomTheme themeExtension) {
 
     List<ExpansionPanel> widgets = state.games.map<ExpansionPanel>((VMUserGame game) {
       var gameAddedStatus = VMGameTools.getGameStatus(game);
@@ -280,9 +329,9 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
           expansionCallback: (int index, bool isExpanded) {
             _nsgpBloc.swapExpansionStateForItem(index);
           },
-          children: widgets),
+          children: widgets,),
     );
-  }
+  }*/
 
   Widget _buildGameTile(BuildContext context, CustomTheme themeExtension, UserGame ug, List<String> availableProtons) {
     List<Widget> gameItems = [];
@@ -295,8 +344,7 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
         child: Container(
             decoration: const BoxDecoration(color: Colors.red, borderRadius: BorderRadius.all(Radius.circular(40))),
             padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
-            child: Text(tr("folder_no_contains_exe"),
-                style: TextStyle(color: Colors.white, fontSize: 20), textAlign: TextAlign.center)),
+            child: Text(tr("folder_no_contains_exe"), style: TextStyle(color: Colors.white, fontSize: 20), textAlign: TextAlign.center)),
       );
     }
 
@@ -402,7 +450,7 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
           children: [
             Expanded(
               child: Text(
-                "${state.notAddedGamesCount + state.addedGamesCount + state.fullyAddedGamesCount} "+tr("discovered_games"),
+                "${state.notAddedGamesCount + state.addedGamesCount + state.fullyAddedGamesCount} " + tr("discovered_games"),
                 style: const TextStyle(color: Colors.white),
               ),
             ),

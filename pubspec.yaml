@@ -45,6 +45,7 @@ dependencies:
   easy_localization_loader: ^1.0.1+1
   universal_disk_space: ^0.2.3
   flappy_search_bar_ns: ^2.0.2
+  expandable: ^5.0.1
 
 dev_dependencies:
   flutter_test:

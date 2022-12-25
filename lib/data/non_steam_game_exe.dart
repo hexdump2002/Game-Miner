@@ -45,31 +45,31 @@ class NonSteamGameExe {
     switch(propertyName)
     {
       case "entry_id": {entryId = propertyValue;}break;
-      case "appid" : {appId = propertyValue;}break;
-      case "AppName"  : {appName = propertyValue;}break;
-      case "StartDir" : {startDir = /*_cleanPathString(*/propertyValue/*)*/;}break;
-      case "icon" : {icon = /*_removeQuotes(*/propertyValue/*)*/;}break;
-      case "ShortcutPath" : {shortcutPath = propertyValue;}break;
-      case "LaunchOptions" : {launchOptions = /*_removeQuotes(*/propertyValue/*)*/;}break;
-      case "IsHidden" : {isHidden = _convertIntToBool(propertyValue);}break;
-      case "AllowDesktopConfig" : {allowDdesktopCconfig = _convertIntToBool(propertyValue);}break;
-      case "AllowOverlay" : {allowOverlay = _convertIntToBool(propertyValue);}break;
-      case "OpenVR" : {openVr = _convertIntToBool(propertyValue);}break;
-      case "Devkit" : {devkit = _convertIntToBool(propertyValue);}break;
-      case "DevkitGameID" : {devkitGameId = propertyValue;}break;
-      case "DevkitOverrideAppID" : {devkitOverrideAppId = propertyValue;}break;
-      case "LastPlayTime" : {lastPlayTime = propertyValue;}break;
-      case "FlatpakAppID" : {flatPackAppId = propertyValue;}break;
-      case "Exe" : { propertyValue = /*_cleanPathString(propertyValue);*/ exePath = propertyValue;}break;
+      case "appid" :case "AppId": {appId = propertyValue;}break;
+      case "AppName":case "appname": {appName = propertyValue;}break;
+      case "StartDir" :case "startdir": {startDir = /*_cleanPathString(*/propertyValue/*)*/;}break;
+      case "Icon": case "icon" : {icon = /*_removeQuotes(*/propertyValue/*)*/;}break;
+      case "shortcutpath": case "ShortcutPath" : {shortcutPath = propertyValue;}break;
+      case "launchoptions": case "LaunchOptions" : {launchOptions = /*_removeQuotes(*/propertyValue/*)*/;}break;
+      case "ishidden": case "IsHidden" : {isHidden = _convertIntToBool(propertyValue);}break;
+      case "AllowDesktopConfig" :case "allowdesktopconfig": {allowDdesktopCconfig = _convertIntToBool(propertyValue);}break;
+      case "AllowOverlay" :case "allowoverlay": {allowOverlay = _convertIntToBool(propertyValue);}break;
+      case "OpenVR" :case "openvr": {openVr = _convertIntToBool(propertyValue);}break;
+      case "Devkit" :case "devkit": {devkit = _convertIntToBool(propertyValue);}break;
+      case "DevkitGameID" :case "devkitgameid": {devkitGameId = propertyValue;}break;
+      case "DevkitOverrideAppID" : case "devkitoverrideappid": {devkitOverrideAppId = propertyValue;}break;
+      case "LastPlayTime" :case "lastplaytime": {lastPlayTime = propertyValue;}break;
+      case "FlatpakAppID" :case "flatpakappid": {flatPackAppId = propertyValue;}break;
+      case "Exe" : case "exe": { propertyValue = /*_cleanPathString(propertyValue);*/ exePath = propertyValue;}break;
       case "tags": {tags = propertyValue; } break;
       default: throw Exception("$propertyName with value $propertyValue is not a known steam game property");
     }
   }
-  
+
   int _convertBEIntStringToInt(String value) {
     return int.parse(value);
   }
-  
+
   String _cleanPathString(String str)
   {
     if(str.startsWith("\"")) str=str.substring(1,str.length);
@@ -83,7 +83,7 @@ class NonSteamGameExe {
     if(str.endsWith("\"")) str=str.substring(0,str.length-1);
     return str;
   }
-  
+
   bool _convertStrToBool(String str)
   {
     if(int.parse(str)!=1 && int.parse(str)!=0) throw  FormatException("Str does not contain a convertible bool");
