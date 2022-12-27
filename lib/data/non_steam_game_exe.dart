@@ -70,19 +70,7 @@ class NonSteamGameExe {
     return int.parse(value);
   }
 
-  String _cleanPathString(String str)
-  {
-    if(str.startsWith("\"")) str=str.substring(1,str.length);
-    if(str.endsWith("\"")) str=str.substring(0,str.length-1);
-    return str;
-  }
 
-  String _removeQuotes(String str)
-  {
-    if(str.startsWith("\"")) str=str.substring(1,str.length);
-    if(str.endsWith("\"")) str=str.substring(0,str.length-1);
-    return str;
-  }
 
   bool _convertStrToBool(String str)
   {

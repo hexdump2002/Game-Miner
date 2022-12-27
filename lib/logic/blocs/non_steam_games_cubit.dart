@@ -93,7 +93,7 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
       while (!finished && i < userGames.length) {
         UserGame e = _games[i].userGame;
         UserGameExe? uge = e.exeFileEntries.firstWhereOrNull((exe) {
-          return "${e.path}/${exe.relativeExePath}" == nsg.exePath;
+          return "${e.path}/${exe.relativeExePath}" == StringTools.removeQuotes(nsg.exePath);
         });
 
         if (uge != null) {

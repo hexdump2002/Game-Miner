@@ -15,4 +15,18 @@ class StringTools {
     return  "$number $suffix";
   }
 
+  static String cleanPathString(String str)
+  {
+    if(str.startsWith("\"")) str=str.substring(1,str.length);
+    if(str.endsWith("\"")) str=str.substring(0,str.length-1);
+    return str;
+  }
+
+  static String removeQuotes(String str)
+  {
+    if(str.startsWith("\"")) str=str.substring(1,str.length);
+    if(str.endsWith("\"")) str=str.substring(0,str.length-1);
+    return str;
+  }
+
 }

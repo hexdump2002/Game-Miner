@@ -102,20 +102,6 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
                   icon: Icon(Icons.save),
                   tooltip: tr("save"),
                 ),
-                /*IconButton(
-            onPressed: () {
-              _nsgpBloc.sortByName();
-            },
-            icon: Icon(Icons.receipt),
-            tooltip: "Sort By Name",
-          ),
-          IconButton(
-            onPressed: () {
-              _nsgpBloc.sortByStatus();
-            },
-            icon: const Icon(Icons.stars),
-            tooltip: "Sort By Status",
-          ),*/
                 IconButton(
                   onPressed: () {
                     _nsgpBloc.foldAll();
@@ -151,8 +137,6 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
             context,
             state,
           ) {
-            //print("[SetttingsCubit Consumer] State -> $state");
-            //print("[SetttingsCubit Consumer] State -> $state");
             if (state is SettingsSaved) {
               _nsgpBloc.refresh(state.settings);
             } else if (state is SettingsLoaded) {
@@ -229,6 +213,7 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
             itemBuilder: (BuildContext context, int index) {
               var game = games[index];
               return ExpandablePanel(
+                controller: ExpandableController(initialExpanded:game.foldingState)..addListener(() => _nsgpBloc.swapExpansionStateForItem(index)),
                 header: ListTile(
                     title: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -268,8 +253,11 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
                           )
                       ],
                     ),
-                  ),  expanded: _buildGameTile(context, themeExtension, game.userGame, state.availableProntonNames),
+                  ),  expanded: Container(padding:EdgeInsets.fromLTRB(0, 16, 0, 16), margin: EdgeInsets.fromLTRB(16, 16, 16, 16), decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20), color: Colors.black12
+              ), child: _buildGameTile(context, themeExtension, game.userGame, state.availableProntonNames)),
                   collapsed: Container(),
+
               );
                 }));
   }

@@ -66,6 +66,8 @@ class SteamTools {
     //Todo, check for empty folder
     var folders = await FileTools.getFolderFilesAsync(path,retrieveRelativePaths: true, recursive: false,regExFilter: "",onlyFolders: true);
 
+    if(folders.isEmpty) throw Exception("It seems steam does not exist or it is not properly configuredd");
+
     return folders[0];
   }
 

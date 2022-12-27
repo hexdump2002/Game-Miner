@@ -8,6 +8,7 @@ import 'package:steamdeck_toolbox/logic/Tools/file_tools.dart';
 import 'package:path/path.dart' as p;
 import 'package:steamdeck_toolbox/logic/Tools/vdf_tools.dart';
 
+import '../logic/Tools/StringTools.dart';
 import 'non_steam_game_exe.dart';
 
 class UserGameExe {
@@ -90,7 +91,7 @@ class UserGameExe {
   }
 
   void fillFromNonSteamGame(NonSteamGameExe nsg, String pathToGame) {
-    relativeExePath = nsg.exePath.substring(pathToGame.length+1);
+    relativeExePath = StringTools.removeQuotes(nsg.exePath).substring(pathToGame.length+1);
     entryId = nsg.entryId;
     appId = nsg.appId;
     name = nsg.appName;
