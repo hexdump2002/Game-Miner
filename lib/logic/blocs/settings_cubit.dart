@@ -65,6 +65,9 @@ class Settings {
 class SettingsCubit extends Cubit<SettingsState> {
   late Settings _settings;
   final String _configFilePath = "settings.cfg";
+  bool _gameListDirty = false;
+  bool get isGameListDirty { return _gameListDirty;}
+
 
   SettingsCubit() : super(SettingsInitial());
 
@@ -92,7 +95,7 @@ class SettingsCubit extends Cubit<SettingsState> {
       ];
 
       _settings.defaultProtonCode = "None";
-      save();
+      save(showMessages: false);
 
       availableProtons.addAll(_settings.builtInProtons);
       _settings.availableProtons.addAll(availableProtons);
@@ -125,15 +128,18 @@ class SettingsCubit extends Cubit<SettingsState> {
     emit(SettingsLoaded(_settings));
   }
 
-  void save() {
-    EasyLoading.show(status: "saving_shortcuts");
+  void save({bool showMessages=true}) {
+    if(showMessages) EasyLoading.show(status: "saving_settings");
+
     String json = jsonEncode(_settings);
     Directory appFolder = Directory.current;
     String fullPath = "${appFolder.path}/$_configFilePath";
     File(fullPath)
       ..createSync(recursive: true)
       ..writeAsStringSync(json);
-    EasyLoading.showSuccess(tr("settings_saved"));
+
+    if(showMessages) EasyLoading.showSuccess(tr("settings_saved"));
+
     emit(SettingsSaved(_settings));
   }
 
@@ -151,6 +157,7 @@ class SettingsCubit extends Cubit<SettingsState> {
 
     if (selectedDirectory != null) {
       _settings.searchPaths.add(selectedDirectory);
+      _gameListDirty  = true;
       emit(SearchPathsChanged(_settings));
     } else {
       // User canceled the picker
@@ -159,6 +166,7 @@ class SettingsCubit extends Cubit<SettingsState> {
 
   removePath(String e) {
     _settings.searchPaths.remove(e);
+    _gameListDirty = true;
     emit(SearchPathsChanged(_settings));
   }
 

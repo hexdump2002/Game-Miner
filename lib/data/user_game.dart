@@ -203,7 +203,7 @@ class UserGame {
 
   Future<void> _writeBlockId(RandomAccessFile raf, int num) async {
     await raf.writeByte(0);
-    await raf.writeString(num.toString(), encoding:Latin1Codec());
+    await raf.writeString(num.toString());
     await raf.writeByte(0);
     /*if (num > 999) {
       throw Exception("Can't write more than 999 non steam games");
@@ -228,20 +228,20 @@ class UserGame {
 
   Future<void> _writeStringProperty(RandomAccessFile raf, String propName, String propValue, {bool addQuotes = false}) async {
     await raf.writeByte(0x01);
-    await raf.writeString(propName, encoding:Latin1Codec());
+    await raf.writeString(propName);
     await raf.writeByte(0);
 
     if(propValue.isNotEmpty && addQuotes) {
       propValue = "\"$propValue\"";
     }
-    await raf.writeString(propValue, encoding:Latin1Codec());
+    await raf.writeString(propValue);
     await raf.writeByte(0);
   }
 
   Future<void> _writeInt32BEProperty(RandomAccessFile raf, String propName, int value) async {
     await raf.writeByte(0x02);
 
-    await raf.writeString(propName, encoding:Latin1Codec());
+    await raf.writeString(propName);
     await raf.writeByte(0);
 
     await raf.writeByte((value & 0x000000FF));
@@ -257,13 +257,13 @@ class UserGame {
 
   Future<void> _writeListProperty(RandomAccessFile raf, String propName, List<String> tags) async {
     await raf.writeByte(0x00);
-    await raf.writeString(propName, encoding:Latin1Codec());
+    await raf.writeString(propName);
     await raf.writeByte(0);
     for(int i=0; i<tags.length; ++i) {
       await raf.writeByte(0x01); //more items comming?
-      await raf.writeString(i.toString(), encoding:Latin1Codec());
+      await raf.writeString(i.toString());
       await raf.writeByte(0);
-      await raf.writeString(tags[i], encoding:Latin1Codec());
+      await raf.writeString(tags[i]);
       await raf.writeByte(0);
     }
 

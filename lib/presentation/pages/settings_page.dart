@@ -12,6 +12,7 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
   late final SettingsCubit _bloc;
+  bool _refreshListOfGames = false;
 
   @override
   void initState() {
@@ -26,6 +27,11 @@ class _SettingsPageState extends State<SettingsPage> {
           // Here we take the value from the MyHomePage object that was created by
           // the App.build method, and use it to set our appbar title.
           title: Text(tr("settings")),
+          leading: GestureDetector(
+              child: const Icon(Icons.arrow_back),
+              onTap: () {
+                Navigator.pop(context, _bloc.isGameListDirty);
+              }),
           actions: [
             IconButton(
               onPressed: () => _bloc.save(),
@@ -34,8 +40,7 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
           ],
         ),
-        body: _buildSettings()
-        );
+        body: _buildSettings());
   }
 
   Widget _buildGeneralOptions(Settings settings) {

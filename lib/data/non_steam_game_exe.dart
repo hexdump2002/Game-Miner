@@ -1,5 +1,6 @@
 
 //ordered as ShortcutsValueType enum
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:tuple/tuple.dart';
@@ -173,10 +174,18 @@ class NonSteamGameExe {
     String str = "";
 
     var index = from;
-    while (buffer[index]!=0 && index<buffer.length) {
-      str+= String.fromCharCode(buffer[index]);
-      index+=1;
+    //Search end of string
+    var endOfString = index;
+    while (buffer[endOfString]!=0) {
+      if(endOfString>=buffer.length) throw Exception("EOF while reading a string");
+      ++endOfString;
     }
+
+    //str= utf8.decode(String.fromCharCodes(buffer,index,endOfString).runes.toList());
+    Uint8List subView = Uint8List.sublistView(buffer,index,endOfString);
+    str = utf8.decode(subView);
+
+    index=endOfString;
 
     //We need to consume last 0 if no end of buffer
     if (index<buffer.length)  { index+=1; }

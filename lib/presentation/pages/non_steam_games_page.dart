@@ -117,8 +117,13 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
                   tooltip: tr("refresh"),
                 ),
                 IconButton(
-                  onPressed: () => Navigator.pushNamed(context, '/settings'),
-                  icon: Icon(Icons.settings),
+                  onPressed: () async  {
+                    bool? gameListDirtyDyn = await Navigator.pushNamed(context, '/settings') as bool;
+                    if(gameListDirtyDyn!=null && gameListDirtyDyn) {
+                       _nsgpBloc.refresh(_settingsBloc.getSettings());
+                    }
+                  },
+                  icon: const Icon(Icons.settings),
                   tooltip: tr("settings"),
                 ),
                 /*IconButton(
@@ -137,9 +142,9 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
             context,
             state,
           ) {
-            if (state is SettingsSaved) {
+            /*if (state is SettingsSaved) {
               _nsgpBloc.refresh(state.settings);
-            } else if (state is SettingsLoaded) {
+            } else*/ if (state is SettingsLoaded) {
               _nsgpBloc.refresh(state.settings);
             }
           }, builder: (context, settingsState) {

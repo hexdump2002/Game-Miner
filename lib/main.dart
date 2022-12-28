@@ -14,20 +14,18 @@ import 'package:steamdeck_toolbox/presentation/pages/splash_page.dart';
 late SettingsCubit _settingsCubit;
 
 void main() async {
-  //Close steam client
-  //SteamTools.closeSteamClient();
-
-  _settingsCubit = SettingsCubit();
-  await _settingsCubit.initialize();
-
-  // ...
   // Needs to be called so that we can await for EasyLocalization.ensureInitialized();
   WidgetsFlutterBinding.ensureInitialized();
-
   await EasyLocalization.ensureInitialized();
+
+  //Close steam client
+  SteamTools.closeSteamClient();
 
   runApp(EasyLocalization(child: MyApp(), supportedLocales: [Locale('en'), Locale('es')], path: 'assets/translations', fallbackLocale: Locale('en')));
   EasyLoading.instance.userInteractions = false;
+
+  _settingsCubit = SettingsCubit();
+  await _settingsCubit.initialize();
 }
 
 class CustomTheme extends ThemeExtension<CustomTheme> {
