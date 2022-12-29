@@ -1,7 +1,7 @@
 import 'dart:io';
 
-import 'package:steamdeck_toolbox/logic/Tools/VMGameTools.dart';
-import 'package:steamdeck_toolbox/logic/blocs/non_steam_games_cubit.dart';
+import 'package:game_miner/logic/Tools/VMGameTools.dart';
+import 'package:game_miner/logic/blocs/non_steam_games_cubit.dart';
 import 'package:universal_disk_space/universal_disk_space.dart';
 
 import '../logic/Tools/file_tools.dart';

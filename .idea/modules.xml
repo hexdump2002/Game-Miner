@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/steamdeck_toolbox_flutter.iml" filepath="$PROJECT_DIR$/.idea/steamdeck_toolbox_flutter.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/game_miner.iml" filepath="$PROJECT_DIR$/.idea/game_miner.iml" />
     </modules>
   </component>
 </project>

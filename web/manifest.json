@@ -1,6 +1,6 @@
 {
-    "name": "steamdeck_toolbox",
-    "short_name": "steamdeck_toolbox",
+    "name": "GameMiner",
+    "short_name": "GameMiner",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

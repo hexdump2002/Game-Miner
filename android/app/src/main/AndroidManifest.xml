@@ -1,7 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.steamdeck_toolbox">
+    package="com.hexdump.GameMiner">
    <application
-        android:label="steamdeck_toolbox"
+        android:label="GameMiner"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

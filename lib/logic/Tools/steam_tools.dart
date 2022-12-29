@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'package:steamdeck_toolbox/logic/Tools/vdf_tools.dart';
+import 'package:game_miner/logic/Tools/vdf_tools.dart';
 
 import 'crc32.dart';
 import 'file_tools.dart';

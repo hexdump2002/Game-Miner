@@ -4,9 +4,9 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:path/path.dart' as pathLib;
-import 'package:steamdeck_toolbox/logic/Tools/file_tools.dart';
+import 'package:game_miner/logic/Tools/file_tools.dart';
 import 'package:path/path.dart' as p;
-import 'package:steamdeck_toolbox/logic/Tools/vdf_tools.dart';
+import 'package:game_miner/logic/Tools/vdf_tools.dart';
 
 import '../logic/Tools/StringTools.dart';
 import 'non_steam_game_exe.dart';

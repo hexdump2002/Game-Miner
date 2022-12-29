@@ -1,9 +1,9 @@
 import 'package:bloc/bloc.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:meta/meta.dart';
-import 'package:steamdeck_toolbox/logic/blocs/settings_cubit.dart';
-import 'package:steamdeck_toolbox/presentation/pages/non_steam_games_page.dart';
-import 'package:steamdeck_toolbox/presentation/pages/settings_page.dart';
+import 'package:game_miner/logic/blocs/settings_cubit.dart';
+import 'package:game_miner/presentation/pages/non_steam_games_page.dart';
+import 'package:game_miner/presentation/pages/settings_page.dart';
 
 part 'main_dart_state.dart';
 

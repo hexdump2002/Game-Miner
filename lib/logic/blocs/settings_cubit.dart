@@ -8,8 +8,8 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:meta/meta.dart';
-import 'package:steamdeck_toolbox/logic/Tools/steam_tools.dart';
-import 'package:steamdeck_toolbox/logic/Tools/vdf_tools.dart';
+import 'package:game_miner/logic/Tools/steam_tools.dart';
+import 'package:game_miner/logic/Tools/vdf_tools.dart';
 
 part 'settings_state.dart';
 

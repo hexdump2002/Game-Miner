@@ -3,8 +3,8 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/services.dart';
-import 'package:steamdeck_toolbox/data/non_steam_game_exe.dart';
-import 'package:steamdeck_toolbox/logic/Tools/file_tools.dart';
+import 'package:game_miner/data/non_steam_game_exe.dart';
+import 'package:game_miner/logic/Tools/file_tools.dart';
 
 const int kEofMark = 0x0808;
 

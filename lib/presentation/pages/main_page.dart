@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:steamdeck_toolbox/logic/blocs/main_dart_cubit.dart';
-import 'package:steamdeck_toolbox/logic/blocs/non_steam_games_cubit.dart';
-import 'package:steamdeck_toolbox/logic/blocs/settings_cubit.dart';
-import 'package:steamdeck_toolbox/presentation/pages/settings_page.dart';
+import 'package:game_miner/logic/blocs/main_dart_cubit.dart';
+import 'package:game_miner/logic/blocs/non_steam_games_cubit.dart';
+import 'package:game_miner/logic/blocs/settings_cubit.dart';
+import 'package:game_miner/presentation/pages/settings_page.dart';
 
 import 'non_steam_games_page.dart';
 

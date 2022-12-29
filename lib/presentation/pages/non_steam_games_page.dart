@@ -5,14 +5,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:expandable/expandable.dart';
-import 'package:steamdeck_toolbox/data/Stats.dart';
-import 'package:steamdeck_toolbox/data/game_folder_stats.dart';
-import 'package:steamdeck_toolbox/logic/Tools/StringTools.dart';
-import 'package:steamdeck_toolbox/logic/Tools/file_tools.dart';
-import 'package:steamdeck_toolbox/logic/Tools/vdf_tools.dart';
-import 'package:steamdeck_toolbox/logic/blocs/non_steam_games_cubit.dart';
-import 'package:steamdeck_toolbox/logic/blocs/settings_cubit.dart';
-import 'package:steamdeck_toolbox/main.dart';
+import 'package:game_miner/data/Stats.dart';
+import 'package:game_miner/data/game_folder_stats.dart';
+import 'package:game_miner/logic/Tools/StringTools.dart';
+import 'package:game_miner/logic/Tools/file_tools.dart';
+import 'package:game_miner/logic/Tools/vdf_tools.dart';
+import 'package:game_miner/logic/blocs/non_steam_games_cubit.dart';
+import 'package:game_miner/logic/blocs/settings_cubit.dart';
+import 'package:game_miner/main.dart';
 
 import '../../data/user_game.dart';
 import '../../logic/Tools/VMGameTools.dart';
@@ -142,7 +142,7 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
             context,
             state,
           ) {
-            if (state is SettingsLoaded || state is IninitalState) {
+            if (state is SettingsSaved) {
               BlocProvider.of<NonSteamGamesCubit>(context).refresh(BlocProvider.of<SettingsCubit>(context).getSettings());
             }
           }, builder: (context, settingsState) {

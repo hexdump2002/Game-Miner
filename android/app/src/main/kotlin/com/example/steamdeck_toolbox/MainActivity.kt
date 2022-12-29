@@ -1,4 +1,4 @@
-package com.example.steamdeck_toolbox
+package com.hexdump.GameMiner
 
 import io.flutter.embedding.android.FlutterActivity
 

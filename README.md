@@ -1,4 +1,4 @@
-# steamdeck_toolbox
+# GameMiner
 
 A new Flutter project.
 
