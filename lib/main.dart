@@ -3,9 +3,11 @@ import 'package:easy_localization_loader/easy_localization_loader.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:steamdeck_toolbox/logic/Tools/steam_tools.dart';
+import 'package:steamdeck_toolbox/logic/blocs/main_dart_cubit.dart';
 import 'package:steamdeck_toolbox/logic/blocs/non_steam_games_cubit.dart';
 import 'package:steamdeck_toolbox/logic/blocs/settings_cubit.dart';
 import 'package:steamdeck_toolbox/presentation/pages/game_artworks_page.dart';
+import 'package:steamdeck_toolbox/presentation/pages/main_page.dart';
 import 'package:steamdeck_toolbox/presentation/pages/non_steam_games_page.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:steamdeck_toolbox/presentation/pages/settings_page.dart';
@@ -21,11 +23,11 @@ void main() async {
   //Close steam client
   SteamTools.closeSteamClient();
 
-  runApp(EasyLocalization(child: MyApp(), supportedLocales: [Locale('en'), Locale('es')], path: 'assets/translations', fallbackLocale: Locale('en')));
-  EasyLoading.instance.userInteractions = false;
-
   _settingsCubit = SettingsCubit();
   await _settingsCubit.initialize();
+
+  runApp(EasyLocalization(child: MyApp(), supportedLocales: [Locale('en'), Locale('es')], path: 'assets/translations', fallbackLocale: Locale('en')));
+  EasyLoading.instance.userInteractions = false;
 }
 
 class CustomTheme extends ThemeExtension<CustomTheme> {
@@ -68,20 +70,23 @@ class MyApp extends StatelessWidget {
         buildWhen: (previous, current) => current is SettingsSaved || current is SettingsLoaded,
         builder: (context, state) {
           ThemeData ta = _getLightTheme();
-          if(state is SettingsSaved && state.settings.darkTheme) {
-            ta= _getDarkTheme();
+          if (state is SettingsSaved && state.settings.darkTheme) {
+            ta = _getDarkTheme();
           }
-          else if(state is SettingsLoaded && state.settings.darkTheme) {
+          else if (state is SettingsLoaded && state.settings.darkTheme) {
             ta = _getDarkTheme();
           }
           return MaterialApp(
             localizationsDelegates: context.localizationDelegates,
             supportedLocales: context.supportedLocales,
             locale: context.locale,
-            title: 'Flutter Demo',
+            title: 'Game Miner',
             theme: ta,
-            initialRoute: "/",
-            routes: _buildRoutes(),
+            home: BlocProvider(
+              create: (context) => MainPageCubit(),
+              child: MainPage(),
+            ), /*",
+            routes: _buildRoutes(),*/
             builder: EasyLoading.init(),
           );
         },
@@ -108,7 +113,8 @@ class MyApp extends StatelessWidget {
   _buildRoutes() {
     return {
       '/': (context) => /*GameArtworksPage()*/SplashPage(),
-      '/main': (context) => BlocProvider(
+      '/main': (context) =>
+          BlocProvider(
             create: (context) => NonSteamGamesCubit(_settingsCubit),
             child: const NonSteamGamesPage(),
           ),

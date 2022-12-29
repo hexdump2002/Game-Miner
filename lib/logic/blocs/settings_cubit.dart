@@ -148,7 +148,7 @@ class SettingsCubit extends Cubit<SettingsState> {
     return File("${appFolder.path}/$_configFilePath").existsSync();
   }
 
-  getSettings() {
+  Settings getSettings() {
     return _settings;
   }
 

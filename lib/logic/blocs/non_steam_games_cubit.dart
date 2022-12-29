@@ -38,7 +38,6 @@ enum SortDirection { Asc, Desc }
 
 class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
   List<VMUserGame> _games = [];
-  late SettingsCubit _settingsBloc;
 
   List<ProtonMapping> _protonMappings = [];
 
@@ -56,10 +55,16 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
   List<bool> _sortDirectionStates = [false, true];
 
   //Not the best place to stored. Cubits should be platform agnostics
-  TextEditingController _genericTextController = TextEditingController();
+  final TextEditingController _genericTextController = TextEditingController();
 
-  NonSteamGamesCubit(SettingsCubit settings) : super(IninitalState()) {
-    _settingsBloc = settings;
+  late Settings _settings;
+  late SettingsCubit _settingsBloc;
+
+  NonSteamGamesCubit(SettingsCubit sb) : super(IninitalState()) {
+    _settings = sb.getSettings();
+    _settingsBloc = sb;
+
+    loadData(_settings);
   }
 
   void loadData(Settings settings) async {
@@ -77,7 +82,7 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
     }
 
     List<String> availableProntonNames = [];
-    availableProntonNames.addAll(_settingsBloc.getSettings().getAvailableProtonNames());
+    availableProntonNames.addAll(_settings.getAvailableProtonNames());
     availableProntonNames.insert(0, "None");
 
     _protonMappings = result[2] as List<ProtonMapping>;
@@ -128,7 +133,7 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
 
     _games = VMGameTools.sortByName(SortDirection.Asc, _games);
     _refreshGameCount();
-    emit(GamesDataRetrieved(_games, _settingsBloc.getSettings().getAvailableProtonNames(), _nonAddedGamesCount, _addedGamesCount, _fullyAddedGamesCount,
+    emit(GamesDataRetrieved(_games, _settings.getAvailableProtonNames(), _nonAddedGamesCount, _addedGamesCount, _fullyAddedGamesCount,
         _addedExternalCount, _ssdFreeSizeInBytes, _sdCardFreeInBytes, _ssdTotalSizeInBytes, _sdCardTotalInBytes, _sortStates, _sortDirectionStates));
   }
 
@@ -188,13 +193,13 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
 
     _refreshGameCount();
 
-    emit(GamesDataChanged(_games, _settingsBloc.getSettings().getAvailableProtonNames(), _nonAddedGamesCount, _addedGamesCount, _fullyAddedGamesCount,
+    emit(GamesDataChanged(_games, _settings.getAvailableProtonNames(), _nonAddedGamesCount, _addedGamesCount, _fullyAddedGamesCount,
         _addedExternalCount, _ssdFreeSizeInBytes, _sdCardFreeInBytes, _ssdTotalSizeInBytes, _sdCardTotalInBytes, _sortStates, _sortDirectionStates));
   }
 
   void swapExpansionStateForItem(int index) {
     _games[index].foldingState = !_games[index].foldingState;
-    emit(GamesFoldingDataChanged(_games, _settingsBloc.getSettings().getAvailableProtonNames(), _nonAddedGamesCount, _addedGamesCount, _fullyAddedGamesCount,
+    emit(GamesFoldingDataChanged(_games, _settings.getAvailableProtonNames(), _nonAddedGamesCount, _addedGamesCount, _fullyAddedGamesCount,
         _addedExternalCount, _ssdFreeSizeInBytes, _sdCardFreeInBytes, _ssdTotalSizeInBytes, _sdCardTotalInBytes, _sortStates, _sortDirectionStates));
   }
 
@@ -274,7 +279,7 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
 
     _refreshGameCount();
 
-    emit(GamesDataChanged(_games, _settingsBloc.getSettings().getAvailableProtonNames(), _nonAddedGamesCount, _addedGamesCount, _fullyAddedGamesCount,
+    emit(GamesDataChanged(_games, _settings.getAvailableProtonNames(), _nonAddedGamesCount, _addedGamesCount, _fullyAddedGamesCount,
         _addedExternalCount, _ssdFreeSizeInBytes, _sdCardFreeInBytes, _ssdTotalSizeInBytes, _sdCardTotalInBytes, _sortStates, _sortDirectionStates));
   }
 
@@ -342,7 +347,7 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
 
                 emit(GamesDataChanged(
                     _games,
-                    _settingsBloc.getSettings().getAvailableProtonNames(),
+                    _settings.getAvailableProtonNames(),
                     _nonAddedGamesCount,
                     _addedGamesCount,
                     _fullyAddedGamesCount,
@@ -421,7 +426,7 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
 
                   emit(GamesDataChanged(
                       _games,
-                      _settingsBloc.getSettings().getAvailableProtonNames(),
+                      _settings.getAvailableProtonNames(),
                       _nonAddedGamesCount,
                       _addedGamesCount,
                       _fullyAddedGamesCount,
@@ -459,7 +464,7 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
       e.foldingState = false;
     });
 
-    emit(GamesDataChanged(_games, _settingsBloc.getSettings().getAvailableProtonNames(), _nonAddedGamesCount, _addedGamesCount, _fullyAddedGamesCount,
+    emit(GamesDataChanged(_games, _settings.getAvailableProtonNames(), _nonAddedGamesCount, _addedGamesCount, _fullyAddedGamesCount,
         _addedExternalCount, _ssdFreeSizeInBytes, _sdCardFreeInBytes, _ssdTotalSizeInBytes, _sdCardTotalInBytes, _sortStates, _sortDirectionStates));
   }
 
@@ -467,7 +472,7 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
     _sortStates = [true, false, false];
     _games = VMGameTools.sortByName(_sortDirectionStates[0] ? SortDirection.Desc : SortDirection.Asc, _games);
 
-    emit(GamesDataChanged(_games, _settingsBloc.getSettings().getAvailableProtonNames(), _nonAddedGamesCount, _addedGamesCount, _fullyAddedGamesCount,
+    emit(GamesDataChanged(_games, _settings.getAvailableProtonNames(), _nonAddedGamesCount, _addedGamesCount, _fullyAddedGamesCount,
         _addedExternalCount, _ssdFreeSizeInBytes, _sdCardFreeInBytes, _ssdTotalSizeInBytes, _sdCardTotalInBytes, _sortStates, _sortDirectionStates));
   }
 
@@ -476,7 +481,7 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
 
     _games = VMGameTools.sortByStatus(_sortDirectionStates[0] ? SortDirection.Desc : SortDirection.Asc, _games);
 
-    emit(GamesDataChanged(_games, _settingsBloc.getSettings().getAvailableProtonNames(), _nonAddedGamesCount, _addedGamesCount, _fullyAddedGamesCount,
+    emit(GamesDataChanged(_games, _settings.getAvailableProtonNames(), _nonAddedGamesCount, _addedGamesCount, _fullyAddedGamesCount,
         _addedExternalCount, _ssdFreeSizeInBytes, _sdCardFreeInBytes, _ssdTotalSizeInBytes, _sdCardTotalInBytes, _sortStates, _sortDirectionStates));
   }
 
@@ -485,7 +490,7 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
 
     _games = VMGameTools.sortBySize(_sortDirectionStates[0] ? SortDirection.Desc : SortDirection.Asc, _games);
 
-    emit(GamesDataChanged(_games, _settingsBloc.getSettings().getAvailableProtonNames(), _nonAddedGamesCount, _addedGamesCount, _fullyAddedGamesCount,
+    emit(GamesDataChanged(_games, _settings.getAvailableProtonNames(), _nonAddedGamesCount, _addedGamesCount, _fullyAddedGamesCount,
         _addedExternalCount, _ssdFreeSizeInBytes, _sdCardFreeInBytes, _ssdTotalSizeInBytes, _sdCardTotalInBytes, _sortStates, _sortDirectionStates));
   }
 
@@ -524,7 +529,7 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
       sortBySize();
     }
 
-    emit(GamesDataChanged(_games, _settingsBloc.getSettings().getAvailableProtonNames(), _nonAddedGamesCount, _addedGamesCount, _fullyAddedGamesCount,
+    emit(GamesDataChanged(_games, _settings.getAvailableProtonNames(), _nonAddedGamesCount, _addedGamesCount, _fullyAddedGamesCount,
         _addedExternalCount, _ssdFreeSizeInBytes, _sdCardFreeInBytes, _ssdTotalSizeInBytes, _sdCardTotalInBytes, _sortStates, _sortDirectionStates));
   }
 }

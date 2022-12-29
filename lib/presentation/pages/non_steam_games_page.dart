@@ -25,18 +25,15 @@ class NonSteamGamesPage extends StatefulWidget {
 }
 
 class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
-  late final NonSteamGamesCubit _nsgpBloc;
-
-  late final SettingsCubit _settingsBloc;
-
   final _formKey = GlobalKey<FormState>();
 
   @override
   void initState() {
-    _nsgpBloc = BlocProvider.of<NonSteamGamesCubit>(context);
-    _settingsBloc = BlocProvider.of<SettingsCubit>(context);
-    _nsgpBloc.loadData(_settingsBloc.getSettings());
   }
+
+  NonSteamGamesCubit _nsCubit(context) =>  BlocProvider.of<NonSteamGamesCubit>(context);
+  SettingsCubit _settingsCubit(context) =>  BlocProvider.of<SettingsCubit>(context);
+  Settings _settings(context) =>  BlocProvider.of<SettingsCubit>(context).getSettings();
 
   @override
   Widget build(BuildContext context) {
@@ -44,7 +41,7 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
       appBar: AppBar(
         // Here we take the value from the MyHomePage object that was created by
         // the App.build method, and use it to set our appbar title.
-        title: Text("Game Miner"),
+        title: Text("Game Manager"),
         actions: [
           BlocBuilder<NonSteamGamesCubit, NonSteamGamesBaseState>(
             builder: (context, nsgState) {
@@ -52,12 +49,13 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
                 ToggleButtons(
                     direction: Axis.horizontal,
                     onPressed: (int index) {
+                      var nsgpBloc = _nsCubit(context);
                       if (index == 0) {
-                        _nsgpBloc.sortByName();
+                        nsgpBloc.sortByName();
                       } else if (index == 1) {
-                        _nsgpBloc.sortByStatus();
+                        nsgpBloc.sortByStatus();
                       } else if (index == 2) {
-                        _nsgpBloc.sortBySize();
+                        nsgpBloc.sortBySize();
                       }
                     },
                     borderRadius: const BorderRadius.all(Radius.circular(8)),
@@ -66,7 +64,7 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
                     selectedColor: Colors.white,
                     fillColor: Colors.blue[300],
                     color: Colors.blue[300],
-                    isSelected: _nsgpBloc.getSortStates(),
+                    isSelected: _nsCubit(context).getSortStates(),
                     children: [
                       Tooltip(message: tr("sort_by_name"), child: const Icon(Icons.receipt)),
                       Tooltip(message: tr("sort_by_status"), child: const Icon(Icons.stars)),
@@ -77,7 +75,7 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
                   child: ToggleButtons(
                       direction: Axis.horizontal,
                       onPressed: (int index) {
-                        index == 0 ? _nsgpBloc.setSortDirection(SortDirection.Asc) : _nsgpBloc.setSortDirection(SortDirection.Desc);
+                        index == 0 ? _nsCubit(context).setSortDirection(SortDirection.Asc) : _nsCubit(context).setSortDirection(SortDirection.Desc);
                       },
                       borderRadius: const BorderRadius.all(Radius.circular(8)),
                       borderColor: Colors.blue,
@@ -85,7 +83,7 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
                       selectedColor: Colors.white,
                       fillColor: Colors.blue[300],
                       color: Colors.blue[300],
-                      isSelected: _nsgpBloc.getSortDirectionStates(),
+                      isSelected: _nsCubit(context).getSortDirectionStates(),
                       children: [
                         Tooltip(message: tr("descending"), child: const Icon(Icons.south)),
                         Tooltip(message: tr("ascending"), child: const Icon(Icons.north))
@@ -94,7 +92,7 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
                 IconButton(
                   onPressed: () {
                     if (_formKey.currentState!.validate()) {
-                      _nsgpBloc.saveData(_settingsBloc.getSettings());
+                      _nsCubit(context).saveData(_settings(context));
                     } else {
                       print("There are errors in the form. Fix them!");
                     }
@@ -104,28 +102,30 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
                 ),
                 IconButton(
                   onPressed: () {
-                    _nsgpBloc.foldAll();
+                    _nsCubit(context).foldAll();
                   },
                   icon: const Icon(Icons.unfold_less),
                   tooltip: tr("fold_all"),
                 ),
                 IconButton(
                   onPressed: () {
-                    _nsgpBloc.refresh(_settingsBloc.getSettings());
+                    _nsCubit(context).refresh(_settings(context));
                   },
                   icon: Icon(Icons.refresh),
                   tooltip: tr("refresh"),
                 ),
-                IconButton(
+                /*IconButton(
                   onPressed: () async  {
+                    var nsCubit = _nsCubit(context);
+                    var settings = _settings(context);
                     bool? gameListDirtyDyn = await Navigator.pushNamed(context, '/settings') as bool;
                     if(gameListDirtyDyn!=null && gameListDirtyDyn) {
-                       _nsgpBloc.refresh(_settingsBloc.getSettings());
+                      nsCubit.refresh(settings);
                     }
                   },
                   icon: const Icon(Icons.settings),
                   tooltip: tr("settings"),
-                ),
+                ),*/
                 /*IconButton(
                   onPressed: () => null /*_nsgpBloc.showInfo()*/,
                   icon: Icon(Icons.info),
@@ -142,10 +142,8 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
             context,
             state,
           ) {
-            /*if (state is SettingsSaved) {
-              _nsgpBloc.refresh(state.settings);
-            } else*/ if (state is SettingsLoaded) {
-              _nsgpBloc.refresh(state.settings);
+            if (state is SettingsLoaded || state is IninitalState) {
+              BlocProvider.of<NonSteamGamesCubit>(context).refresh(BlocProvider.of<SettingsCubit>(context).getSettings());
             }
           }, builder: (context, settingsState) {
             return BlocBuilder<NonSteamGamesCubit, NonSteamGamesBaseState>(builder: (context, nsgState) {
@@ -218,7 +216,7 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
             itemBuilder: (BuildContext context, int index) {
               var game = games[index];
               return ExpandablePanel(
-                controller: ExpandableController(initialExpanded:game.foldingState)..addListener(() => _nsgpBloc.swapExpansionStateForItem(index)),
+                controller: ExpandableController(initialExpanded:game.foldingState)..addListener(() => _nsCubit(context).swapExpansionStateForItem(index)),
                 header: ListTile(
                     title: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -236,14 +234,14 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
                             ),
                             IconButton(
                               onPressed: () {
-                                _nsgpBloc.renameGame(context, game);
+                                _nsCubit(context).renameGame(context, game);
                               },
                               icon: Icon(Icons.edit),
                               tooltip: tr("rename_game"),
                             ),
                             IconButton(
                               onPressed: () {
-                                _nsgpBloc.deleteGame(context, game);
+                                _nsCubit(context).deleteGame(context, game);
                               },
                               icon: Icon(Icons.delete),
                               tooltip: tr("delete"),
@@ -355,7 +353,7 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
                 Switch(
                     value: uge.added,
                     onChanged: (value) {
-                      _nsgpBloc.swapExeAdding(uge, _settingsBloc.getSettings().defaultProtonCode);
+                      _nsCubit(context).swapExeAdding(uge, _settings(context).defaultProtonCode);
                     }),
                 //activeTrackColor: Colors.lightGreenAccent,
                 //activeColor: Colors.green,
@@ -404,8 +402,8 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
                 items: availableProntons.map<DropdownMenuItem<String>>((String e) {
                   return DropdownMenuItem<String>(value: e, child: Text(e));
                 }).toList(),
-                value: _settingsBloc.getProtonNameForCode(uge.protonCode),
-                onChanged: (String? value) => _nsgpBloc.setProtonDataFor(uge, value!),
+                value: _settingsCubit(context).getProtonNameForCode(uge.protonCode),
+                onChanged: (String? value) => _nsCubit(context).setProtonDataFor(uge, value!),
                 decoration: const InputDecoration(labelText: "Proton"))
           ],
         ),
