@@ -1,6 +1,7 @@
 import 'dart:io';
 
-import 'package:game_miner/logic/Tools/VMGameTools.dart';
+import 'package:game_miner/data/models/game.dart';
+import 'package:game_miner/logic/Tools/GameTools.dart';
 import 'package:game_miner/logic/blocs/non_steam_games_cubit.dart';
 import 'package:universal_disk_space/universal_disk_space.dart';
 
@@ -25,13 +26,13 @@ class Stats {
 
   //late Map<String, GameFolderStats> _folderStats;
 
-  static Map<String, int> getGameStatusStats(List<VMUserGame> games) {
-    Map<String, List<VMUserGame>> data = VMGameTools.categorizeGamesByStatus(games);
-    return data.map((key, List<VMUserGame> value) => MapEntry<String, int>(key, value.length));
+  static Map<String, int> getGameStatusStats(List<Game> games) {
+    Map<String, List<Game>> data = GameTools.categorizeGamesByStatus(games);
+    return data.map((key, List<Game> value) => MapEntry<String, int>(key, value.length));
   }
 
   //TODO: get SD Card
-  static Future<Map<String, int>> getStorageStats(List<VMUserGame> games) async {
+  static Future<Map<String, int>> getStorageStats(List<Game> games) async {
     final diskSpace = DiskSpace();
     await diskSpace.scan();
     var disks = diskSpace.disks;
@@ -103,14 +104,14 @@ class Stats {
   }*/
 
   //This function returns the folder metadata in the same order the games list is
-  static Future<GameFoldersStats> getGamesFolderStats(List<VMUserGame> games) async {
+  static Future<GameFoldersStats> getGamesFolderStats(List<Game> games) async {
     List<GameFolderStats> statsByGame = [];
 
     int totalFilesCount = 0;
     int totalFilesSize = 0;
 
     for (var game in games) {
-      var metaData = await FileTools.getFolderMetaData(game.userGame.path, recursive: true);
+      var metaData = await FileTools.getFolderMetaData(game.path, recursive: true);
       var fileCount = metaData['fileCount']!;
       var size = metaData['size']!;
       statsByGame.add(GameFolderStats(fileCount, size));

@@ -1,156 +1,55 @@
-import 'dart:convert';
-import 'dart:io';
-
-import 'package:collection/collection.dart';
-
 import 'package:bloc/bloc.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:game_miner/data/repositories/settings_repository.dart';
+import 'package:get_it/get_it.dart';
 import 'package:meta/meta.dart';
-import 'package:game_miner/logic/Tools/steam_tools.dart';
-import 'package:game_miner/logic/Tools/vdf_tools.dart';
+
+import '../../data/models/compat_tool_mapping.dart';
+import '../../data/models/settings.dart';
 
 part 'settings_state.dart';
 
-class ProtonVersion {
-  late String protonCode;
-  late String protonName;
-
-  ProtonVersion(this.protonCode, this.protonName);
-
-  ProtonVersion.fromJson(Map<String, dynamic> json) {
-    protonCode = json['code'];
-    protonName = json['name'];
-  }
-
-  Map<String, dynamic> toJson() {
-    return {'code': protonCode, 'name': protonName};
-  }
-
-}
-
-class Settings {
-  List<String> searchPaths = [];
-  late List<ProtonVersion> builtInProtons;
-  final List<ProtonVersion> availableProtons = [];
-  String defaultProtonCode = "None";
-  late String currentUserId;
-  bool darkTheme = false;
-
-  Settings();
-
-  Settings.fromJson(Map<String, dynamic> json) {
-    searchPaths = json['searchPaths'].map<String>((e) => e as String).toList();
-    defaultProtonCode = json['defaultProtonCode'];
-    builtInProtons = json['builtinProtons'].map<ProtonVersion>((e) {
-      return ProtonVersion(e['code'],e['name']);
-    }).toList();
-    darkTheme = json['darkTheme'];
-  }
-
-  Map<String, dynamic> toJson() {
-    return {'searchPaths': searchPaths, 'defaultProtonCode': defaultProtonCode, 'builtinProtons': builtInProtons, 'darkTheme':darkTheme};
-  }
-
-  List<String> getAvailableProtonNames() {
-    var availableProtonNames = availableProtons.map((e) => e.protonName).toList();
-    availableProtonNames.sort();
-    availableProtonNames.insert(0,"None");
-
-    return availableProtonNames;
-  }
-}
-
 class SettingsCubit extends Cubit<SettingsState> {
   late Settings _settings;
-  final String _configFilePath = "settings.cfg";
+
   bool _gameListDirty = false;
   bool get isGameListDirty { return _gameListDirty;}
 
 
-  SettingsCubit() : super(SettingsInitial());
+  SettingsCubit(String userId) : super(SettingsInitial()) {
+    SettingsRepository repo = GetIt.I<SettingsRepository>();
+    Settings? settings = repo.loadSettings(userId);
 
-  Future<void> initialize() async {
-    List<ProtonVersion> availableProtons = [];
+    save(showMessages: false);
 
-    List<ProtonMapping> externalProtons = await SteamTools.loadExternalProtons();
-    var externalProtonVersions = externalProtons.map((e) => ProtonVersion(e.id, e.name)).toList();
-    availableProtons.addAll(externalProtonVersions);
-
-    if (!existsConfig()) {
-      _settings = Settings();
-      _settings.builtInProtons = [
-        ProtonVersion("proton_experimental", "Proton Experimental"),
-        ProtonVersion("proton_7", "Proton 7.0-5"),
-        ProtonVersion("proton_63", "Proton 6.3-8"),
-        ProtonVersion("proton_513", "Proton 5.13-6"),
-        ProtonVersion("proton_5", "Proton 5.0-10"),
-        ProtonVersion("proton_411", "Proton 4.11-13"),
-        ProtonVersion("proton_42", "Proton 4.2-9"),
-        ProtonVersion("proton_316", "Proton 3.16-9"),
-        ProtonVersion("proton_37", "Proton 3.7-8"),
-        ProtonVersion("proton_hotfix", "Proton Hotfix"),
-        ProtonVersion("steamlinuxruntime", "Steam Linux Runtime")
-      ];
-
-      _settings.defaultProtonCode = "None";
-      save(showMessages: false);
-
-      availableProtons.addAll(_settings.builtInProtons);
-      _settings.availableProtons.addAll(availableProtons);
-
-      emit(SettingsLoaded(_settings));
-    } else {
-      load(availableProtons);
-    }
-
-    _settings.currentUserId = await SteamTools.getUserId();
+    emit(SettingsLoaded(_settings));
   }
+
+
+  Settings getSettings() { return _settings;}
 
   void refresh() {
     emit(SettingsChangedState(_settings));
   }
 
-  void load(List<ProtonVersion> externalProtons) {
-    Directory appFolder = Directory.current;
-    String fullPath = "${appFolder.path}/$_configFilePath";
-    var file = File(fullPath)..openSync();
-    String json = file.readAsStringSync();
-    _settings = Settings.fromJson(jsonDecode(json));
-    _settings.availableProtons.addAll(externalProtons);
-    _settings.availableProtons.addAll(_settings.builtInProtons);
-
-    if (_settings.defaultProtonCode!="None" && _settings.availableProtons.firstWhereOrNull((element) => element.protonCode == _settings.defaultProtonCode) == null) {
-      throw Exception("The default configured proton is not valid");
-    }
-
-    emit(SettingsLoaded(_settings));
-  }
 
   void save({bool showMessages=true}) {
     if(showMessages) EasyLoading.show(status: "saving_settings");
 
-    String json = jsonEncode(_settings);
-    Directory appFolder = Directory.current;
-    String fullPath = "${appFolder.path}/$_configFilePath";
-    File(fullPath)
-      ..createSync(recursive: true)
-      ..writeAsStringSync(json);
+    SettingsRepository repo = GetIt.I<SettingsRepository>();
+    repo.save();
 
     if(showMessages) EasyLoading.showSuccess(tr("settings_saved"));
 
     emit(SettingsSaved(_settings));
   }
 
-  bool existsConfig() {
+  /*bool existsConfig() {
     Directory appFolder = Directory.current;
     return File("${appFolder.path}/$_configFilePath").existsSync();
-  }
-
-  Settings getSettings() {
-    return _settings;
-  }
+  }*/
 
   pickPath() async {
     String? selectedDirectory = await FilePicker.platform.getDirectoryPath();
@@ -168,18 +67,6 @@ class SettingsCubit extends Cubit<SettingsState> {
     _settings.searchPaths.remove(e);
     _gameListDirty = true;
     emit(SearchPathsChanged(_settings));
-  }
-
-  String getProtonNameForCode(String protonCode) {
-    if(protonCode == "None") return "None";
-
-    return _settings.availableProtons.firstWhere((e) => e.protonCode == protonCode).protonName;
-  }
-
-  String getProtonCodeFromName(String protonName) {
-    if(protonName == "None") return "None";
-
-    return _settings.availableProtons.firstWhere((e) => e.protonName == protonName).protonCode;
   }
 
   void setDarkThemeState(bool state) {

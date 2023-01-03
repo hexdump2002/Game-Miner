@@ -20,26 +20,23 @@ class _MainPageState extends State<MainPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: BlocProvider(
-        create: (context) => NonSteamGamesCubit(BlocProvider.of<SettingsCubit>(context)),
-        child: BlocBuilder<MainPageCubit, MainPageState>(
-          builder: (context, state) {
-            int selectedIndex = 0;
-            if (state is SelectedPageIndexChanged) {
-              selectedIndex = state.selectedIndex;
-            }
+      body: BlocBuilder<MainPageCubit, MainPageState>(
+        builder: (context, state) {
+          int selectedIndex = 0;
+          if (state is SelectedPageIndexChanged) {
+            selectedIndex = state.selectedIndex;
+          }
 
-            return Row(
-              children: <Widget>[
-                _buildVerticalMenu(context, selectedIndex),
+          return Row(
+            children: <Widget>[
+              _buildVerticalMenu(context, selectedIndex),
 
-                const VerticalDivider(thickness: 1, width: 1),
-                // This is the main content.
-                Expanded(child: _getPage(context, selectedIndex)),
-              ],
-            );
-          },
-        ),
+              const VerticalDivider(thickness: 1, width: 1),
+              // This is the main content.
+              Expanded(child: _getPage(context, selectedIndex)),
+            ],
+          );
+        },
       ),
     );
   }
@@ -113,12 +110,11 @@ class _MainPageState extends State<MainPage> {
     Widget widget = Container();
 
     if (_pages[selectedIndex] != null) return _pages[selectedIndex]!;
-    print("Created!");
 
     switch (selectedIndex) {
       case 0:
         {
-          widget = const NonSteamGamesPage();
+          widget = BlocProvider(create: (context) => NonSteamGamesCubit(), child: const NonSteamGamesPage());
           break;
         }
       case 1:

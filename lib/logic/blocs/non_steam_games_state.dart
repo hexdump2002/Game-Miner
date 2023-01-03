@@ -9,7 +9,8 @@ class RetrievingGameData extends NonSteamGamesBaseState {}
 
 //All states emiting all the data. This is not performant. We need to use smaller events to re-create as less widgets as we could
 class BaseDataChanged extends NonSteamGamesBaseState {
-  final List<VMUserGame> games;
+  final List<Game> games;
+  final List<bool> gamesFoldingState;
   final List<String> availableProntonNames;
   final int notAddedGamesCount;
   final int addedGamesCount;
@@ -23,12 +24,13 @@ class BaseDataChanged extends NonSteamGamesBaseState {
   final List<bool> sortDirectionStates;
 
 
-  BaseDataChanged(this.games, this.availableProntonNames, this.notAddedGamesCount, this.addedGamesCount, this.fullyAddedGamesCount, this.addedExternal,this.freeSSDSpace,
+  BaseDataChanged(this.games, this.gamesFoldingState, this.availableProntonNames, this.notAddedGamesCount, this.addedGamesCount, this.fullyAddedGamesCount, this.addedExternal,this.freeSSDSpace,
       this.freeSDCardSpace, this.totalSSDSpace, this.totalSDCardSpace, this.sortStates, this.sortDirectionStates);
 }
 
 class GamesDataRetrieved extends BaseDataChanged {
-  GamesDataRetrieved( List<VMUserGame> games,
+  GamesDataRetrieved( List<Game> games,
+      List<bool> gamesFoldingState,
       List<String> availableProntonNames,
       int nonAddedGamesCount,
       int addedGamesCount,
@@ -42,6 +44,7 @@ class GamesDataRetrieved extends BaseDataChanged {
       List<bool> sortDirectionStates)
       : super(
       games,
+      gamesFoldingState,
       availableProntonNames,
       nonAddedGamesCount,
       addedGamesCount,
@@ -57,7 +60,8 @@ class GamesDataRetrieved extends BaseDataChanged {
 
 class GamesDataChanged extends BaseDataChanged {
   GamesDataChanged(
-      List<VMUserGame> games,
+      List<Game> games,
+      List<bool> gamesFoldingState,
       List<String> availableProntonNames,
       int nonAddedGamesCount,
       int addedGamesCount,
@@ -71,6 +75,7 @@ class GamesDataChanged extends BaseDataChanged {
       List<bool> sortDirectionStates)
       : super(
       games,
+      gamesFoldingState,
       availableProntonNames,
       nonAddedGamesCount,
       addedGamesCount,
@@ -86,7 +91,8 @@ class GamesDataChanged extends BaseDataChanged {
 
 class GamesFoldingDataChanged extends BaseDataChanged {
   GamesFoldingDataChanged(
-      List<VMUserGame> games,
+      List<Game> games,
+      List<bool> gamesFoldingState,
       List<String> availableProntonNames,
       int nonAddedGamesCount,
       int addedGamesCount,
@@ -100,6 +106,7 @@ class GamesFoldingDataChanged extends BaseDataChanged {
       List<bool> sortDirectionStates)
       : super(
       games,
+      gamesFoldingState,
       availableProntonNames,
       nonAddedGamesCount,
       addedGamesCount,

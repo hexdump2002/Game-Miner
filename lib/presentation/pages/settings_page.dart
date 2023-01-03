@@ -1,7 +1,10 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:game_miner/logic/blocs/non_steam_games_cubit.dart';
 import 'package:game_miner/logic/blocs/settings_cubit.dart';
+
+import '../../data/models/settings.dart';
 
 class SettingsPage extends StatefulWidget {
   SettingsPage({Key? key}) : super(key: key);
@@ -12,7 +15,6 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
   late final SettingsCubit _bloc;
-  bool _refreshListOfGames = false;
 
   @override
   void initState() {
@@ -44,6 +46,9 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Widget _buildGeneralOptions(Settings settings) {
+    //TODO: What the fuck is doing this here?
+    NonSteamGamesCubit nsgc = BlocProvider.of<NonSteamGamesCubit>(context);
+
     return Expanded(
         flex: 4,
         child: Card(
@@ -66,11 +71,11 @@ class _SettingsPageState extends State<SettingsPage> {
                     Expanded(child: Text(tr("default_proton"))),
                     Expanded(
                       child: DropdownButtonFormField<String>(
-                          items: settings.getAvailableProtonNames().map<DropdownMenuItem<String>>((String e) {
+                          items: nsgc.getAvailableCompatToolDisplayNames().map<DropdownMenuItem<String>>((String e) {
                             return DropdownMenuItem<String>(value: e, child: Text(e));
                           }).toList(),
-                          value: _bloc.getProtonNameForCode(_bloc.getSettings().defaultProtonCode),
-                          onChanged: (String? value) => _bloc.getSettings().defaultProtonCode = _bloc.getProtonCodeFromName(value!),
+                          value: nsgc.getCompatToolDisplayNameFromCode(_bloc.getSettings().defaultCompatTool),
+                          onChanged: (String? value) => _bloc.getSettings().defaultCompatTool = nsgc.getCompatToolCodeFromDisplayName(value!),
                           decoration: const InputDecoration()),
                     )
                   ])),

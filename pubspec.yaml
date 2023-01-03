@@ -46,6 +46,8 @@ dependencies:
   universal_disk_space: ^0.2.3
   flappy_search_bar_ns: ^2.0.2
   expandable: ^5.0.1
+  meta: ^1.8.0
+  get_it: ^7.2.0
 
 dev_dependencies:
   flutter_test:

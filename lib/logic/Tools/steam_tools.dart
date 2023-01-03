@@ -7,7 +7,7 @@ import 'package:path/path.dart' as p;
 
 class SteamTools {
 
-  static Future<List<ProtonMapping>> loadExternalProtons() async {
+  /*static Future<List<ProtonMapping>> loadExternalProtons() async {
 
     String homeFolder = FileTools.getHomeFolder();
     String path = "$homeFolder/.local/share/Steam/compatibilitytools.d";
@@ -34,7 +34,7 @@ class SteamTools {
 
     return protonMappings;
 
-  }
+  }*/
 
   /*static Future<List<String>> loadProtons() async {
     List<String>  builtInProtons = ["proton_experimental##Proton Experimental","proton_7##Proton 7.0-5","proton_63##Proton 6.3-8","proton_513##Proton 5.13-6","proton_5##Proton 5.0-10","proton_411##Proton 4.11-13",
@@ -56,19 +56,6 @@ class SteamTools {
     var crc = CRC32.compute(exePath) | 0x80000000;
     print(crc);
     return crc;
-  }
-
-  static Future<String> getUserId() async{
-    String homeFolder = FileTools.getHomeFolder();
-    //String path = "$homeFolder/.local/Steam/steam/userdata";
-    String path = "$homeFolder/.local/share/Steam/userdata"; //Changed because of flatpak
-
-    //Todo, check for empty folder
-    var folders = await FileTools.getFolderFilesAsync(path,retrieveRelativePaths: true, recursive: false,regExFilter: "",onlyFolders: true);
-
-    if(folders.isEmpty) throw Exception("It seems steam does not exist or it is not properly configuredd");
-
-    return folders[0];
   }
 
   static Future<bool> openSteamClient() async{

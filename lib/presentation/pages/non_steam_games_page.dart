@@ -7,15 +7,19 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:expandable/expandable.dart';
 import 'package:game_miner/data/Stats.dart';
 import 'package:game_miner/data/game_folder_stats.dart';
+import 'package:game_miner/data/repositories/settings_repository.dart';
 import 'package:game_miner/logic/Tools/StringTools.dart';
 import 'package:game_miner/logic/Tools/file_tools.dart';
 import 'package:game_miner/logic/Tools/vdf_tools.dart';
 import 'package:game_miner/logic/blocs/non_steam_games_cubit.dart';
 import 'package:game_miner/logic/blocs/settings_cubit.dart';
 import 'package:game_miner/main.dart';
+import 'package:get_it/get_it.dart';
 
-import '../../data/user_game.dart';
-import '../../logic/Tools/VMGameTools.dart';
+import '../../data/models/game_executable.dart';
+import '../../data/models/game.dart';
+import '../../data/models/settings.dart';
+import '../../logic/Tools/GameTools.dart';
 
 class NonSteamGamesPage extends StatefulWidget {
   const NonSteamGamesPage({Key? key}) : super(key: key);
@@ -32,8 +36,7 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
   }
 
   NonSteamGamesCubit _nsCubit(context) =>  BlocProvider.of<NonSteamGamesCubit>(context);
-  SettingsCubit _settingsCubit(context) =>  BlocProvider.of<SettingsCubit>(context);
-  Settings _settings(context) =>  BlocProvider.of<SettingsCubit>(context).getSettings();
+  Settings _settings =  GetIt.I<SettingsRepository>().getSettingsForCurrentUser();
 
   @override
   Widget build(BuildContext context) {
@@ -92,7 +95,7 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
                 IconButton(
                   onPressed: () {
                     if (_formKey.currentState!.validate()) {
-                      _nsCubit(context).saveData(_settings(context));
+                      _nsCubit(context).saveData(_settings);
                     } else {
                       print("There are errors in the form. Fix them!");
                     }
@@ -109,7 +112,7 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
                 ),
                 IconButton(
                   onPressed: () {
-                    _nsCubit(context).refresh(_settings(context));
+                    _nsCubit(context).refresh(_settings);
                   },
                   icon: Icon(Icons.refresh),
                   tooltip: tr("refresh"),
@@ -138,7 +141,7 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
       ),
       body: Container(
           alignment: Alignment.center,
-          child: BlocConsumer<SettingsCubit, SettingsState>(listener: (
+          child: /*BlocConsumer<SettingsCubit, SettingsState>(listener: (
             context,
             state,
           ) {
@@ -146,14 +149,14 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
               BlocProvider.of<NonSteamGamesCubit>(context).refresh(BlocProvider.of<SettingsCubit>(context).getSettings());
             }
           }, builder: (context, settingsState) {
-            return BlocBuilder<NonSteamGamesCubit, NonSteamGamesBaseState>(builder: (context, nsgState) {
+            return */BlocBuilder<NonSteamGamesCubit, NonSteamGamesBaseState>(builder: (context, nsgState) {
               //print("[NonSteamGamesCubit Builder] State -> $nsgState");
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: _buildDataScreen(context, nsgState),
               );
-            });
-          })),
+            })/*;
+          })*/),
     );
   }
 
@@ -216,21 +219,21 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
             itemBuilder: (BuildContext context, int index) {
               var game = games[index];
               return ExpandablePanel(
-                controller: ExpandableController(initialExpanded:game.foldingState)..addListener(() => _nsCubit(context).swapExpansionStateForItem(index)),
+                controller: ExpandableController(initialExpanded:state.gamesFoldingState[index])..addListener(() => _nsCubit(context).swapExpansionStateForItem(index)),
                 header: ListTile(
                     title: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
                           children: [
-                            Expanded(child: Text(game.userGame.name, style: Theme.of(context).textTheme.headline5, textAlign: TextAlign.left)),
+                            Expanded(child: Text(game.name, style: Theme.of(context).textTheme.headline5, textAlign: TextAlign.left)),
                             Padding(
                               padding: const EdgeInsets.fromLTRB(0, 0, 24, 0),
-                              child: game.userGame.isExternal ? null : Text(StringTools.bytesToStorageUnity(game.userGame.gameSize)),
+                              child: game.isExternal ? null : Text(StringTools.bytesToStorageUnity(game.gameSize)),
                             ),
                             Padding(
                               padding: const EdgeInsets.fromLTRB(0, 0, 24, 0),
-                              child: _getExeCurrentStateIcon(VMGameTools.getGameStatus(game)),
+                              child: _getExeCurrentStateIcon(GameTools.getGameStatus(game)),
                             ),
                             IconButton(
                               onPressed: () {
@@ -248,9 +251,9 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
                             ),
                           ],
                         ),
-                        if (game.foldingState)
+                        if (state.gamesFoldingState[index])
                           Text(
-                            "${game.userGame.path}",
+                            "${game.path}",
                             textAlign: TextAlign.left,
                             style: TextStyle(color: themeExtension.gameCardHeaderPath, fontSize: 13),
                           )
@@ -258,7 +261,7 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
                     ),
                   ),  expanded: Container(padding:EdgeInsets.fromLTRB(0, 16, 0, 16), margin: EdgeInsets.fromLTRB(16, 16, 16, 16), decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20), color: Colors.black12
-              ), child: _buildGameTile(context, themeExtension, game.userGame, state.availableProntonNames)),
+              ), child: _buildGameTile(context, themeExtension, game, state.availableProntonNames)),
                   collapsed: Container(),
 
               );
@@ -324,10 +327,10 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
     );
   }*/
 
-  Widget _buildGameTile(BuildContext context, CustomTheme themeExtension, UserGame ug, List<String> availableProtons) {
+  Widget _buildGameTile(BuildContext context, CustomTheme themeExtension, Game ug, List<String> availableProtons) {
     List<Widget> gameItems = [];
 
-    List<UserGameExe> gameExePaths = ug.exeFileEntries;
+    List<GameExecutable> gameExePaths = ug.exeFileEntries;
 
     if (ug.exeFileEntries.isEmpty) {
       return Padding(
@@ -339,7 +342,7 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
       );
     }
 
-    for (UserGameExe uge in gameExePaths) {
+    for (GameExecutable uge in gameExePaths) {
       bool added = uge.added;
       gameItems.add(Padding(
         padding: const EdgeInsets.fromLTRB(64, 0, 0, 0),
@@ -353,7 +356,7 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
                 Switch(
                     value: uge.added,
                     onChanged: (value) {
-                      _nsCubit(context).swapExeAdding(uge, _settings(context).defaultProtonCode);
+                      _nsCubit(context).swapExeAdding(uge, _settings.defaultCompatTool);
                     }),
                 //activeTrackColor: Colors.lightGreenAccent,
                 //activeColor: Colors.green,
@@ -375,7 +378,9 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
     );
   }
 
-  Widget _buildGameExeForm(UserGameExe uge, CustomTheme themeExtension, List<String> availableProntons) {
+  Widget _buildGameExeForm(GameExecutable uge, CustomTheme themeExtension, List<String> availableProntons) {
+
+    NonSteamGamesCubit nsgc = _nsCubit(context);
     return Container(
       color: themeExtension.gameCardExeOptionsBg,
       margin: EdgeInsets.fromLTRB(16, 8, 128, 8),
@@ -402,8 +407,8 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
                 items: availableProntons.map<DropdownMenuItem<String>>((String e) {
                   return DropdownMenuItem<String>(value: e, child: Text(e));
                 }).toList(),
-                value: _settingsCubit(context).getProtonNameForCode(uge.protonCode),
-                onChanged: (String? value) => _nsCubit(context).setProtonDataFor(uge, value!),
+                value: nsgc.getCompatToolDisplayNameFromCode(uge.compatToolCode),
+                onChanged: (String? value) =>nsgc.setCompatToolDataFor(uge, value!),
                 decoration: const InputDecoration(labelText: "Proton"))
           ],
         ),
@@ -411,20 +416,20 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
     );
   }
 
-  Widget _getExeCurrentStateIcon(VMGameAddedStatus gameAddedStatus) {
+  Widget _getExeCurrentStateIcon(GameStatus gameAddedStatus) {
     /*if(anyExeAddedAndProtonAssigned) return  const Icon(Icons.thumb_up, color:Colors.green);
 
     if(anyExeAdded) return  const Icon(Icons.check_circle, color:Colors.orangeAccent);
 
     return  const Icon(Icons.error_outline, color:Colors.red);*/
     Color color;
-    if (gameAddedStatus == VMGameAddedStatus.FullyAdded)
+    if (gameAddedStatus == GameStatus.FullyAdded) {
       color = Colors.green;
-    else if (gameAddedStatus == VMGameAddedStatus.Added)
+    } else if (gameAddedStatus == GameStatus.Added) {
       color = Colors.orangeAccent;
-    else if (gameAddedStatus == VMGameAddedStatus.NonAdded)
+    } else if (gameAddedStatus == GameStatus.NonAdded) {
       color = Colors.red;
-    else {
+    } else {
       color = Colors.blue.shade200;
     }
 
