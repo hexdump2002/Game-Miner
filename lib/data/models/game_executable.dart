@@ -2,7 +2,7 @@ import 'package:game_miner/data/models/compat_tool_mapping.dart';
 import 'package:game_miner/data/models/steam_shortcut_game.dart';
 import 'package:path/path.dart' as p;
 
-import '../../logic/Tools/StringTools.dart';
+import '../../logic/Tools/string_tools.dart';
 
 class GameExecutable {
   late bool brokenLink;
@@ -106,6 +106,6 @@ class GameExecutable {
   }
 
   String getAbsolutePath() {
-    return p.join(startDir, relativeExePath);
+    return p.join(StringTools.removeQuotes(startDir), relativeExePath);
   }
 }

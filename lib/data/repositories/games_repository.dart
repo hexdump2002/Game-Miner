@@ -5,7 +5,7 @@ import 'package:game_miner/data/models/compat_tool_mapping.dart';
 import 'package:game_miner/data/models/steam_shortcut_game.dart';
 import 'package:game_miner/data/models/game.dart';
 import 'package:game_miner/data/repositories/cache_repository.dart';
-import 'package:game_miner/logic/Tools/StringTools.dart';
+import 'package:game_miner/logic/Tools/string_tools.dart';
 import 'package:get_it/get_it.dart';
 import '../data_providers/user_library_games_data_provider.dart';
 import '../models/game_executable.dart';
@@ -99,9 +99,9 @@ class GamesRepository extends CacheRepository<Game> {
           s.entryId = ge.entryId;
           s.appId = ge.appId;
           s.appName = ge.name;
-          s.startDir = ge.startDir;
+          s.startDir = StringTools.addQuotesToPath(ge.startDir);
           s.icon = ge.icon;
-          s.shortcutPath = ge.shortcutPath;
+          s.shortcutPath = StringTools.addQuotesToPath(ge.shortcutPath);
           s.launchOptions = ge.launchOptions;
           s.isHidden = ge.isHidden;
           s.allowDesktopConfig = ge.allowDdesktopConfig;
@@ -113,8 +113,8 @@ class GamesRepository extends CacheRepository<Game> {
           s.lastPlayTime = ge.lastPlayTime;
           s.flatPackAppId = ge.flatPackAppId;
           s.exePath = g.isExternal
-              ? ge.relativeExePath
-              : ge.getAbsolutePath();
+              ? StringTools.addQuotesToPath(ge.relativeExePath)
+              : StringTools.addQuotesToPath(ge.getAbsolutePath());
           s.tags = ge.tags;
           shortcuts.add(s);
         }

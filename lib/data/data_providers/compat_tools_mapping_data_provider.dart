@@ -16,17 +16,21 @@ class CompatToolsMappingDataProvider {
     await file.open();
     String json = await file.readAsString();
 
-    RegExp r = RegExp(r'"CompatToolMapping"\n\t*{\n(\t*("(\d+)\"\n\t*{\n\t*\"name\"\t*\"(.*)\"\n\t*\"config\"\t*\"(.*)\"\n\t*\"priority\"\t*\"\d+\"\n\t*}\n))*\t*}');
-    var match = r.firstMatch(json);
-    String compatToolMappingText = (json.substring(match!.start, match!.end));
-    r = RegExp(r'"(\d+)\"\n\t*{\n\t*\"name\"\t*\"(.*)\"\n\t*\"config\"\t*\"(.*)\"\n\t*\"priority\"\t*\"(\d+)\"\n\t*}');
-    var matches = r.allMatches(compatToolMappingText);
-
     List<CompatToolMapping> protonMappings = [];
 
-    matches.forEach((element) {
-      protonMappings.add(CompatToolMapping(element.group(1)!, element.group(2)!, element.group(3)!, element.group(4)!));
-    });
+    RegExp r = RegExp(r'"CompatToolMapping"\n\t*{\n(\t*("(\d+)\"\n\t*{\n\t*\"name\"\t*\"(.*)\"\n\t*\"config\"\t*\"(.*)\"\n\t*\"priority\"\t*\"\d+\"\n\t*}\n))*\t*}');
+    var match = r.firstMatch(json);
+    if(match!=null) {
+      String compatToolMappingText = (json.substring(match!.start, match!.end));
+      r = RegExp(r'"(\d+)\"\n\t*{\n\t*\"name\"\t*\"(.*)\"\n\t*\"config\"\t*\"(.*)\"\n\t*\"priority\"\t*\"(\d+)\"\n\t*}');
+      var matches = r.allMatches(compatToolMappingText);
+
+
+
+      for (var element in matches) {
+        protonMappings.add(CompatToolMapping(element.group(1)!, element.group(2)!, element.group(3)!, element.group(4)!));
+      }
+    }
 
     return Future.value(protonMappings);
   }

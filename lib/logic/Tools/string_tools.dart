@@ -29,4 +29,41 @@ class StringTools {
     return str;
   }
 
+  static countCharacters(String s, int char) {
+    int count = 0;
+    for(int i=0; i<s.length; ++i) {
+      if(char == s[i].codeUnitAt(0)) {
+        ++count;
+      }
+    }
+    return count;
+  }
+
+  static String addQuotesToPath(String path) {
+    path = path.trim();
+
+    bool addQuotes = true;
+    bool balanced = true;
+
+    int count = countCharacters(path, "\"".codeUnitAt(0));
+
+
+    if(count%2 != 0) {
+      balanced = false;
+      addQuotes = false;
+    }
+    else if(path.trim().startsWith("\"") || path.trim().endsWith("\""))
+    {
+      addQuotes = false;
+    }
+
+    if(!balanced) print("Path $path is not quote balanced");
+
+    if(addQuotes) {
+       return "\"$path\"";
+    }
+    else {
+      return path;
+    }
+  }
 }

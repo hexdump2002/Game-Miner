@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:game_miner/data/models/game.dart';
-import 'package:game_miner/logic/Tools/GameTools.dart';
+import 'package:game_miner/logic/Tools/game_tools.dart';
 import 'package:game_miner/logic/blocs/non_steam_games_cubit.dart';
 import 'package:universal_disk_space/universal_disk_space.dart';
 

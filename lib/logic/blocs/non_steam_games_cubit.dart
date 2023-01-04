@@ -27,7 +27,7 @@ import '../../data/models/game_executable.dart';
 import '../../data/models/game.dart';
 import '../../data/models/settings.dart';
 import '../../data/repositories/steam_user_repository.dart';
-import '../Tools/GameTools.dart';
+import '../Tools/game_tools.dart';
 
 part 'non_steam_games_state.dart';
 

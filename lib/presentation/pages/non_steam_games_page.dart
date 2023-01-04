@@ -8,7 +8,7 @@ import 'package:expandable/expandable.dart';
 import 'package:game_miner/data/Stats.dart';
 import 'package:game_miner/data/game_folder_stats.dart';
 import 'package:game_miner/data/repositories/settings_repository.dart';
-import 'package:game_miner/logic/Tools/StringTools.dart';
+import 'package:game_miner/logic/Tools/string_tools.dart';
 import 'package:game_miner/logic/Tools/file_tools.dart';
 import 'package:game_miner/logic/Tools/vdf_tools.dart';
 import 'package:game_miner/logic/blocs/non_steam_games_cubit.dart';
@@ -19,7 +19,7 @@ import 'package:get_it/get_it.dart';
 import '../../data/models/game_executable.dart';
 import '../../data/models/game.dart';
 import '../../data/models/settings.dart';
-import '../../logic/Tools/GameTools.dart';
+import '../../logic/Tools/game_tools.dart';
 
 class NonSteamGamesPage extends StatefulWidget {
   const NonSteamGamesPage({Key? key}) : super(key: key);
