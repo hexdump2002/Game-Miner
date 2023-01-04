@@ -71,22 +71,28 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
 
 
   Future<void> loadData(Settings settings) async {
-    emit(RetrievingGameData());
+    List<Game>? games = _gameRepository.getGames();
 
-    await _refreshStorageSize();
-    _games = await _gameRepository.loadGames(_settings.currentUserId,_settings.searchPaths);
-    _gamesFoldingState = List.generate(_games.length, (index) => false);
+    if(games !=null) {
+      _games = games;
+    }
+    else {
+      emit(RetrievingGameData());
 
-    _games = GameTools.sortByName(SortDirection.Asc, _games);
+      await _refreshStorageSize();
+      _games = await _gameRepository.loadGames(_settings.currentUserId, _settings.searchPaths);
 
-    var folderStats = await Stats.getGamesFolderStats(_games);
-    assert(folderStats.statsByGame.length == _games.length);
+      var folderStats = await Stats.getGamesFolderStats(_games);
+      assert(folderStats.statsByGame.length == _games.length);
 
-    //Todo: Think about update games in repository.
-    for (int i = 0; i < folderStats.statsByGame.length; ++i) {
-      _games[i].gameSize = folderStats.statsByGame[i].size;
+      //Todo: Think about update games in repository.
+      for (int i = 0; i < folderStats.statsByGame.length; ++i) {
+        _games[i].gameSize = folderStats.statsByGame[i].size;
+      }
     }
 
+    _games = GameTools.sortByName(SortDirection.Asc, _games);
+    _gamesFoldingState = List.generate(_games.length, (index) => false);
     _availableCompatTools = await _compatToolsRepository.loadCompatTools();
     _compatToolsMappings = await _compatToolsMappipngRepository.loadCompatToolMappings();
 
@@ -97,6 +103,7 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
   }
 
   refresh(Settings settings) {
+    _gameRepository.invalidateGamesCache();
     loadData(settings);
   }
 
@@ -148,10 +155,13 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
 
     await _gameRepository.saveGames(_settings.currentUserId, _games);
 
-    EasyLoading.showSuccess("Data saved!. We will synch with Steam now");
+    //EasyLoading.showSuccess("Data saved!. We will synch with Steam now");
 
-    refresh(_settings);
-    EasyLoading.showSuccess("Saving proton mappings");
+    //refresh(_settings);
+
+    if(showInfo) {
+      EasyLoading.showSuccess("Saving proton mappings");
+    }
 
     await saveCompatToolMappings();
 

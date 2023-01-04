@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:game_miner/data/models/steam_shortcut_game.dart';
@@ -49,15 +50,22 @@ class SteamShortcutDataProvider {
   Future<void> saveShortcuts(String userId, List<SteamShortcut> shortcuts) async {
 
     String homeFolder = FileTools.getHomeFolder();
-    String shortcutsPath = "$homeFolder.steam/steam/userdata/$userId/config/shortcuts.vdf";
+    String shortcutsPath = "$homeFolder/.steam/steam/userdata/$userId/config/shortcuts.vdf";
 
     BinaryVdfFile file = BinaryVdfFile(shortcutsPath);
-    file.open();
+    await file.open(FileMode.writeOnly);
+
+    //Write header
+    await file.writeByte(0);
+    await file.writeString("shortcuts");
+    await file.writeByte(0);
 
     int blockId= 0;
 
     for (SteamShortcut shortcut in shortcuts) {
 
+      //00 08 08 00 31 30 00 (02) (Numero 10)
+      //00 08 08 00 31 00 (02)    (Numero 1)
       await _writeBlockId(file, blockId++);
 
       await file.writeInt32BEProperty("appid", shortcut.appId);
@@ -78,12 +86,17 @@ class SteamShortcutDataProvider {
       await file.writeStringProperty("FlatpakAppID", shortcut.flatPackAppId);
       await file.writeListProperty("tags", shortcut.tags);
 
-      //00 08 08 00 31 30 00 (02) (Numero 10)
-      //00 08 08 00 31 00 (02)    (Numero 1)
+      await file.writeByte(8);
+      await file.writeByte(8);
 
-      file.writeByte(8);
-      file.writeByte(8);
     }
+
+
+
+    await file.writeByte(8);
+    await file.writeByte(8);
+
+    file.close();
   }
 
   Future<void> _writeBlockId(BinaryVdfFile file, int num) async {

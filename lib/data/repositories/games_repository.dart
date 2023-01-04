@@ -23,6 +23,11 @@ class GamesRepository extends CacheRepository<Game> {
     _compatToolsMappingDataProvider = GetIt.I<CompatToolsMappingDataProvider>();
   }
 
+  List<Game>? getGames() {
+    List<Game>? games = getObjectsFromCache(cacheKey);
+    return games;
+  }
+
   Future<List<Game>> loadGames(String userId, List<String> userLibraryPaths) async {
 
     List<Game>? games = getObjectsFromCache(cacheKey);
@@ -74,35 +79,45 @@ class GamesRepository extends CacheRepository<Game> {
     return games!;
   }
 
+  //Request a reload in next iteration
+  void invalidateGamesCache() {
+    removeCacheKey(cacheKey);
+  }
+
   //TODO: Move all this to write to a in memory buffer and then dump it to the file
   Future<void> saveGames(String userId, List<Game> games) async {
-    //Convert Games into steam shortcuts data provider model
+
+
+    //Convert Games into steam shortcuts data provider model (only the ones selected)
     List<SteamShortcut> shortcuts = [];
 
     for(Game g in games) {
       for(GameExecutable ge in g.exeFileEntries) {
-        SteamShortcut s = SteamShortcut();
-        s.entryId = ge.entryId;
-        s.appId = ge.appId;
-        s.appName = ge.name;
-        s.startDir = ge.startDir;
-        s.icon = ge.icon;
-        s.shortcutPath = ge.shortcutPath;
-        s.launchOptions = ge.launchOptions;
-        s.isHidden = ge.isHidden;
-        s.allowDesktopConfig = ge.allowDdesktopConfig;
-        s.allowOverlay = ge.allowOverlay;
-        s.openVr = ge.openVr;
-        s.devkit = ge.devkit;
-        s.devkitGameId = ge.devkitGameId;
-        s.devkitOverrideAppId = ge.devkitOverrideAppId;
-        s.lastPlayTime = ge.lastPlayTime;
-        s.flatPackAppId = ge.flatPackAppId;
-        s.exePath = g.isExternal
-            ? ge.relativeExePath
-          : ge.getAbsolutePath();
-        s.tags = ge.tags;
-        shortcuts.add(s);
+
+        if(ge.added == true) {
+          SteamShortcut s = SteamShortcut();
+          s.entryId = ge.entryId;
+          s.appId = ge.appId;
+          s.appName = ge.name;
+          s.startDir = ge.startDir;
+          s.icon = ge.icon;
+          s.shortcutPath = ge.shortcutPath;
+          s.launchOptions = ge.launchOptions;
+          s.isHidden = ge.isHidden;
+          s.allowDesktopConfig = ge.allowDdesktopConfig;
+          s.allowOverlay = ge.allowOverlay;
+          s.openVr = ge.openVr;
+          s.devkit = ge.devkit;
+          s.devkitGameId = ge.devkitGameId;
+          s.devkitOverrideAppId = ge.devkitOverrideAppId;
+          s.lastPlayTime = ge.lastPlayTime;
+          s.flatPackAppId = ge.flatPackAppId;
+          s.exePath = g.isExternal
+              ? ge.relativeExePath
+              : ge.getAbsolutePath();
+          s.tags = ge.tags;
+          shortcuts.add(s);
+        }
       }
     }
 

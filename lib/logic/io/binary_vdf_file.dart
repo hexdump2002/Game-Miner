@@ -10,13 +10,16 @@ class BinaryVdfFile {
 
   BinaryVdfFile(String path) : _path=path {
     _file = File(_path);
-    if (!_file.existsSync()) {
-      throw NotFoundException("Vdf file not found: $path");
-    }
+
   }
 
-  void open() async {
-    _raf ??= await _file.open();
+  Future<void> open(FileMode mode) async {
+
+    if (mode == FileMode.read && !_file.existsSync()) {
+      throw NotFoundException("Vdf file not found: $_path");
+    }
+
+    _raf ??= await _file.open(mode: mode);
   }
 
   void close() async {

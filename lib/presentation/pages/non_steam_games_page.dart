@@ -36,7 +36,7 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
   }
 
   NonSteamGamesCubit _nsCubit(context) =>  BlocProvider.of<NonSteamGamesCubit>(context);
-  Settings _settings =  GetIt.I<SettingsRepository>().getSettingsForCurrentUser();
+  final Settings _settings =  GetIt.I<SettingsRepository>().getSettingsForCurrentUser();
 
   @override
   Widget build(BuildContext context) {
@@ -202,7 +202,7 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
       return Container();
     }*/
     else {
-      print("[Warning] Unknown state");
+      //print("[Warning] Unknown state");
       return [Container()];
     }
 

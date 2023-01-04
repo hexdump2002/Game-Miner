@@ -14,4 +14,8 @@ class CacheRepository<T> {
   void setCacheKey(String key, List<T> objects) {
     _cachedData[key] = objects;
   }
+
+  void removeCacheKey(String key) {
+    _cachedData.remove(key);
+  }
 }

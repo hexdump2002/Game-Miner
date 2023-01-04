@@ -19,4 +19,7 @@ class Settings {
     return {'searchPaths': searchPaths, 'defaultCompatTool': defaultCompatTool,  'darkTheme':darkTheme};
   }
 
+  Settings clone() {
+    return Settings.fromJson(toJson());
+  }
 }

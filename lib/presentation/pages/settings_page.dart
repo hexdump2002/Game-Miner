@@ -1,8 +1,10 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:game_miner/data/repositories/compat_tools_mapping_repository.dart';
 import 'package:game_miner/logic/blocs/non_steam_games_cubit.dart';
 import 'package:game_miner/logic/blocs/settings_cubit.dart';
+import 'package:get_it/get_it.dart';
 
 import '../../data/models/settings.dart';
 
@@ -15,11 +17,12 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
   late final SettingsCubit _bloc;
+  late final Future<void> _blocInitializer;
 
   @override
   void initState() {
     _bloc = BlocProvider.of<SettingsCubit>(context);
-    _bloc.refresh();
+    _blocInitializer = _bloc.initialize();
   }
 
   @override
@@ -29,11 +32,11 @@ class _SettingsPageState extends State<SettingsPage> {
           // Here we take the value from the MyHomePage object that was created by
           // the App.build method, and use it to set our appbar title.
           title: Text(tr("settings")),
-          leading: GestureDetector(
+          /*leading: GestureDetector(
               child: const Icon(Icons.arrow_back),
               onTap: () {
                 Navigator.pop(context, _bloc.isGameListDirty);
-              }),
+              }),*/
           actions: [
             IconButton(
               onPressed: () => _bloc.save(),
@@ -42,13 +45,17 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
           ],
         ),
-        body: _buildSettings());
+        body: FutureBuilder(future: _blocInitializer, builder: (ctx, snapshot) {
+          if (snapshot.hasData) {
+            return _buildSettings();
+          }
+          else {
+            return Container();
+          }
+        }));
   }
 
   Widget _buildGeneralOptions(Settings settings) {
-    //TODO: What the fuck is doing this here?
-    NonSteamGamesCubit nsgc = BlocProvider.of<NonSteamGamesCubit>(context);
-
     return Expanded(
         flex: 4,
         child: Card(
@@ -71,11 +78,16 @@ class _SettingsPageState extends State<SettingsPage> {
                     Expanded(child: Text(tr("default_proton"))),
                     Expanded(
                       child: DropdownButtonFormField<String>(
-                          items: nsgc.getAvailableCompatToolDisplayNames().map<DropdownMenuItem<String>>((String e) {
+                          items: _bloc.getAvailableCompatToolDisplayNames().map<DropdownMenuItem<String>>((String e) {
                             return DropdownMenuItem<String>(value: e, child: Text(e));
                           }).toList(),
-                          value: nsgc.getCompatToolDisplayNameFromCode(_bloc.getSettings().defaultCompatTool),
-                          onChanged: (String? value) => _bloc.getSettings().defaultCompatTool = nsgc.getCompatToolCodeFromDisplayName(value!),
+                          value: _bloc.getCompatToolDisplayNameFromCode(_bloc
+                              .getSettings()
+                              .defaultCompatTool),
+                          onChanged: (String? value) =>
+                          _bloc
+                              .getSettings()
+                              .defaultCompatTool = _bloc.getCompatToolCodeFromDisplayName(value!),
                           decoration: const InputDecoration()),
                     )
                   ])),
@@ -121,60 +133,57 @@ class _SettingsPageState extends State<SettingsPage> {
                   ),
                   Expanded(
                     child: BlocBuilder<SettingsCubit, SettingsState>(
-                      buildWhen: (previous, current) => current is SearchPathsChanged || current is SettingsChangedState,
+                      //buildWhen: (previous, current) => current is SearchPathsChanged || current is SettingsChangedState,
                       builder: (context, state) {
                         late Settings settings;
-                        if (state is SearchPathsChanged) {
-                          settings = state.settings;
-                        } else if (state is SettingsChangedState) {
+                        if (state is SearchPathsChanged || state is SettingsChangedState  || state is SettingsLoaded) {
                           settings = state.settings;
                         } else {
                           return Container();
                         }
 
-                        return state is SearchPathsChanged || state is SettingsChangedState
-                            ? Column(
+                        return Column(
+                          children: [
+                            Expanded(
+                              child: ListView(
+                                shrinkWrap: true,
+                                children: settings.searchPaths
+                                    .map<ListTile>((e) =>
+                                    ListTile(
+                                      visualDensity: VisualDensity(horizontal: -4, vertical: -4),
+                                      title: Text(e),
+                                      trailing: IconButton(onPressed: () => _bloc.removePath(e), icon: const Icon(Icons.delete)),
+                                    ))
+                                    .toList(),
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(16, 16, 8, 8),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [
                                   Expanded(
-                                    child: ListView(
-                                      shrinkWrap: true,
-                                      children: settings.searchPaths
-                                          .map<ListTile>((e) => ListTile(
-                                                visualDensity: VisualDensity(horizontal: -4, vertical: -4),
-                                                title: Text(e),
-                                                trailing: IconButton(onPressed: () => _bloc.removePath(e), icon: const Icon(Icons.delete)),
-                                              ))
-                                          .toList(),
-                                    ),
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.fromLTRB(16, 16, 8, 8),
                                     child: Row(
                                       crossAxisAlignment: CrossAxisAlignment.center,
                                       children: [
-                                        Expanded(
-                                          child: Row(
-                                            crossAxisAlignment: CrossAxisAlignment.center,
-                                            children: [
-                                              Container(
-                                                padding: EdgeInsets.fromLTRB(8, 4, 8, 4),
-                                                decoration:
-                                                    const BoxDecoration(color: Colors.grey, borderRadius: BorderRadius.all(Radius.circular(40))),
-                                                child: Text(
-                                                  "${settings.searchPaths.length} ${tr("folders")}",
-                                                  style: TextStyle(fontSize: 15, color: Colors.white),
-                                                ),
-                                              )
-                                            ],
+                                        Container(
+                                          padding: EdgeInsets.fromLTRB(8, 4, 8, 4),
+                                          decoration:
+                                          const BoxDecoration(color: Colors.grey, borderRadius: BorderRadius.all(Radius.circular(40))),
+                                          child: Text(
+                                            "${settings.searchPaths.length} ${tr("folders")}",
+                                            style: TextStyle(fontSize: 15, color: Colors.white),
                                           ),
-                                        ),
-                                        ElevatedButton(onPressed: () => _bloc.pickPath(), child: Text(tr('add_path'))),
+                                        )
                                       ],
                                     ),
-                                  )
+                                  ),
+                                  ElevatedButton(onPressed: () => _bloc.pickPath(), child: Text(tr('add_path'))),
                                 ],
-                              )
-                            : Container();
+                              ),
+                            )
+                          ],
+                        );
                       },
                     ),
                   ),
@@ -183,15 +192,16 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
           ),
           BlocBuilder<SettingsCubit, SettingsState>(
-              buildWhen: (previous, current) => current is GeneralOptionsChanged || current is SettingsChangedState,
+            //buildWhen: (previous, current) => current is GeneralOptionsChanged || current is SettingsChangedState,
               builder: (context, state) {
-                if (state is GeneralOptionsChanged) {
+                /*if (state is GeneralOptionsChanged) {
                   return _buildGeneralOptions((state).settings);
                 } else if (state is SettingsChangedState) {
                   return _buildGeneralOptions((state).settings);
                 } else {
                   return Container();
-                }
+                }*/
+                return _buildGeneralOptions(state.settings);
               })
         ]));
   }

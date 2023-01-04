@@ -23,7 +23,7 @@ class SettingsDataProvider {
     else {
       file.openSync();
       String json = file.readAsStringSync();
-      Settings settings = Settings.fromJson(jsonDecode(json));
+      settings = Settings.fromJson(jsonDecode(json));
     }
 
     return settings;

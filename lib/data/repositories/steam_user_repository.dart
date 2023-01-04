@@ -19,8 +19,8 @@ class SteamUserRepository extends CacheRepository<SteamUser> {
     }
   }
 
-  Future<SteamUser?> getFirstUser() async {
-    var users = await loadUsers();
-    return users.isNotEmpty ? users[0] : null;
+  SteamUser? getFirstUser() {
+    var users = getObjectsFromCache("SteamUsers");
+    return users!=null && users.isNotEmpty ?  users[0] : null;
   }
 }
