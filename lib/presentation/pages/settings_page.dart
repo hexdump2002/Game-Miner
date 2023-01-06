@@ -2,7 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:game_miner/data/repositories/compat_tools_mapping_repository.dart';
-import 'package:game_miner/logic/blocs/non_steam_games_cubit.dart';
+import 'package:game_miner/logic/blocs/game_mgr_cubit.dart';
 import 'package:game_miner/logic/blocs/settings_cubit.dart';
 import 'package:get_it/get_it.dart';
 

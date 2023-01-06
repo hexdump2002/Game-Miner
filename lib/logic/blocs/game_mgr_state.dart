@@ -1,14 +1,14 @@
-part of 'non_steam_games_cubit.dart';
+part of 'game_mgr_cubit.dart';
 
 @immutable
-abstract class NonSteamGamesBaseState {}
+abstract class GameMgrBaseState {}
 
-class IninitalState extends NonSteamGamesBaseState {}
+class IninitalState extends GameMgrBaseState {}
 
-class RetrievingGameData extends NonSteamGamesBaseState {}
+class RetrievingGameData extends GameMgrBaseState {}
 
 //All states emiting all the data. This is not performant. We need to use smaller events to re-create as less widgets as we could
-class BaseDataChanged extends NonSteamGamesBaseState {
+class BaseDataChanged extends GameMgrBaseState {
   final List<Game> games;
   final List<bool> gamesFoldingState;
   final List<String> availableProntonNames;

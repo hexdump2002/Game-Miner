@@ -11,7 +11,7 @@ import 'package:game_miner/data/repositories/settings_repository.dart';
 import 'package:game_miner/logic/Tools/string_tools.dart';
 import 'package:game_miner/logic/Tools/file_tools.dart';
 import 'package:game_miner/logic/Tools/vdf_tools.dart';
-import 'package:game_miner/logic/blocs/non_steam_games_cubit.dart';
+import 'package:game_miner/logic/blocs/game_mgr_cubit.dart';
 import 'package:game_miner/logic/blocs/settings_cubit.dart';
 import 'package:game_miner/main.dart';
 import 'package:get_it/get_it.dart';
@@ -21,21 +21,21 @@ import '../../data/models/game.dart';
 import '../../data/models/settings.dart';
 import '../../logic/Tools/game_tools.dart';
 
-class NonSteamGamesPage extends StatefulWidget {
-  const NonSteamGamesPage({Key? key}) : super(key: key);
+class GameMgrPage extends StatefulWidget {
+  const GameMgrPage({Key? key}) : super(key: key);
 
   @override
-  State<NonSteamGamesPage> createState() => _NonSteamGamesPageState();
+  State<GameMgrPage> createState() => _GameMgrPageState();
 }
 
-class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
+class _GameMgrPageState extends State<GameMgrPage> {
   final _formKey = GlobalKey<FormState>();
 
   @override
   void initState() {
   }
 
-  NonSteamGamesCubit _nsCubit(context) =>  BlocProvider.of<NonSteamGamesCubit>(context);
+  GameMgrCubit _nsCubit(context) =>  BlocProvider.of<GameMgrCubit>(context);
   final Settings _settings =  GetIt.I<SettingsRepository>().getSettingsForCurrentUser();
 
   @override
@@ -46,7 +46,7 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
         // the App.build method, and use it to set our appbar title.
         title: Text("Game Manager"),
         actions: [
-          BlocBuilder<NonSteamGamesCubit, NonSteamGamesBaseState>(
+          BlocBuilder<GameMgrCubit, GameMgrBaseState>(
             builder: (context, nsgState) {
               return Row(children: [
                 ToggleButtons(
@@ -149,7 +149,7 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
               BlocProvider.of<NonSteamGamesCubit>(context).refresh(BlocProvider.of<SettingsCubit>(context).getSettings());
             }
           }, builder: (context, settingsState) {
-            return */BlocBuilder<NonSteamGamesCubit, NonSteamGamesBaseState>(builder: (context, nsgState) {
+            return */BlocBuilder<GameMgrCubit, GameMgrBaseState>(builder: (context, nsgState) {
               //print("[NonSteamGamesCubit Builder] State -> $nsgState");
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -160,7 +160,7 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
     );
   }
 
-  List<Widget> _buildDataScreen(BuildContext context, NonSteamGamesBaseState nsgState) {
+  List<Widget> _buildDataScreen(BuildContext context, GameMgrBaseState nsgState) {
     CustomTheme themeExtension = Theme.of(context).extension<CustomTheme>()!;
 
     if (nsgState is RetrievingGameData) {
@@ -380,7 +380,7 @@ class _NonSteamGamesPageState extends State<NonSteamGamesPage> {
 
   Widget _buildGameExeForm(GameExecutable uge, CustomTheme themeExtension, List<String> availableProntons) {
 
-    NonSteamGamesCubit nsgc = _nsCubit(context);
+    GameMgrCubit nsgc = _nsCubit(context);
     return Container(
       color: themeExtension.gameCardExeOptionsBg,
       margin: EdgeInsets.fromLTRB(16, 8, 128, 8),

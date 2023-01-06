@@ -1,17 +1,22 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:game_miner/data/data_providers/compat_tools_data_provider.dart';
+import 'package:game_miner/data/models/steam_app.dart';
 import 'package:game_miner/data/repositories/settings_repository.dart';
+import 'package:game_miner/data/repositories/steam_apps_repository.dart';
 import 'package:game_miner/data/repositories/steam_user_repository.dart';
 import 'package:game_miner/logic/Tools/steam_tools.dart';
 import 'package:game_miner/logic/blocs/main_dart_cubit.dart';
-import 'package:game_miner/logic/blocs/non_steam_games_cubit.dart';
+import 'package:game_miner/logic/blocs/game_mgr_cubit.dart';
 import 'package:game_miner/logic/blocs/settings_cubit.dart';
+import 'package:game_miner/logic/io/text_vdf_file.dart';
 import 'package:game_miner/presentation/pages/main_page.dart';
-import 'package:game_miner/presentation/pages/non_steam_games_page.dart';
+import 'package:game_miner/presentation/pages/game_mgr_page.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:game_miner/presentation/pages/settings_page.dart';
 import 'package:game_miner/presentation/pages/splash_page.dart';
@@ -23,10 +28,15 @@ import 'data/models/steam_user.dart';
 import 'logic/Tools/service_locator.dart';
 
 late SettingsCubit _settingsCubit;
+Stream<Settings> stream = GetIt.I<SettingsRepository>().settings.distinct((Settings previous, Settings next) {
+  return previous.darkTheme != next.darkTheme;
+});
 
 void main() async {
   await setupServiceLocator();
 
+  SteamAppsRepository repo = GetIt.I<SteamAppsRepository>();
+  List<SteamApp>? steamApps = await repo.load();
   // Needs to be called so that we can await for EasyLocalization.ensureInitialized();
   WidgetsFlutterBinding.ensureInitialized();
   await EasyLocalization.ensureInitialized();
@@ -79,9 +89,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<Settings>(
-        stream: GetIt.I<SettingsRepository>().settings.distinct((Settings previous, Settings next) {
-          return previous.darkTheme != next.darkTheme;
-        }),
+        stream: stream,
         initialData: GetIt.I<SettingsRepository>().getSettings(),
         builder: (context, AsyncSnapshot<Settings> snapshot) {
           return MaterialApp(
@@ -122,8 +130,8 @@ _buildRoutes() {
   return {
     '/': (context) => SplashPage(),
     '/main': (context) => BlocProvider(
-          create: (context) => NonSteamGamesCubit(),
-          child: const NonSteamGamesPage(),
+          create: (context) => GameMgrCubit(),
+          child: const GameMgrPage(),
         ),
     // When navigating to the "/second" route, build the SecondScreen widget.
     '/settings': (context) => SettingsPage(),

@@ -1,11 +1,13 @@
 import 'package:game_miner/data/data_providers/compat_tools_data_provider.dart';
 import 'package:game_miner/data/data_providers/compat_tools_mapping_data_provider.dart';
 import 'package:game_miner/data/data_providers/settings_data_provider.dart';
+import 'package:game_miner/data/data_providers/steam_apps_data_provider.dart';
 import 'package:game_miner/data/data_providers/steam_shortcuts_data_provider.dart';
 import 'package:game_miner/data/repositories/compat_tools_mapping_repository.dart';
 import 'package:game_miner/data/repositories/compat_tools_repository.dart';
 import 'package:game_miner/data/repositories/games_repository.dart';
 import 'package:game_miner/data/repositories/settings_repository.dart';
+import 'package:game_miner/data/repositories/steam_apps_repository.dart';
 import 'package:get_it/get_it.dart';
 
 import '../../data/data_providers/steam_users_data_provider.dart';
@@ -25,6 +27,7 @@ Future<void> setupServiceLocator() async {
   serviceLocator.registerLazySingleton<CompatToolsMappingDataProvider>(() => CompatToolsMappingDataProvider());
   serviceLocator.registerLazySingleton<SteamShortcutDataProvider>(() => SteamShortcutDataProvider());
   serviceLocator.registerLazySingleton<UserLibraryGamesDataProvider>(() => UserLibraryGamesDataProvider());
+  serviceLocator.registerLazySingleton<SteamAppsDataProvider>(() => SteamAppsDataProvider());
   serviceLocator.registerLazySingleton<SettingsDataProvider>(() => SettingsDataProvider());
   serviceLocator.registerSingleton<SteamUsersDataProvider>(sudp);
 
@@ -32,6 +35,7 @@ Future<void> setupServiceLocator() async {
   serviceLocator.registerLazySingleton<CompatToolsRepository>(() => CompatToolsRepository());
   serviceLocator.registerLazySingleton<CompatToolsMappipngRepository>(()=>CompatToolsMappipngRepository());
   serviceLocator.registerLazySingleton<GamesRepository>(() => GamesRepository());
+  serviceLocator.registerLazySingleton<SteamAppsRepository>(() => SteamAppsRepository());
   serviceLocator.registerLazySingleton<SteamUserRepository>(() => SteamUserRepository());
   serviceLocator.registerLazySingleton<SettingsRepository>(() => SettingsRepository());
 }

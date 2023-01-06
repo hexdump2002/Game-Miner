@@ -29,14 +29,14 @@ import '../../data/models/settings.dart';
 import '../../data/repositories/steam_user_repository.dart';
 import '../Tools/game_tools.dart';
 
-part 'non_steam_games_state.dart';
+part 'game_mgr_state.dart';
 
 
 enum SortBy { Name, Status }
 
 enum SortDirection { Asc, Desc }
 
-class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
+class GameMgrCubit extends Cubit<GameMgrBaseState> {
   List<Game> _games = [];
   List<bool> _gamesFoldingState = [];
   List<CompatTool> _availableCompatTools = [];
@@ -64,7 +64,7 @@ class NonSteamGamesCubit extends Cubit<NonSteamGamesBaseState> {
   //Not the best place to stored. Cubits should be platform agnostics
   final TextEditingController _genericTextController = TextEditingController();
 
-  NonSteamGamesCubit() : super(IninitalState()) {
+  GameMgrCubit() : super(IninitalState()) {
     _settings  = GetIt.I<SettingsRepository>().getSettings()!;
     loadData(_settings);
   }

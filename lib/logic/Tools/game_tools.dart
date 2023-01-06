@@ -2,7 +2,7 @@ import 'package:collection/collection.dart';
 import 'package:path/path.dart' as p;
 
 import '../../data/models/game.dart';
-import '../blocs/non_steam_games_cubit.dart';
+import '../blocs/game_mgr_cubit.dart';
 
 enum GameStatus {NonAdded, Added, FullyAdded, AddedExternal}
 

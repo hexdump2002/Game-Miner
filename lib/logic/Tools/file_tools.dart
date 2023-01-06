@@ -91,4 +91,12 @@ class FileTools {
 
     return {'fileCount': fileCount, 'size': totalSize};
   }
+
+  static Future<bool> existsFile(String path) async{
+    return await File(path).exists();
+  }
+
+  static Future<bool> existsFolder(String path) async{
+    return await Directory(path).exists();
+  }
 }

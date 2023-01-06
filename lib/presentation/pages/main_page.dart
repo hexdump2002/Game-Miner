@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:game_miner/data/repositories/steam_user_repository.dart';
+import 'package:game_miner/logic/blocs/game_data_mgr_cubit.dart';
 import 'package:game_miner/logic/blocs/main_dart_cubit.dart';
-import 'package:game_miner/logic/blocs/non_steam_games_cubit.dart';
+import 'package:game_miner/logic/blocs/game_mgr_cubit.dart';
 import 'package:game_miner/logic/blocs/settings_cubit.dart';
+import 'package:game_miner/presentation/pages/game_data_mgr_page.dart';
 import 'package:game_miner/presentation/pages/settings_page.dart';
 import 'package:get_it/get_it.dart';
 
-import 'non_steam_games_page.dart';
+import 'game_mgr_page.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({Key? key}) : super(key: key);
@@ -48,9 +50,7 @@ class _MainPageState extends State<MainPage> {
       selectedIndex: selectedIndex,
       groupAlignment: 0,
       onDestinationSelected: (int index) {
-        BlocProvider
-            .of<MainPageCubit>(context)
-            .selectedIndex = index;
+        BlocProvider.of<MainPageCubit>(context).selectedIndex = index;
       },
       labelType: NavigationRailLabelType.all,
       /*leading: showLeading
@@ -118,13 +118,13 @@ class _MainPageState extends State<MainPage> {
     switch (selectedIndex) {
       case 0:
         {
-          widget = BlocProvider(create: (context) => NonSteamGamesCubit(), child: const NonSteamGamesPage());
+          widget = BlocProvider(create: (context) => GameMgrCubit(), child: const GameMgrPage());
           break;
         }
       case 1:
-        widget = Container(
-          child: Center(child: Text("Comming soon")),
-        );
+        {
+          widget = BlocProvider(create: (context) => GameDataMgrCubit(), child: const GameDataMgrPage());
+        }
         break;
       case 2:
         widget = BlocProvider(

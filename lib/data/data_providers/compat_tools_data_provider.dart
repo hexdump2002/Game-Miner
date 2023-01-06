@@ -46,7 +46,8 @@ class CompatToolsDataProvider {
   }
 
   Future<List<CompatTool>> loadInternalCompatTools() async {
-    BinaryVdfBuffer buffer = BinaryVdfBuffer("/home/hexdump/.local/share/Steam/appcache/appinfo.vdf");
+    String homeFolder = FileTools.getHomeFolder();
+    BinaryVdfBuffer buffer = BinaryVdfBuffer("$homeFolder/.local/share/Steam/appcache/appinfo.vdf");
 
     int pos = buffer.findStringInBuffer("compat_tools");
     if(pos==-1) return [];
