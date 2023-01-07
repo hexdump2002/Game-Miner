@@ -37,7 +37,8 @@ class GamesRepository extends CacheRepository<Game> {
       List<Game> userLibraryGames = await _libraryGamesDataProvider.loadGames(userLibraryPaths);
       List<CompatToolMapping> compatToolMappings = await _compatToolsMappingDataProvider.loadCompatToolMappings();
 
-      games = List.from(userLibraryGames);
+      //games = List.from(userLibraryGames);
+      games = userLibraryGames;
 
       for (SteamShortcut shortcut in shortcuts) {
         bool finished = false;
@@ -114,7 +115,7 @@ class GamesRepository extends CacheRepository<Game> {
           s.flatPackAppId = ge.flatPackAppId;
           s.exePath = g.isExternal
               ? StringTools.addQuotesToPath(ge.relativeExePath)
-              : StringTools.addQuotesToPath(ge.getAbsolutePath());
+              : StringTools.addQuotesToPath("${g.path}/${ge.relativeExePath}");
           s.tags = ge.tags;
           shortcuts.add(s);
         }

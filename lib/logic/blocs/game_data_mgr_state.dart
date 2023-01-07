@@ -5,7 +5,12 @@ abstract class GameDataMgrState {}
 
 class GameDataMgrInitial extends GameDataMgrState {}
 
-class SteamAppsLoaded extends GameDataMgrState{
-  late final List<SteamApp> steamApps;
-  SteamAppsLoaded(this.steamApps);
+class AppDataStorageLoaded extends GameDataMgrState{
+  late final List<AppDataStorageEntry> steamApps;
+  AppDataStorageLoaded(this.steamApps);
+}
+
+class AppDataStorageChanged extends GameDataMgrState{
+  late final List<AppDataStorageEntry> steamApps;
+  AppDataStorageChanged(this.steamApps);
 }

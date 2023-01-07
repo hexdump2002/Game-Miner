@@ -28,6 +28,7 @@
   "folder_no_contains_exe":"Este directorio no contiene ficheros exe. ¿Es correcto?",
   "please_enter_text": "Por favor, introduce algún texto",
   "saving_settings": "Guardando settings",
+  "saving_games": "Guardando juegos",
   "loading_games": "Cargando juegos",
   "data_saved": "Datos grabados!",
   "game_renamed": "Juego renombrado",
@@ -37,5 +38,10 @@
   "game_couldnt_be_renamed": "El juego '{}' no pudo ser renombrado",
   "game_was_deleted": "El juego '{}' fue borrado",
   "game_couldnt_be_deleted": "El juego '{}' no pudo ser borrado",
-  "dark_theme": "Tema oscuro"
+  "dark_theme": "Tema oscuro",
+  "clean": "Limpiar",
+  "free_sd_card_space":"Epacio libre en tarjeta SD",
+  "free_ssd_space":"Espacio libre en SSD",
+  "remove_path": "Quitar ruta",
+  "path_duplicated": "La ruta no se añadió por que fue añadida previamente"
 }

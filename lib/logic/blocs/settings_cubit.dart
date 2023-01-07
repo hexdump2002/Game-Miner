@@ -98,8 +98,15 @@ class SettingsCubit extends Cubit<SettingsState> {
     String? selectedDirectory = await FilePicker.platform.getDirectoryPath();
 
     if (selectedDirectory != null) {
-      _settings.searchPaths.add(selectedDirectory);
-      emit(SearchPathsChanged(_settings));
+      bool existed = _settings.searchPaths.contains(selectedDirectory);
+      if(existed)
+      {
+        EasyLoading.showError(tr("path_duplicated"));
+      }
+      else {
+        _settings.searchPaths.add(selectedDirectory);
+        emit(SearchPathsChanged(_settings));
+      }
     } else {
       // User canceled the picker
     }

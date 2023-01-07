@@ -136,7 +136,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       //buildWhen: (previous, current) => current is SearchPathsChanged || current is SettingsChangedState,
                       builder: (context, state) {
                         late Settings settings;
-                        if (state is SearchPathsChanged || state is SettingsChangedState  || state is SettingsLoaded) {
+                        if (state is SearchPathsChanged || state is SettingsChangedState  || state is SettingsLoaded || state is SettingsSaved) {
                           settings = state.settings;
                         } else {
                           return Container();
@@ -152,7 +152,7 @@ class _SettingsPageState extends State<SettingsPage> {
                                     ListTile(
                                       visualDensity: VisualDensity(horizontal: -4, vertical: -4),
                                       title: Text(e),
-                                      trailing: IconButton(onPressed: () => _bloc.removePath(e), icon: const Icon(Icons.delete)),
+                                      trailing: Tooltip(message: tr("remove_path"),child: IconButton(onPressed: () => _bloc.removePath(e), icon: const Icon(Icons.delete))),
                                     ))
                                     .toList(),
                               ),

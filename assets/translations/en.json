@@ -28,6 +28,7 @@
   "folder_no_contains_exe":"This folder does not contain Exe files. Was this intended?",
   "please_enter_text": "Please, add some text",
   "saving_settings": "Saving settings",
+  "saving_games": "Saving games",
   "loading_games": "Loading games",
   "data_saved": "Data saved!",
   "rename_game": "Rename game",
@@ -37,5 +38,10 @@
   "game_couldnt_be_deleted": "Game '{}' couldn't be deleted",
   "game_renamed": "Game was renamed!",
   "game_couldnt_be_renamed": "Game '{}' couldn't be renamed",
-  "dark_theme": "Dark Theme"
+  "dark_theme": "Dark Theme",
+  "clean": "Clean",
+  "free_sd_card_space":"Free SDCard Space",
+  "free_ssd_space":"Free SSD Space",
+  "remove_path": "Remove path",
+  "path_duplicated": "Path was not added because it was previously added"
 }

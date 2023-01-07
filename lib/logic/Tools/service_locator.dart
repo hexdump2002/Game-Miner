@@ -7,9 +7,10 @@ import 'package:game_miner/data/repositories/compat_tools_mapping_repository.dar
 import 'package:game_miner/data/repositories/compat_tools_repository.dart';
 import 'package:game_miner/data/repositories/games_repository.dart';
 import 'package:game_miner/data/repositories/settings_repository.dart';
-import 'package:game_miner/data/repositories/steam_apps_repository.dart';
+import 'package:game_miner/data/repositories/apps_storage_repository.dart';
 import 'package:get_it/get_it.dart';
 
+import '../../data/data_providers/app_storage_data_provider.dart';
 import '../../data/data_providers/steam_users_data_provider.dart';
 import '../../data/data_providers/user_library_games_data_provider.dart';
 import '../../data/models/steam_user.dart';
@@ -29,13 +30,14 @@ Future<void> setupServiceLocator() async {
   serviceLocator.registerLazySingleton<UserLibraryGamesDataProvider>(() => UserLibraryGamesDataProvider());
   serviceLocator.registerLazySingleton<SteamAppsDataProvider>(() => SteamAppsDataProvider());
   serviceLocator.registerLazySingleton<SettingsDataProvider>(() => SettingsDataProvider());
+  serviceLocator.registerLazySingleton<AppsStorageDataProvider>(() => AppsStorageDataProvider());
   serviceLocator.registerSingleton<SteamUsersDataProvider>(sudp);
 
   //Repositories
   serviceLocator.registerLazySingleton<CompatToolsRepository>(() => CompatToolsRepository());
   serviceLocator.registerLazySingleton<CompatToolsMappipngRepository>(()=>CompatToolsMappipngRepository());
   serviceLocator.registerLazySingleton<GamesRepository>(() => GamesRepository());
-  serviceLocator.registerLazySingleton<SteamAppsRepository>(() => SteamAppsRepository());
+  serviceLocator.registerLazySingleton<AppsStorageRepository>(() => AppsStorageRepository());
   serviceLocator.registerLazySingleton<SteamUserRepository>(() => SteamUserRepository());
   serviceLocator.registerLazySingleton<SettingsRepository>(() => SettingsRepository());
 }

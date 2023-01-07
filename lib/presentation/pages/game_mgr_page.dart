@@ -482,7 +482,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
                   style: TextStyle(color: Colors.white),
                 )),
             Tooltip(
-              message: "Free SD Card Space",
+              message: tr("free_sd_card_space"),
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(8.0, 0, 8, 0),
                 child: Row(
@@ -500,7 +500,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
               ),
             ),
             Tooltip(
-              message: "Free SSD Space",
+              message: tr("free_ssd_space"),
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(8.0, 0, 8, 0),
                 child: Row(

@@ -132,7 +132,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
       //_globalStats.MoveGameByStatus(uge, VMGameAddedStatus.Added);
     } else {
       ge.appId = 0;
-      ge.clearProtonMappingData();
+      ge.clearCompatTOolMappingData();
       //_globalStats.MoveGameByStatus(uge, VMGameAddedStatus.NonAdded);
     }
 
@@ -150,18 +150,10 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
 
   void saveData(Settings settings, {showInfo=true}) async {
     if(showInfo) {
-      EasyLoading.show(status: tr("saving_shortcuts"));
+      EasyLoading.show(status: tr("saving_games"));
     }
 
     await _gameRepository.saveGames(_settings.currentUserId, _games);
-
-    //EasyLoading.showSuccess("Data saved!. We will synch with Steam now");
-
-    //refresh(_settings);
-
-    if(showInfo) {
-      EasyLoading.showSuccess("Saving proton mappings");
-    }
 
     await saveCompatToolMappings();
 
@@ -190,7 +182,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
     //assert(value!=null);
 
     if (value == "None") {
-      uge.clearProtonMappingData();
+      uge.clearCompatTOolMappingData();
     } else {
       uge.fillProtonMappingData(getCompatToolCodeFromDisplayName(value), "", "250");
     }
@@ -234,7 +226,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
               try {
                 //Delete the file
                 if (game.isExternal) {
-                  await File(game.exeFileEntries[0].getAbsolutePath()).delete();
+                  await File("${game.path}/${game.exeFileEntries[0].relativeExePath}").delete();
                   _games.removeWhere((element) => element.exeFileEntries[0] == game.exeFileEntries[0]);
                 } else {
                   await Directory(game.path).delete(recursive: true);

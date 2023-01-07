@@ -6,9 +6,10 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:game_miner/data/data_providers/compat_tools_data_provider.dart';
+import 'package:game_miner/data/models/app_storage.dart';
 import 'package:game_miner/data/models/steam_app.dart';
 import 'package:game_miner/data/repositories/settings_repository.dart';
-import 'package:game_miner/data/repositories/steam_apps_repository.dart';
+import 'package:game_miner/data/repositories/apps_storage_repository.dart';
 import 'package:game_miner/data/repositories/steam_user_repository.dart';
 import 'package:game_miner/logic/Tools/steam_tools.dart';
 import 'package:game_miner/logic/blocs/main_dart_cubit.dart';
@@ -35,8 +36,6 @@ Stream<Settings> stream = GetIt.I<SettingsRepository>().settings.distinct((Setti
 void main() async {
   await setupServiceLocator();
 
-  SteamAppsRepository repo = GetIt.I<SteamAppsRepository>();
-  List<SteamApp>? steamApps = await repo.load();
   // Needs to be called so that we can await for EasyLocalization.ensureInitialized();
   WidgetsFlutterBinding.ensureInitialized();
   await EasyLocalization.ensureInitialized();
@@ -49,6 +48,9 @@ void main() async {
   SteamUser? su = userRepository.getFirstUser();
   if (su == null) throw NotFoundException("No steam user was found in the system. Aborting...");
   GetIt.I<SettingsRepository>().loadSettings(su.id);
+
+  AppsStorageRepository repo = GetIt.I<AppsStorageRepository>();
+  List<AppStorage>? steamApps = await repo.load(su.id);
 
   runApp(EasyLocalization(child: MyApp(), supportedLocales: [Locale('en'), Locale('es')], path: 'assets/translations', fallbackLocale: Locale('en')));
   EasyLoading.instance.userInteractions = false;

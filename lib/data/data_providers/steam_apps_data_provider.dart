@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:collection/collection.dart';
 import 'package:game_miner/data/models/steam_user.dart';
 import 'package:game_miner/logic/io/text_vdf_file.dart';
 import 'package:universal_disk_space/universal_disk_space.dart';
@@ -10,6 +11,8 @@ import '../models/steam_app.dart';
 
 
 class SteamAppsDataProvider {
+
+  //TODO:This should return all steam apps detected in steamapps. Not just the ones with storage in shadercache or compatdata
   Future<List<SteamApp>> load() async {
 
     List<SteamApp> apps = [];
@@ -17,6 +20,18 @@ class SteamAppsDataProvider {
     String homeFolder = FileTools.getHomeFolder();
 
     String searchPath = "$homeFolder/.local/share/Steam/steamapps"; //Changed because of flatpak
+
+    bool searchInCompatData = await FileTools.existsFolder("$searchPath/compatdata");
+    bool searchInShaderCacheData = await FileTools.existsFolder("$searchPath/shadercache");
+
+    List<SteamApp> steamApps = await _loadSteamApps(searchPath, searchInCompatData, searchInShaderCacheData);
+    return steamApps;
+
+  }
+
+  Future<List<SteamApp>> _loadSteamApps(String searchPath, searchInCompatData, searchInShaderCacheData) async {
+
+    List<SteamApp> apps = [];
 
     //Todo, check for empty folder
     var steamAppFiles = await FileTools.getFolderFilesAsync(searchPath, retrieveRelativePaths: false, recursive: false, regExFilter: r'.+.acf$', onlyFolders: false);
@@ -34,12 +49,11 @@ class SteamAppsDataProvider {
 
       String appId =  obj["appstate"]["appid"];
 
-      if(await FileTools.existsFolder("$searchPath/compatdata/$appId")) {
-        Map<String, int> metaData = await FileTools.getFolderMetaData("$searchPath/compatdata/$appId",recursive: true);
-        compatDataSize = metaData['size']!;
+      if (searchInCompatData && await FileTools.existsFolder("$searchPath/compatdata/$appId")) {
+          Map<String, int> metaData = await FileTools.getFolderMetaData("$searchPath/compatdata/$appId", recursive: true);
+          compatDataSize = metaData['size']!;
       }
-      bool pepe = await FileTools.existsFile("$searchPath/shadercache/$appId");
-      if(await FileTools.existsFolder("$searchPath/shadercache/$appId")) {
+      if(searchInShaderCacheData && await FileTools.existsFolder("$searchPath/shadercache/$appId")) {
         Map<String, int> metaData = await FileTools.getFolderMetaData("$searchPath/shadercache/$appId",recursive: true);
         shaderCacheSize = metaData['size']!;
       }
@@ -50,4 +64,6 @@ class SteamAppsDataProvider {
 
     return apps;
   }
+
+
 }

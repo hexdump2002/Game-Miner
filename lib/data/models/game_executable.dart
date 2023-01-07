@@ -39,7 +39,7 @@ class GameExecutable {
     appId = 0;
     startDir = p.dirname(absoluteExePath);
 
-    clearProtonMappingData();
+    clearCompatTOolMappingData();
   }
 
   GameExecutable.asExternal(SteamShortcut nonSteamGameExe, {CompatToolMapping? protonMapping}) {
@@ -77,7 +77,7 @@ class GameExecutable {
     compatToolPriority = priority;
   }
 
-  void clearProtonMappingData() {
+  void clearCompatTOolMappingData() {
     compatToolCode = "None";
     compatToolConfig = "";
     compatToolPriority = "0";
@@ -105,7 +105,7 @@ class GameExecutable {
     tags = nsg.tags;
   }
 
-  String getAbsolutePath() {
+  /*String getAbsolutePath() {
     return p.join(StringTools.removeQuotes(startDir), relativeExePath);
-  }
+  }*/
 }
