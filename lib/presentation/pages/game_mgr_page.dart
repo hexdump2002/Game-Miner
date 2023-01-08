@@ -14,7 +14,7 @@ import 'package:game_miner/logic/Tools/vdf_tools.dart';
 import 'package:game_miner/logic/blocs/game_mgr_cubit.dart';
 import 'package:game_miner/logic/blocs/settings_cubit.dart';
 import 'package:game_miner/main.dart';
-import 'package:game_miner/widgets/searchbar/searchbar_widget.dart';
+import 'package:game_miner/presentation/widgets/searchbar/searchbar_widget.dart';
 import 'package:get_it/get_it.dart';
 
 import '../../data/models/game_executable.dart';
@@ -42,6 +42,14 @@ class _GameMgrPageState extends State<GameMgrPage> {
   Widget build(BuildContext context) {
     final stopwatch = Stopwatch()..start();
 
+/*BlocBuilder<GameMgrCubit, GameMgrBaseState>(
+                builder: (context, state) {
+                  return */
+
+    /*Expanded(
+                child:
+                    Padding(padding: const EdgeInsets.fromLTRB(8, 8, 16, 8), child: SearchBar((term) => _nsCubit(context).filterGamesByName(term))),
+              ),*/
     Widget widgets = Scaffold(
       appBar: AppBar(
           // Here we take the value from the MyHomePage object that was created by
@@ -49,14 +57,13 @@ class _GameMgrPageState extends State<GameMgrPage> {
           title: Text("Game Manager"),
           actions: [
             Expanded(
-                child: Row(children: [
-              Expanded(
-                child:
-                    Padding(padding: const EdgeInsets.fromLTRB(8, 8, 16, 8), child: SearchBar((term) => _nsCubit(context).filterGamesByName(term))),
-              ),
-              BlocBuilder<GameMgrCubit, GameMgrBaseState>(
-                builder: (context, state) {
-                  return Padding(
+              child:
+              Padding(padding: const EdgeInsets.fromLTRB(8, 8, 16, 8), child: SearchBar((term) => _nsCubit(context).filterGamesByName(term))),
+            ),
+            BlocBuilder<GameMgrCubit, GameMgrBaseState>(
+              builder: (context, state) {
+                return Row(children: [
+                  Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: ToggleButtons(
                         direction: Axis.horizontal,
@@ -82,54 +89,54 @@ class _GameMgrPageState extends State<GameMgrPage> {
                           Tooltip(message: tr("sort_by_status"), child: const Icon(Icons.stars)),
                           Tooltip(message: tr("sort_by_size"), child: const Icon(Icons.storage))
                         ]),
-                  );
-                },
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(0, 8, 16, 8),
-                child: ToggleButtons(
-                    direction: Axis.horizontal,
-                    onPressed: (int index) {
-                      index == 0 ? _nsCubit(context).setSortDirection(SortDirection.Asc) : _nsCubit(context).setSortDirection(SortDirection.Desc);
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(0, 8, 16, 8),
+                    child: ToggleButtons(
+                        direction: Axis.horizontal,
+                        onPressed: (int index) {
+                          index == 0 ? _nsCubit(context).setSortDirection(SortDirection.Asc) : _nsCubit(context).setSortDirection(SortDirection.Desc);
+                        },
+                        borderRadius: const BorderRadius.all(Radius.circular(8)),
+                        borderColor: Colors.blue,
+                        selectedBorderColor: Colors.blue[200],
+                        selectedColor: Colors.white,
+                        fillColor: Colors.blue[300],
+                        color: Colors.blue[300],
+                        isSelected: _nsCubit(context).getSortDirectionStates(),
+                        children: [
+                          Tooltip(message: tr("descending"), child: const Icon(Icons.south)),
+                          Tooltip(message: tr("ascending"), child: const Icon(Icons.north))
+                        ]),
+                  ),
+                  IconButton(
+                    onPressed: () {
+                      if (_formKey.currentState!.validate()) {
+                        _nsCubit(context).saveData(_settings);
+                      } else {
+                        print("There are errors in the form. Fix them!");
+                      }
                     },
-                    borderRadius: const BorderRadius.all(Radius.circular(8)),
-                    borderColor: Colors.blue,
-                    selectedBorderColor: Colors.blue[200],
-                    selectedColor: Colors.white,
-                    fillColor: Colors.blue[300],
-                    color: Colors.blue[300],
-                    isSelected: _nsCubit(context).getSortDirectionStates(),
-                    children: [
-                      Tooltip(message: tr("descending"), child: const Icon(Icons.south)),
-                      Tooltip(message: tr("ascending"), child: const Icon(Icons.north))
-                    ]),
-              ),
-              IconButton(
-                onPressed: () {
-                  if (_formKey.currentState!.validate()) {
-                    _nsCubit(context).saveData(_settings);
-                  } else {
-                    print("There are errors in the form. Fix them!");
-                  }
-                },
-                icon: Icon(Icons.save),
-                tooltip: tr("save"),
-              ),
-              IconButton(
-                onPressed: () {
-                  _nsCubit(context).foldAll();
-                },
-                icon: const Icon(Icons.unfold_less),
-                tooltip: tr("fold_all"),
-              ),
-              IconButton(
-                onPressed: () {
-                  _nsCubit(context).refresh(_settings);
-                },
-                icon: Icon(Icons.refresh),
-                tooltip: tr("refresh"),
-              ),
-            ]))
+                    icon: Icon(Icons.save),
+                    tooltip: tr("save"),
+                  ),
+                  IconButton(
+                    onPressed: () {
+                      _nsCubit(context).foldAll();
+                    },
+                    icon: const Icon(Icons.unfold_less),
+                    tooltip: tr("fold_all"),
+                  ),
+                  IconButton(
+                    onPressed: () {
+                      _nsCubit(context).refresh(_settings);
+                    },
+                    icon: Icon(Icons.refresh),
+                    tooltip: tr("refresh"),
+                  ),
+                ]);
+              },
+            )
           ]),
       body: Container(
           alignment: Alignment.center,
@@ -205,16 +212,16 @@ class _GameMgrPageState extends State<GameMgrPage> {
   }
 
   Widget _createGameCards(BuildContext context, BaseDataChanged state, CustomTheme themeExtension) {
-    var games = state.games;
+    var gamesView = state.games;
 
     return Form(
         key: _formKey,
         child: ListView.builder(
-            itemCount: games.length,
+            itemCount: gamesView.length,
             itemBuilder: (BuildContext context, int index) {
-              var game = games[index];
+              var gameView = gamesView[index];
               return ExpandablePanel(
-                controller: ExpandableController(initialExpanded: state.gamesFoldingState[index])
+                controller: ExpandableController(initialExpanded: gamesView[index].isExpanded)
                   ..addListener(() => _nsCubit(context).swapExpansionStateForItem(index)),
                 header: ListTile(
                   title: Column(
@@ -222,34 +229,34 @@ class _GameMgrPageState extends State<GameMgrPage> {
                     children: [
                       Row(
                         children: [
-                          Expanded(child: Text(game.name, style: Theme.of(context).textTheme.headline5, textAlign: TextAlign.left)),
+                          Expanded(child: Text(gameView.game.name, style: Theme.of(context).textTheme.headline5, textAlign: TextAlign.left)),
                           Padding(
                             padding: const EdgeInsets.fromLTRB(0, 0, 24, 0),
-                            child: game.isExternal ? null : Text(StringTools.bytesToStorageUnity(game.gameSize)),
+                            child: gameView.game.isExternal ? null : Text(StringTools.bytesToStorageUnity(gameView.game.gameSize)),
                           ),
                           Padding(
                             padding: const EdgeInsets.fromLTRB(0, 0, 24, 0),
-                            child: _getExeCurrentStateIcon(GameTools.getGameStatus(game)),
+                            child: _getExeCurrentStateIcon(GameTools.getGameStatus(gameView.game)),
                           ),
                           IconButton(
                             onPressed: () {
-                              _nsCubit(context).renameGame(context, game);
+                              _nsCubit(context).renameGame(context, gameView.game);
                             },
                             icon: Icon(Icons.edit),
                             tooltip: tr("rename_game"),
                           ),
                           IconButton(
                             onPressed: () {
-                              _nsCubit(context).deleteGame(context, game);
+                              _nsCubit(context).deleteGame(context, gameView.game);
                             },
                             icon: Icon(Icons.delete),
                             tooltip: tr("delete"),
                           ),
                         ],
                       ),
-                      if (state.gamesFoldingState[index])
+                      if (gamesView[index].isExpanded)
                         Text(
-                          "${game.path}",
+                          "${gameView.game.path}",
                           textAlign: TextAlign.left,
                           style: TextStyle(color: themeExtension.gameCardHeaderPath, fontSize: 13),
                         )
@@ -260,70 +267,11 @@ class _GameMgrPageState extends State<GameMgrPage> {
                     padding: EdgeInsets.fromLTRB(0, 16, 0, 16),
                     margin: EdgeInsets.fromLTRB(16, 16, 16, 16),
                     decoration: BoxDecoration(borderRadius: BorderRadius.circular(20), color: Colors.black12),
-                    child: _buildGameTile(context, themeExtension, game, state.availableProntonNames)),
+                    child: _buildGameTile(context, themeExtension, gameView.game, state.availableProntonNames)),
                 collapsed: Container(),
               );
             }));
   }
-
-/*Widget _createGameCards(BuildContext context, BaseDataChanged state, CustomTheme themeExtension) {
-
-    List<ExpansionPanel> widgets = state.games.map<ExpansionPanel>((VMUserGame game) {
-      var gameAddedStatus = VMGameTools.getGameStatus(game);
-
-      return ExpansionPanel(
-        canTapOnHeader: true,
-        headerBuilder: (BuildContext context, bool isExpanded) {
-          return ListTile(
-            title: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(child: Text(game.userGame.name, style: Theme.of(context).textTheme.headline5, textAlign: TextAlign.left)),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(0, 0, 24, 0),
-                      child: game.userGame.isExternal ? null : Text(StringTools.bytesToStorageUnity(game.userGame.gameSize)),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(0, 0, 24, 0),
-                      child: _getExeCurrentStateIcon(gameAddedStatus),
-                    ),
-                    IconButton(
-                      onPressed: () {
-                        _nsgpBloc.renameGame(context, game);
-                      },
-                      icon: Icon(Icons.edit),
-                      tooltip: tr("rename_game"),
-                    ),
-                    IconButton(
-                      onPressed: () {
-                        _nsgpBloc.deleteGame(context, game);
-                      },
-                      icon: Icon(Icons.delete),
-                      tooltip: tr("delete"),
-                    ),
-                  ],
-                ),
-                if(game.foldingState) Text("${game.userGame.path}",textAlign: TextAlign.left, style: TextStyle(color:themeExtension.gameCardHeaderPath, fontSize: 13),)
-              ],
-            ),
-          );
-        },
-        body: _buildGameTile(context, themeExtension,  game.userGame, state.availableProntonNames),
-        isExpanded: game.foldingState,
-      );
-    }).toList();
-
-    return Form(
-      key: _formKey,
-      child: ExpansionPanelList(
-          expansionCallback: (int index, bool isExpanded) {
-            _nsgpBloc.swapExpansionStateForItem(index);
-          },
-          children: widgets,),
-    );
-  }*/
 
   Widget _buildGameTile(BuildContext context, CustomTheme themeExtension, Game ug, List<String> availableProtons) {
     List<Widget> gameItems = [];

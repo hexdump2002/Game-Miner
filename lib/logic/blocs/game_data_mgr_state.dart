@@ -1,16 +1,28 @@
 part of 'game_data_mgr_cubit.dart';
 
 @immutable
-abstract class GameDataMgrState {}
+abstract class GameDataMgrState {
+  final List<AppDataStorageEntry> steamApps;
+  int compatDataFolderCount;
+  int shaderDataFolderCount;
+  int compatDataFoldersSize;
+  int shaderDataFolderSize;
 
-class GameDataMgrInitial extends GameDataMgrState {}
-
-class AppDataStorageLoaded extends GameDataMgrState{
-  late final List<AppDataStorageEntry> steamApps;
-  AppDataStorageLoaded(this.steamApps);
+  GameDataMgrState(this.steamApps, this.compatDataFolderCount, this.shaderDataFolderCount, this.compatDataFoldersSize, this.shaderDataFolderSize);
 }
 
-class AppDataStorageChanged extends GameDataMgrState{
-  late final List<AppDataStorageEntry> steamApps;
-  AppDataStorageChanged(this.steamApps);
+class GameDataMgrInitial extends GameDataMgrState {
+  GameDataMgrInitial() : super([], 0, 0, 0, 0);
+}
+
+class AppDataStorageLoaded extends GameDataMgrState {
+  AppDataStorageLoaded(
+      List<AppDataStorageEntry> steamApps, int compatDataFolderCount, int shaderDataFolderCount, int compatDataFoldersSize, int shaderDataFolderSize)
+      : super(steamApps, compatDataFolderCount, shaderDataFolderCount, compatDataFoldersSize, shaderDataFolderSize);
+}
+
+class AppDataStorageChanged extends GameDataMgrState {
+  AppDataStorageChanged(
+      List<AppDataStorageEntry> steamApps, int compatDataFolderCount, int shaderDataFolderCount, int compatDataFoldersSize, int shaderDataFolderSize)
+      : super(steamApps, compatDataFolderCount, shaderDataFolderCount, compatDataFoldersSize, shaderDataFolderSize);
 }

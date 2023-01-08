@@ -9,8 +9,7 @@ class RetrievingGameData extends GameMgrBaseState {}
 
 //All states emiting all the data. This is not performant. We need to use smaller events to re-create as less widgets as we could
 class BaseDataChanged extends GameMgrBaseState {
-  final List<Game> games;
-  final List<bool> gamesFoldingState;
+  final List<GameView> games;
   final List<String> availableProntonNames;
   final int notAddedGamesCount;
   final int addedGamesCount;
@@ -24,14 +23,13 @@ class BaseDataChanged extends GameMgrBaseState {
   final List<bool> sortDirectionStates;
 
 
-  BaseDataChanged(this.games, this.gamesFoldingState, this.availableProntonNames, this.notAddedGamesCount, this.addedGamesCount, this.fullyAddedGamesCount, this.addedExternal,this.freeSSDSpace,
+  BaseDataChanged(this.games, this.availableProntonNames, this.notAddedGamesCount, this.addedGamesCount, this.fullyAddedGamesCount, this.addedExternal,this.freeSSDSpace,
       this.freeSDCardSpace, this.totalSSDSpace, this.totalSDCardSpace, this.sortStates, this.sortDirectionStates);
 }
 
 class GamesDataRetrieved extends BaseDataChanged {
-  GamesDataRetrieved( List<Game> games,
-      List<bool> gamesFoldingState,
-      List<String> availableProntonNames,
+  GamesDataRetrieved( List<GameView> games,
+       List<String> availableProntonNames,
       int nonAddedGamesCount,
       int addedGamesCount,
       int fullyAddedGamesCount,
@@ -44,7 +42,6 @@ class GamesDataRetrieved extends BaseDataChanged {
       List<bool> sortDirectionStates)
       : super(
       games,
-      gamesFoldingState,
       availableProntonNames,
       nonAddedGamesCount,
       addedGamesCount,
@@ -60,8 +57,7 @@ class GamesDataRetrieved extends BaseDataChanged {
 
 class GamesDataChanged extends BaseDataChanged {
   GamesDataChanged(
-      List<Game> games,
-      List<bool> gamesFoldingState,
+      List<GameView> games,
       List<String> availableProntonNames,
       int nonAddedGamesCount,
       int addedGamesCount,
@@ -75,7 +71,6 @@ class GamesDataChanged extends BaseDataChanged {
       List<bool> sortDirectionStates)
       : super(
       games,
-      gamesFoldingState,
       availableProntonNames,
       nonAddedGamesCount,
       addedGamesCount,
@@ -91,8 +86,7 @@ class GamesDataChanged extends BaseDataChanged {
 
 class GamesFoldingDataChanged extends BaseDataChanged {
   GamesFoldingDataChanged(
-      List<Game> games,
-      List<bool> gamesFoldingState,
+      List<GameView> games,
       List<String> availableProntonNames,
       int nonAddedGamesCount,
       int addedGamesCount,
@@ -106,7 +100,6 @@ class GamesFoldingDataChanged extends BaseDataChanged {
       List<bool> sortDirectionStates)
       : super(
       games,
-      gamesFoldingState,
       availableProntonNames,
       nonAddedGamesCount,
       addedGamesCount,
@@ -122,8 +115,7 @@ class GamesFoldingDataChanged extends BaseDataChanged {
 
 class SearchTermChanged extends BaseDataChanged {
   SearchTermChanged(
-      List<Game> games,
-      List<bool> gamesFoldingState,
+      List<GameView> games,
       List<String> availableProntonNames,
       int nonAddedGamesCount,
       int addedGamesCount,
@@ -137,7 +129,6 @@ class SearchTermChanged extends BaseDataChanged {
       List<bool> sortDirectionStates)
       : super(
       games,
-      gamesFoldingState,
       availableProntonNames,
       nonAddedGamesCount,
       addedGamesCount,
