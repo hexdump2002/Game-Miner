@@ -38,6 +38,7 @@ enum SortDirection { Asc, Desc }
 
 class GameMgrCubit extends Cubit<GameMgrBaseState> {
   List<Game> _games = [];
+  List<Game> _filteredGames = [];
   List<bool> _gamesFoldingState = [];
   List<CompatTool> _availableCompatTools = [];
   List<CompatToolMapping> _compatToolsMappings = [];
@@ -71,12 +72,16 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
 
 
   Future<void> loadData(Settings settings) async {
+    final stopwatch = Stopwatch()..start();
+
     List<Game>? games = _gameRepository.getGames();
 
     if(games !=null) {
+      print("Using game cache");
       _games = games;
     }
     else {
+      print("Cache Miss. Loading Games");
       emit(RetrievingGameData());
 
       await _refreshStorageSize();
@@ -92,14 +97,18 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
     }
 
     _games = GameTools.sortByName(SortDirection.Asc, _games);
+    _filteredGames = _games;
     _gamesFoldingState = List.generate(_games.length, (index) => false);
     _availableCompatTools = await _compatToolsRepository.loadCompatTools();
     _compatToolsMappings = await _compatToolsMappipngRepository.loadCompatToolMappings();
 
 
     _refreshGameCount();
-    emit(GamesDataRetrieved(_games, _gamesFoldingState,getAvailableCompatToolDisplayNames(), _nonAddedGamesCount, _addedGamesCount, _fullyAddedGamesCount,
+    emit(GamesDataRetrieved(_filteredGames, _gamesFoldingState,getAvailableCompatToolDisplayNames(), _nonAddedGamesCount, _addedGamesCount, _fullyAddedGamesCount,
         _addedExternalCount, _ssdFreeSizeInBytes, _sdCardFreeInBytes, _ssdTotalSizeInBytes, _sdCardTotalInBytes, _sortStates, _sortDirectionStates));
+
+    stopwatch.stop();
+    print('[Logic] Time taken to execute method: ${stopwatch.elapsed}');
   }
 
   refresh(Settings settings) {
@@ -138,13 +147,13 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
 
     _refreshGameCount();
 
-    emit(GamesDataChanged(_games, _gamesFoldingState, getAvailableCompatToolDisplayNames(), _nonAddedGamesCount, _addedGamesCount, _fullyAddedGamesCount,
+    emit(GamesDataChanged(_filteredGames, _gamesFoldingState, getAvailableCompatToolDisplayNames(), _nonAddedGamesCount, _addedGamesCount, _fullyAddedGamesCount,
         _addedExternalCount, _ssdFreeSizeInBytes, _sdCardFreeInBytes, _ssdTotalSizeInBytes, _sdCardTotalInBytes, _sortStates, _sortDirectionStates));
   }
 
   void swapExpansionStateForItem(int index) {
     _gamesFoldingState[index] = !_gamesFoldingState[index];
-    emit(GamesFoldingDataChanged(_games, _gamesFoldingState,getAvailableCompatToolDisplayNames(), _nonAddedGamesCount, _addedGamesCount, _fullyAddedGamesCount,
+    emit(GamesFoldingDataChanged(_filteredGames, _gamesFoldingState,getAvailableCompatToolDisplayNames(), _nonAddedGamesCount, _addedGamesCount, _fullyAddedGamesCount,
         _addedExternalCount, _ssdFreeSizeInBytes, _sdCardFreeInBytes, _ssdTotalSizeInBytes, _sdCardTotalInBytes, _sortStates, _sortDirectionStates));
   }
 
@@ -189,7 +198,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
 
     _refreshGameCount();
 
-    emit(GamesDataChanged(_games, _gamesFoldingState,getAvailableCompatToolDisplayNames(), _nonAddedGamesCount, _addedGamesCount, _fullyAddedGamesCount,
+    emit(GamesDataChanged(_filteredGames, _gamesFoldingState,getAvailableCompatToolDisplayNames(), _nonAddedGamesCount, _addedGamesCount, _fullyAddedGamesCount,
         _addedExternalCount, _ssdFreeSizeInBytes, _sdCardFreeInBytes, _ssdTotalSizeInBytes, _sdCardTotalInBytes, _sortStates, _sortDirectionStates));
   }
 
@@ -243,7 +252,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
                 saveData(_settings, showInfo: false);
 
                 emit(GamesDataChanged(
-                    _games,
+                    _filteredGames,
                     _gamesFoldingState,
                     getAvailableCompatToolDisplayNames(),
                     _nonAddedGamesCount,
@@ -323,7 +332,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
                   game.name = _genericTextController.text;
 
                   emit(GamesDataChanged(
-                      _games,
+                      _filteredGames,
                       _gamesFoldingState,
                       getAvailableCompatToolDisplayNames(),
                       _nonAddedGamesCount,
@@ -363,7 +372,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
       _gamesFoldingState[i] = false;
     }
 
-    emit(GamesDataChanged(_games,_gamesFoldingState, getAvailableCompatToolDisplayNames(), _nonAddedGamesCount, _addedGamesCount, _fullyAddedGamesCount,
+    emit(GamesDataChanged(_filteredGames,_gamesFoldingState, getAvailableCompatToolDisplayNames(), _nonAddedGamesCount, _addedGamesCount, _fullyAddedGamesCount,
         _addedExternalCount, _ssdFreeSizeInBytes, _sdCardFreeInBytes, _ssdTotalSizeInBytes, _sdCardTotalInBytes, _sortStates, _sortDirectionStates));
   }
 
@@ -384,7 +393,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
 
     foldAll();
 
-    emit(GamesDataChanged(_games, _gamesFoldingState,getAvailableCompatToolDisplayNames(), _nonAddedGamesCount, _addedGamesCount, _fullyAddedGamesCount,
+    emit(GamesDataChanged(_filteredGames, _gamesFoldingState,getAvailableCompatToolDisplayNames(), _nonAddedGamesCount, _addedGamesCount, _fullyAddedGamesCount,
         _addedExternalCount, _ssdFreeSizeInBytes, _sdCardFreeInBytes, _ssdTotalSizeInBytes, _sdCardTotalInBytes, _sortStates, _sortDirectionStates));
   }
 
@@ -395,7 +404,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
 
     foldAll();
 
-    emit(GamesDataChanged(_games, _gamesFoldingState,getAvailableCompatToolDisplayNames(), _nonAddedGamesCount, _addedGamesCount, _fullyAddedGamesCount,
+    emit(GamesDataChanged(_filteredGames, _gamesFoldingState,getAvailableCompatToolDisplayNames(), _nonAddedGamesCount, _addedGamesCount, _fullyAddedGamesCount,
         _addedExternalCount, _ssdFreeSizeInBytes, _sdCardFreeInBytes, _ssdTotalSizeInBytes, _sdCardTotalInBytes, _sortStates, _sortDirectionStates));
   }
 
@@ -423,7 +432,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
     return _sortDirectionStates;
   }
 
-  setSortDirection(SortDirection sd) {
+  void setSortDirection(SortDirection sd) {
     _sortDirectionStates = sd == SortDirection.Asc ? [true, false] : [false, true];
 
     if (_sortStates[0]) {
@@ -434,7 +443,15 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
       sortBySize();
     }
 
-    emit(GamesDataChanged(_games, _gamesFoldingState, getAvailableCompatToolDisplayNames(), _nonAddedGamesCount, _addedGamesCount, _fullyAddedGamesCount,
+    emit(GamesDataChanged(_filteredGames, _gamesFoldingState, getAvailableCompatToolDisplayNames(), _nonAddedGamesCount, _addedGamesCount, _fullyAddedGamesCount,
+        _addedExternalCount, _ssdFreeSizeInBytes, _sdCardFreeInBytes, _ssdTotalSizeInBytes, _sdCardTotalInBytes, _sortStates, _sortDirectionStates));
+  }
+
+  void filterGamesByName(String searchTerm) {
+    searchTerm = searchTerm.toLowerCase();
+    _filteredGames = _games.where((element) => element.name.toLowerCase().contains(searchTerm)).toList();
+    _gamesFoldingState = List.generate(_filteredGames.length, (index) => false);
+    emit(SearchTermChanged(_filteredGames, _gamesFoldingState, getAvailableCompatToolDisplayNames(), _nonAddedGamesCount, _addedGamesCount, _fullyAddedGamesCount,
         _addedExternalCount, _ssdFreeSizeInBytes, _sdCardFreeInBytes, _ssdTotalSizeInBytes, _sdCardTotalInBytes, _sortStates, _sortDirectionStates));
   }
 }
