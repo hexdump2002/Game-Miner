@@ -26,7 +26,7 @@ class AppsStorageDataProvider {
       var appIds = await FileTools.getFolderFilesAsync("$searchPath/compatdata", retrieveRelativePaths: true, recursive: false,  onlyFolders: true);
       for(String appId in appIds) {
         Map<String, int> metaData = await FileTools.getFolderMetaData("$searchPath/compatdata/$appId", recursive: true);
-        appsStorage.add(AppStorage(appId,"UNKNOWN","UNKNOWN",0, metaData['size']!,false));
+        appsStorage.add(AppStorage(appId,"UNKNOWN","UNKNOWN",-1, metaData['size']!,false));
       }
     }
 
@@ -36,7 +36,7 @@ class AppsStorageDataProvider {
         AppStorage? as = appsStorage.firstWhereOrNull((element) => element.appId == appId);
         Map<String, int> metaData = await FileTools.getFolderMetaData("$searchPath/shadercache/$appId", recursive: true);
         if(as == null)  {
-          appsStorage.add(AppStorage(appId,"UNKNOWN","UNKNOWN",metaData['size']!,0, false));
+          appsStorage.add(AppStorage(appId,"UNKNOWN","UNKNOWN",metaData['size']!,-1, false));
         }
         else {
           as.shaderCacheSize = metaData['size']!;

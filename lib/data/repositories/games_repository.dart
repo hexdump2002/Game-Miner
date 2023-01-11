@@ -68,7 +68,7 @@ class GamesRepository extends CacheRepository<Game> {
         if (!finished) {
           //Add external exe and provid proton mapping
           CompatToolMapping? pm = compatToolMappings.firstWhereOrNull((e) => shortcut.appId.toString() == e.id);
-          Game ug = Game(shortcut.appName);
+          Game ug = Game(shortcut.startDir, shortcut.appName);
           ug.addExternalExeFile(shortcut, pm);
           games.add(ug);
         }

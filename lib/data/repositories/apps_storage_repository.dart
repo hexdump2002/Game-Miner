@@ -28,6 +28,11 @@ class AppsStorageRepository extends CacheRepository<AppStorage> {
     _steamShortcutDataProvider = GetIt.I<SteamShortcutDataProvider>();
   }
 
+  //Request a reload in next iteration
+  void invalidateCache() {
+    removeCacheKey(cacheKey);
+  }
+
   List<AppStorage>? getAll() {
     List<AppStorage>? appsStorage = getObjectsFromCache(cacheKey);
     return appsStorage;
@@ -41,7 +46,7 @@ class AppsStorageRepository extends CacheRepository<AppStorage> {
       //Steam apps (Apps that were downloaded and installed through steam)
       var steamApps = await _steamAppsDataProvider.load();
 
-      //Here we have all app ids (Steam apps nad not steam apps) that keep data in compatdata or shadercache folders
+      //Here we have all app ids (Steam apps and not steam apps) that keep data in compatdata or shadercache folders
       finalAppsStorage = await _appIdsStorageDataProvider.load();
 
       //We want to return all AppStorage entries. But let's flag the ones that are Steam games and the ones that arent
@@ -58,7 +63,7 @@ class AppsStorageRepository extends CacheRepository<AppStorage> {
       //Get shortcuts data
       List<SteamShortcut> scs = await _steamShortcutDataProvider.loadShortcutGames(userId);
 
-      var nonSteamAppStorage  = finalAppsStorage.where((element) => !element.isSteamApp);
+      var nonSteamAppStorage  = finalAppsStorage.where((element) => element.isSteamApp == false);
 
       for(AppStorage as in nonSteamAppStorage) {
         SteamShortcut? shortcut = scs.firstWhereOrNull((element) => element.appId.toString() == as.appId);

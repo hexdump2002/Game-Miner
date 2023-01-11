@@ -5,14 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:expandable/expandable.dart';
-import 'package:game_miner/data/Stats.dart';
-import 'package:game_miner/data/game_folder_stats.dart';
 import 'package:game_miner/data/repositories/settings_repository.dart';
 import 'package:game_miner/logic/Tools/string_tools.dart';
-import 'package:game_miner/logic/Tools/file_tools.dart';
-import 'package:game_miner/logic/Tools/vdf_tools.dart';
 import 'package:game_miner/logic/blocs/game_mgr_cubit.dart';
-import 'package:game_miner/logic/blocs/settings_cubit.dart';
 import 'package:game_miner/main.dart';
 import 'package:game_miner/presentation/widgets/searchbar/searchbar_widget.dart';
 import 'package:get_it/get_it.dart';
@@ -42,14 +37,6 @@ class _GameMgrPageState extends State<GameMgrPage> {
   Widget build(BuildContext context) {
     final stopwatch = Stopwatch()..start();
 
-/*BlocBuilder<GameMgrCubit, GameMgrBaseState>(
-                builder: (context, state) {
-                  return */
-
-    /*Expanded(
-                child:
-                    Padding(padding: const EdgeInsets.fromLTRB(8, 8, 16, 8), child: SearchBar((term) => _nsCubit(context).filterGamesByName(term))),
-              ),*/
     Widget widgets = Scaffold(
       appBar: AppBar(
           // Here we take the value from the MyHomePage object that was created by
@@ -57,8 +44,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
           title: Text("Game Manager"),
           actions: [
             Expanded(
-              child:
-              Padding(padding: const EdgeInsets.fromLTRB(8, 8, 16, 8), child: SearchBar((term) => _nsCubit(context).filterGamesByName(term))),
+              child: Padding(padding: const EdgeInsets.fromLTRB(8, 8, 16, 8), child: SearchBar((term) => _nsCubit(context).filterGamesByName(term))),
             ),
             BlocBuilder<GameMgrCubit, GameMgrBaseState>(
               builder: (context, state) {
@@ -78,11 +64,11 @@ class _GameMgrPageState extends State<GameMgrPage> {
                           }
                         },
                         borderRadius: const BorderRadius.all(Radius.circular(8)),
-                        borderColor: Colors.blue,
+                        /*borderColor: Colors.blue,
                         selectedBorderColor: Colors.blue[200],
                         selectedColor: Colors.white,
                         fillColor: Colors.blue[300],
-                        color: Colors.blue[300],
+                        color: Colors.blue[300],*/
                         isSelected: _nsCubit(context).getSortStates(),
                         children: [
                           Tooltip(message: tr("sort_by_name"), child: const Icon(Icons.receipt)),
@@ -98,11 +84,11 @@ class _GameMgrPageState extends State<GameMgrPage> {
                           index == 0 ? _nsCubit(context).setSortDirection(SortDirection.Asc) : _nsCubit(context).setSortDirection(SortDirection.Desc);
                         },
                         borderRadius: const BorderRadius.all(Radius.circular(8)),
-                        borderColor: Colors.blue,
+                        /*borderColor: Colors.blue,
                         selectedBorderColor: Colors.blue[200],
                         selectedColor: Colors.white,
                         fillColor: Colors.blue[300],
-                        color: Colors.blue[300],
+                        color: Colors.blue[300],*/
                         isSelected: _nsCubit(context).getSortDirectionStates(),
                         children: [
                           Tooltip(message: tr("descending"), child: const Icon(Icons.south)),
@@ -235,23 +221,35 @@ class _GameMgrPageState extends State<GameMgrPage> {
                             child: gameView.game.isExternal ? null : Text(StringTools.bytesToStorageUnity(gameView.game.gameSize)),
                           ),
                           Padding(
-                            padding: const EdgeInsets.fromLTRB(0, 0, 24, 0),
+                            padding: const EdgeInsets.fromLTRB(0, 0, 16, 0),
                             child: _getExeCurrentStateIcon(GameTools.getGameStatus(gameView.game)),
                           ),
                           IconButton(
+                            padding: const EdgeInsets.all(0),
                             onPressed: () {
-                              _nsCubit(context).renameGame(context, gameView.game);
+                              _nsCubit(context).openFolder(gameView.game);
                             },
-                            icon: Icon(Icons.edit),
-                            tooltip: tr("rename_game"),
+                            icon: Icon(Icons.folder),
+                            tooltip: tr("open_folder"),
                           ),
                           IconButton(
-                            onPressed: () {
-                              _nsCubit(context).deleteGame(context, gameView.game);
-                            },
-                            icon: Icon(Icons.delete),
-                            tooltip: tr("delete"),
+                            onPressed: gameView.game.isExternal
+                                ? null
+                                : () {
+                                    _nsCubit(context).renameGame(context, gameView.game);
+                                  },
+                            icon: Icon(Icons.edit),
+                            tooltip: gameView.game.isExternal ? null : tr("rename_game"),
                           ),
+                          IconButton(
+                            onPressed: gameView.game.isExternal
+                                ? null
+                                : () {
+                                    _nsCubit(context).deleteGame(context, gameView.game);
+                                  },
+                            icon: Icon(Icons.delete),
+                            tooltip: gameView.game.isExternal ? null : tr("delete"),
+                          )
                         ],
                       ),
                       if (gamesView[index].isExpanded)

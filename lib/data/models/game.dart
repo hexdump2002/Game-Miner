@@ -16,10 +16,16 @@ class Game {
   final List<GameExecutable> exeFileEntries = [];
 
   //User Folders Game (Internal)
-  Game(this.path) {
-    List<String> pathComponents = pathLib.split(path);
-    name = pathComponents.last;
+  Game(this.path, this.name) {
     isExternal = false;
+  }
+
+  factory Game.fromPath(String folderPath) {
+    List<String> pathComponents = pathLib.split(folderPath);
+    String name = pathComponents.last;
+
+    var game = Game(folderPath, name);
+    return game;
   }
 
   //Game not in User Folders (External)

@@ -8,7 +8,7 @@ class UserLibraryGamesDataProvider {
 
     for (String searchPath in searchPaths) {
       List<String> gamesPath = await FileTools.getFolderFilesAsync(searchPath, retrieveRelativePaths: false, recursive: false, onlyFolders: true);
-      List<Game> ugs = gamesPath.map<Game>((e) => Game(e)).toList();
+      List<Game> ugs = gamesPath.map<Game>((e) => Game.fromPath(e)).toList();
 
       userGames.addAll(ugs);
 
