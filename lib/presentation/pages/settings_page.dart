@@ -104,6 +104,42 @@ class _SettingsPageState extends State<SettingsPage> {
                   ],
                 ),
               ),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Row(
+                  children: [
+                    Expanded(child: Text(tr("enable_backups"))),
+                    Switch(
+                        value: settings.backupsEnabled,
+                        onChanged: (value) {
+                          _bloc.setEnableBackups(value);
+                        }),
+                  ],
+                ),
+              ),
+              if(settings.backupsEnabled)  Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Row(
+                  children: [
+                    Expanded(child: Text(tr("backup_count"))),
+                    Expanded(
+                      child: Slider(
+                        min: 0.0,
+                        max: 10.0,
+                        divisions: 10,
+                        value: settings.maxBackupsCount.toDouble(),
+                        label: '${settings.maxBackupsCount}',
+                        onChanged: (value) {
+                          setState(() {
+                            _bloc.setMaxBackupCount(value);
+                          });
+                        },
+                      ),
+                    )
+                  ],
+                ),
+              ),
+
             ],
           ),
         ));
@@ -135,12 +171,8 @@ class _SettingsPageState extends State<SettingsPage> {
                     child: BlocBuilder<SettingsCubit, SettingsState>(
                       //buildWhen: (previous, current) => current is SearchPathsChanged || current is SettingsChangedState,
                       builder: (context, state) {
-                        late Settings settings;
-                        if (state is SearchPathsChanged || state is SettingsChangedState  || state is SettingsLoaded || state is SettingsSaved) {
-                          settings = state.settings;
-                        } else {
-                          return Container();
-                        }
+                        Settings settings;
+                        settings = state.settings;
 
                         return Column(
                           children: [

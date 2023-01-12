@@ -86,7 +86,7 @@ class GamesRepository extends CacheRepository<Game> {
   }
 
   //TODO: Move all this to write to a in memory buffer and then dump it to the file
-  Future<void> saveGames(String userId, List<Game> games) async {
+  Future<void> saveGames(/*String userId, */ String shortcutsPath, List<Game> games) async {
 
 
     //Convert Games into steam shortcuts data provider model (only the ones selected)
@@ -122,7 +122,7 @@ class GamesRepository extends CacheRepository<Game> {
       }
     }
 
-    _steamShortcutsDataProvider.saveShortcuts(userId, shortcuts);
+    await _steamShortcutsDataProvider.saveShortcuts(/*userId,*/shortcutsPath, shortcuts);
   }
 
 

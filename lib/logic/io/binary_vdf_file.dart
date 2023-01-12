@@ -22,7 +22,7 @@ class BinaryVdfFile {
     _raf ??= await _file.open(mode: mode);
   }
 
-  void close() async {
+  Future<void> close() async {
     if(_raf != null) {
       await _raf!.close();
     }

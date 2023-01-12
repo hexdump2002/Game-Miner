@@ -5,6 +5,7 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:game_miner/data/repositories/compat_tools_repository.dart';
 import 'package:game_miner/data/repositories/games_repository.dart';
 import 'package:game_miner/data/repositories/settings_repository.dart';
+import 'package:game_miner/logic/Tools/file_tools.dart';
 import 'package:get_it/get_it.dart';
 import 'package:meta/meta.dart';
 
@@ -70,6 +71,8 @@ class SettingsCubit extends Cubit<SettingsState> {
       GetIt.I<GamesRepository>().invalidateGamesCache();
     }
 
+    //FileTools.clampBackupsToCount(path, maxBackups)
+
     emit(SettingsSaved(_settings));
   }
 
@@ -119,6 +122,16 @@ class SettingsCubit extends Cubit<SettingsState> {
 
   void setDarkThemeState(bool state) {
     _settings.darkTheme = state;
+    emit(GeneralOptionsChanged(_settings));
+  }
+
+  void setEnableBackups(bool value) {
+    _settings.backupsEnabled = value;
+    emit(GeneralOptionsChanged(_settings));
+  }
+
+  void setMaxBackupCount(double value) {
+    _settings.maxBackupsCount = value.toInt();
     emit(GeneralOptionsChanged(_settings));
   }
 

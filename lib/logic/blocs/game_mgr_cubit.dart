@@ -13,6 +13,7 @@ import 'package:game_miner/data/repositories/compat_tools_mapping_repository.dar
 import 'package:game_miner/data/repositories/compat_tools_repository.dart';
 import 'package:game_miner/data/repositories/games_repository.dart';
 import 'package:game_miner/data/repositories/settings_repository.dart';
+import 'package:game_miner/logic/Tools/file_tools.dart';
 import 'package:game_miner/logic/Tools/string_tools.dart';
 import 'package:get_it/get_it.dart';
 import 'package:meta/meta.dart';
@@ -174,7 +175,20 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
       EasyLoading.show(status: tr("saving_games"));
     }
 
-    await _gameRepository.saveGames(_settings.currentUserId, _baseGames);
+    String homeFolder = FileTools.getHomeFolder();
+    String shortcutsPath = "$homeFolder/.steam/steam/userdata/${_settings.currentUserId}/config/shortcuts.vdf";
+    //await FileTools.clampBackupsToCount(shortcutsPath, settings.maxBackupsCount);
+
+    if(settings.backupsEnabled) {
+      await FileTools.saveFileSecure<List<Game>>(shortcutsPath, _baseGames, (String path, List<Game> games) async {
+        return _gameRepository.saveGames(path, games);
+      }, settings.maxBackupsCount);
+    }
+    else
+    {
+      await _gameRepository.saveGames(shortcutsPath,_baseGames);
+    }
+
 
     await saveCompatToolMappings();
 

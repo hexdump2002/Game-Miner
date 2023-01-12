@@ -1,5 +1,7 @@
 import 'dart:io';
-import 'package:path/path.dart';
+import 'package:path/path.dart' as p;
+import 'package:tuple/tuple.dart';
+import 'package:universal_disk_space/universal_disk_space.dart';
 
 class FileTools {
   //Search for exe files inside the game folder
@@ -47,7 +49,7 @@ class FileTools {
       RegExp r = RegExp(regExFilter,caseSensitive: regExCaseSensitive);
 
       stream = stream.where((event) {
-          String fileName = basename(event.path);
+          String fileName = p.basename(event.path);
           return r.hasMatch(fileName);
         });
     }
@@ -99,4 +101,75 @@ class FileTools {
   static Future<bool> existsFolder(String path) async{
     return await Directory(path).exists();
   }
+
+  static Future<void> saveFileSecure<T>(String path, T data, Future<void> Function(String,T) writer, int maxBackups) async {
+    String dirName = p.dirname(path);
+    String fileName = p.basename(path);
+
+    //Copy current file to backup
+    Tuple2 backupFiles = await getNextBackupFile(path, maxBackups);
+
+    if(await File(path).exists()) {
+      var file = File(path);
+      await file.copy("${dirName}/${backupFiles.item1}");
+    }
+
+    if(backupFiles.item2 != null) {
+      //Create new and delete old backup
+      await File(backupFiles.item2).delete();
+
+    }
+
+
+    //Create temp file, copy over the old old one and delete temp
+    String tempFileName ="${dirName}/tempFile";
+    var v =  await writer(tempFileName,data);
+    var tempFile = File(tempFileName);
+    await tempFile.copy(path);
+    await tempFile.delete();
+  }
+
+  //Tuple[0] new backup file Tuple[1] the backup file that must be deleted to rotate (because we reach max backups
+  static Future<Tuple2<String,String?>> getNextBackupFile(String path, int maxBackups) async
+  {
+    String? backupToDelete;
+
+    String fileName = p.basename(path);
+    String folder = p.dirname(path);
+
+    if(! await Directory(folder).exists()) throw NotFoundException("Folder $folder does not exist when saving backup.");
+
+    List<String> files = await getFolderFilesAsync(folder,recursive: false, regExFilter: "${fileName}_.*");
+    if(files.length>=maxBackups)
+    {
+        files.sort();
+        backupToDelete = files[0];
+    }
+
+    String newBackupFile = "${fileName}_${DateTime.now().millisecondsSinceEpoch}";
+
+    return Tuple2(newBackupFile, backupToDelete);
+  }
+
+  static Future<void> clampBackupsToCount(String path, int maxBackups) async
+  {
+    String fileName = p.basename(path);
+    String folder = p.dirname(path);
+
+    if(! await Directory(folder).exists()) throw NotFoundException("Folder $folder does not exist when saving backup.");
+
+    List<String> files = await getFolderFilesAsync(folder,recursive: false, regExFilter: "${fileName}_.*");
+
+    if(files.length>=maxBackups)
+    {
+      files.sort();
+
+      //delete all not needed backups (older)
+      int deleteCount = files.length - maxBackups;
+      for(int i=0; i<deleteCount; ++i) {
+        await File(files[i]).delete();
+      }
+    }
+  }
+
 }

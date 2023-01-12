@@ -62,5 +62,7 @@
   "delete_all_selected_text":" todos los datos seleccionados de tu dispositivo. Ten en cuenta:\n\n 1) Acerca de los datos de compat data: El borrado de compat data destruira todas las partirdas que tengas guardadas a menos que el juego soporte Cloud save.\n 2) Acerca de los datos de Shader cache: Esto puede producir que cuando vuelvas a jugar se tengan que recrear la cache de shaders con las consiguientes perdidas de rendimeinto puntuales .",
   "shader_page_no_selected_items": "No hay datos seleccionados. Selecciona primero lo que quieras borrar.",
   "error_deleting_game_data": "Hubo un error borrando los datos. Algunos o todos los datos no pudieron ser borrador.\n\n Se liberaron {}",
-  "success_deleting_game_data": "Todos los datos fueron borrados!.\n\nSe liberaron {}"
+  "success_deleting_game_data": "Todos los datos fueron borrados!.\n\nSe liberaron {}",
+  "enable_backups": "Activar backups",
+  "backup_count": "Número de backups"
 }

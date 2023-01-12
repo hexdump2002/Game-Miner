@@ -63,5 +63,7 @@
   "delete_all_selected_text":" all selected data from your file system. Things to take into account:\n\n 1) About compat data: This will destroy all your game progress if this game doesn't support cloud save.\n 2) About Shader cache data: Next time you run this game you will have to compile the shaders again so you could suffer from some temporal performance issues .",
   "shader_page_no_selected_items": "No data selected. Select what you want to delete first.",
   "error_deleting_game_data": "There was an error deleting data.Some or All data items couldn't be deleted.\n\nYou Freed {}",
-  "success_deleting_game_data": "All data was deleted!.\n\nYou freed {}"
+  "success_deleting_game_data": "All data was deleted!.\n\nYou freed {}",
+  "enable_backups": "Enable backups",
+  "backup_count": "Backup count"
 }

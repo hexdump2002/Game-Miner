@@ -6,6 +6,8 @@ class Settings {
   String defaultCompatTool = "None";
   late String currentUserId;
   bool darkTheme = false;
+  bool backupsEnabled = true;
+  int maxBackupsCount = 5;
 
   Settings(this.currentUserId);
 
@@ -13,10 +15,12 @@ class Settings {
     searchPaths = json['searchPaths'].map<String>((e) => e as String).toList();
     defaultCompatTool = json['defaultCompatTool'];
     darkTheme = json['darkTheme'];
+    backupsEnabled = json['backupsEnabled'];
+    maxBackupsCount = json['maxBackupsCount'];
   }
 
   Map<String, dynamic> toJson() {
-    return {'searchPaths': searchPaths, 'defaultCompatTool': defaultCompatTool,  'darkTheme':darkTheme};
+    return {'searchPaths': searchPaths, 'defaultCompatTool': defaultCompatTool,  'darkTheme':darkTheme, 'backupsEnabled': backupsEnabled, 'maxBackupsCount': maxBackupsCount};
   }
 
   Settings clone() {

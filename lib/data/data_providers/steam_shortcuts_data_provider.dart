@@ -47,10 +47,10 @@ class SteamShortcutDataProvider {
     }
   }
 
-  Future<void> saveShortcuts(String userId, List<SteamShortcut> shortcuts) async {
+  Future<void> saveShortcuts(/*String userId,*/ String shortcutsPath, List<SteamShortcut> shortcuts) async {
 
     String homeFolder = FileTools.getHomeFolder();
-    String shortcutsPath = "$homeFolder/.steam/steam/userdata/$userId/config/shortcuts.vdf";
+    //String shortcutsPath = "$homeFolder/.steam/steam/userdata/$userId/config/shortcuts.vdf";
 
     BinaryVdfFile file = BinaryVdfFile(shortcutsPath);
     await file.open(FileMode.writeOnly);
@@ -96,7 +96,7 @@ class SteamShortcutDataProvider {
     await file.writeByte(8);
     await file.writeByte(8);
 
-    file.close();
+    await file.close();
   }
 
   Future<void> _writeBlockId(BinaryVdfFile file, int num) async {
