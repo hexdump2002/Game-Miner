@@ -64,6 +64,10 @@ class _GameMgrPageState extends State<GameMgrPage> {
                           }
                         },
                         borderRadius: const BorderRadius.all(Radius.circular(8)),
+                        /*selectedBorderColor: Colors.blue[700],
+                        selectedColor: Colors.white,
+                        fillColor: Colors.blue[200],
+                        color: Colors.blue[400],*/
                         /*borderColor: Colors.blue,
                         selectedBorderColor: Colors.blue[200],
                         selectedColor: Colors.white,
@@ -226,6 +230,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
                           ),
                           IconButton(
                             padding: const EdgeInsets.all(0),
+                            disabledColor: _settings.darkTheme ? Colors.grey.shade800 : Colors.grey.shade300,
                             onPressed: () {
                               _nsCubit(context).openFolder(gameView.game);
                             },
@@ -233,6 +238,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
                             tooltip: tr("open_folder"),
                           ),
                           IconButton(
+                            disabledColor:_settings.darkTheme ? Colors.grey.shade800 : Colors.grey.shade300,
                             onPressed: gameView.game.isExternal
                                 ? null
                                 : () {
@@ -242,6 +248,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
                             tooltip: gameView.game.isExternal ? null : tr("rename_game"),
                           ),
                           IconButton(
+                            disabledColor:_settings.darkTheme ? Colors.grey.shade800 : Colors.grey.shade300,
                             onPressed: gameView.game.isExternal
                                 ? null
                                 : () {

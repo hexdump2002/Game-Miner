@@ -63,7 +63,7 @@ class _GameDataMgrPageState extends State<GameDataMgrPage> {
                       isSelected: _bloc.getSortStates(),
                       children: [
                         Tooltip(message: tr("sort_by_name"), child: const Icon(Icons.receipt)),
-                        Tooltip(message: tr("sort_by_storage_size"), child: const Icon(Icons.stars)),
+                        Tooltip(message: tr("sort_by_storage_type"), child: const Icon(Icons.stars)),
                         Tooltip(message: tr("sort_by_size"), child: const Icon(Icons.storage))
                       ]),
                 ),
@@ -105,7 +105,7 @@ class _GameDataMgrPageState extends State<GameDataMgrPage> {
                     _bloc.deleteAll(context);
                   },
                   icon: const Icon(Icons.delete),
-                  tooltip: tr("delete_all"),
+                  tooltip: tr("delete_selected"),
                 ),
                 IconButton(
                   onPressed: () {

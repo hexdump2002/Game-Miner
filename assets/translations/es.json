@@ -64,5 +64,8 @@
   "error_deleting_game_data": "Hubo un error borrando los datos. Algunos o todos los datos no pudieron ser borrador.\n\n Se liberaron {}",
   "success_deleting_game_data": "Todos los datos fueron borrados!.\n\nSe liberaron {}",
   "enable_backups": "Activar backups",
-  "backup_count": "Número de backups"
+  "backup_count": "Número de backups",
+  "select_none": "Seleccionar ninguno",
+  "select_all": "Seleccionar todos",
+  "delete_selected": "Eliminar seleccionados"
 }

@@ -65,5 +65,9 @@
   "error_deleting_game_data": "There was an error deleting data.Some or All data items couldn't be deleted.\n\nYou Freed {}",
   "success_deleting_game_data": "All data was deleted!.\n\nYou freed {}",
   "enable_backups": "Enable backups",
-  "backup_count": "Backup count"
+  "backup_count": "Backup count",
+  "select_none": "Select none",
+  "select_all": "Select all",
+  "delete_selected": "Delete selected"
+
 }
