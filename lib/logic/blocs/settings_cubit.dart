@@ -71,7 +71,13 @@ class SettingsCubit extends Cubit<SettingsState> {
       GetIt.I<GamesRepository>().invalidateGamesCache();
     }
 
-    //FileTools.clampBackupsToCount(path, maxBackups)
+    //Leave the needed backups
+    String homeFolder = FileTools.getHomeFolder();
+
+    int currentBackups = _settings.backupsEnabled ? _settings.maxBackupsCount : 0;
+
+    FileTools.clampBackupsToCount("$homeFolder/.local/share/Steam/userdata/${_settings.currentUserId}/config/shortcuts.vdf", currentBackups);
+    FileTools.clampBackupsToCount("$homeFolder/.local/share/Steam/config/config.vdf", currentBackups);
 
     emit(SettingsSaved(_settings));
   }

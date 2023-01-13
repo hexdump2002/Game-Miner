@@ -102,7 +102,7 @@ class FileTools {
     return await Directory(path).exists();
   }
 
-  static Future<void> saveFileSecure<T>(String path, T data, Future<void> Function(String,T) writer, int maxBackups) async {
+  static Future<void> saveFileSecure<T>(String path, T data, Map<String, dynamic> extraParams, Future<void> Function(String,T, Map<String,dynamic> extraParams) writer, int maxBackups) async {
     String dirName = p.dirname(path);
     String fileName = p.basename(path);
 
@@ -123,7 +123,7 @@ class FileTools {
 
     //Create temp file, copy over the old old one and delete temp
     String tempFileName ="${dirName}/tempFile";
-    var v =  await writer(tempFileName,data);
+    await writer(tempFileName,data, extraParams);
     var tempFile = File(tempFileName);
     await tempFile.copy(path);
     await tempFile.delete();

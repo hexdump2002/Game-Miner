@@ -1,14 +1,11 @@
-import 'dart:math';
-
 import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_dialogs/flutter_dialogs.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
-import 'package:game_miner/data/data_providers/settings_data_provider.dart';
+
 import 'package:game_miner/data/models/compat_tool.dart';
-import 'package:game_miner/data/models/steam_user.dart';
+
 import 'package:game_miner/data/repositories/compat_tools_mapping_repository.dart';
 import 'package:game_miner/data/repositories/compat_tools_repository.dart';
 import 'package:game_miner/data/repositories/games_repository.dart';
@@ -16,20 +13,19 @@ import 'package:game_miner/data/repositories/settings_repository.dart';
 import 'package:game_miner/logic/Tools/file_tools.dart';
 import 'package:game_miner/logic/Tools/string_tools.dart';
 import 'package:get_it/get_it.dart';
-import 'package:meta/meta.dart';
+
 import 'package:game_miner/data/Stats.dart';
 import 'package:game_miner/logic/Tools/steam_tools.dart';
-import 'package:game_miner/logic/blocs/settings_cubit.dart';
+
 import 'dart:io' show Directory, File;
 import 'package:path/path.dart' as p;
-import 'package:universal_disk_space/universal_disk_space.dart';
+
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../data/models/compat_tool_mapping.dart';
 import '../../data/models/game_executable.dart';
 import '../../data/models/game.dart';
 import '../../data/models/settings.dart';
-import '../../data/repositories/steam_user_repository.dart';
 import '../Tools/game_tools.dart';
 
 part 'game_mgr_state.dart';
@@ -50,7 +46,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
   List<GameView> _gameViews = [];
   List<GameView> _filteredGames = [];
   List<CompatTool> _availableCompatTools = [];
-  List<CompatToolMapping> _compatToolsMappings = [];
+  //List<CompatToolMapping> _compatToolsMappings = [];
 
   final CompatToolsRepository _compatToolsRepository = GetIt.I<CompatToolsRepository>();
   final GamesRepository _gameRepository = GetIt.I<GamesRepository>();
@@ -78,7 +74,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
   final TextEditingController _genericTextController = TextEditingController();
 
   GameMgrCubit() : super(IninitalState()) {
-    _settings = GetIt.I<SettingsRepository>().getSettings()!;
+    _settings = GetIt.I<SettingsRepository>().getSettings();
     loadData(_settings);
   }
 
@@ -112,7 +108,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
     _filteredGames = [];
     _filteredGames.addAll(_gameViews);
     _availableCompatTools = await _compatToolsRepository.loadCompatTools();
-    _compatToolsMappings = await _compatToolsMappipngRepository.loadCompatToolMappings();
+    //_compatToolsMappings = await _compatToolsMappipngRepository.loadCompatToolMappings();
 
     _refreshGameCount();
     await _refreshStorageSize();
@@ -177,10 +173,9 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
 
     String homeFolder = FileTools.getHomeFolder();
     String shortcutsPath = "$homeFolder/.steam/steam/userdata/${_settings.currentUserId}/config/shortcuts.vdf";
-    //await FileTools.clampBackupsToCount(shortcutsPath, settings.maxBackupsCount);
 
     if(settings.backupsEnabled) {
-      await FileTools.saveFileSecure<List<Game>>(shortcutsPath, _baseGames, (String path, List<Game> games) async {
+      await FileTools.saveFileSecure<List<Game>>(shortcutsPath, _baseGames, <String,dynamic>{}, (String path, List<Game> games, Map<String,dynamic> extraParams) async {
         return _gameRepository.saveGames(path, games);
       }, settings.maxBackupsCount);
     }
@@ -190,27 +185,39 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
     }
 
 
-    await saveCompatToolMappings();
+    await saveCompatToolMappings(settings);
 
     if (showInfo) {
       EasyLoading.showSuccess(tr("data_saved"));
     }
   }
 
-  Future<void> saveCompatToolMappings() async {
+  Future<void> saveCompatToolMappings(Settings settings) async {
     Map<int, CompatToolMapping> usedProtonMappings = {};
     _baseGames.forEach((e) {
       e.exeFileEntries.forEach((uge) {
         if (usedProtonMappings.containsKey(uge.appId)) throw Exception("An appId with 2 differnt pronton mappings found!. This is not valid.");
         if (uge.compatToolCode == "None") return;
 
-        usedProtonMappings[uge.appId] = CompatToolMapping(uge.appId.toString(), uge.compatToolCode, uge.compatToolConfig, uge.compatToolPriority!);
+        usedProtonMappings[uge.appId] = CompatToolMapping(uge.appId.toString(), uge.compatToolCode, uge.compatToolConfig, uge.compatToolPriority);
       });
     });
 
     List<CompatToolMapping> compatToolMappings = usedProtonMappings.entries.map((entry) => entry.value).toList();
 
-    await _compatToolsMappipngRepository.saveCompatToolMappings(compatToolMappings);
+    String homeFolder = FileTools.getHomeFolder();
+    String configPath = "$homeFolder/.local/share/Steam/config/config.vdf";
+
+    if(settings.backupsEnabled) {
+      Map<String,dynamic> extraParams = {"sourceFile": configPath};
+      await FileTools.saveFileSecure<List<CompatToolMapping>>(configPath, compatToolMappings, extraParams, (String path, List<CompatToolMapping> games, Map<String,dynamic> extraParams) async {
+        await _compatToolsMappipngRepository.saveCompatToolMappings(path, compatToolMappings, extraParams);
+      }, settings.maxBackupsCount);
+    }
+    else
+    {
+      await _compatToolsMappipngRepository.saveCompatToolMappings(configPath, compatToolMappings, <String,dynamic>{});
+    }
   }
 
   setCompatToolDataFor(GameExecutable uge, String value) {
@@ -547,7 +554,6 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
   }
 
   void openFolder(Game game) async {
-    final Uri url = Uri.parse(game.path);
     String path = StringTools.removeQuotes(game.path); // external ones are not touched so they can come with this
     bool b = await launchUrl(Uri.parse("file:$path"));
 

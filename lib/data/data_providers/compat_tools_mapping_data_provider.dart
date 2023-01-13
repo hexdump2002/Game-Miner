@@ -35,9 +35,11 @@ class CompatToolsMappingDataProvider {
     return Future.value(protonMappings);
   }
 
-  Future<void> saveCompatToolMappings(List<CompatToolMapping> compatToolMappings) async {
+  Future<void> saveCompatToolMappings(String writePath, List<CompatToolMapping> compatToolMappings, Map<String, dynamic> extraParams ) async {
 
-    String fullPath = "${FileTools.getHomeFolder()}/$_relativeConfigVdfPath";
+    //String fullPath = "${FileTools.getHomeFolder()}/$_relativeConfigVdfPath";
+    String fullPath = extraParams.isEmpty ? writePath : extraParams['sourceFile'];
+
     var file =  File(fullPath);
     await file.open();
     String contents = await file.readAsString();
@@ -50,15 +52,15 @@ class CompatToolsMappingDataProvider {
     dstString+="\n";
     dstString+=_al("{","\t",rootIdent);
     dstString+="\n";
-    compatToolMappings.forEach((e) {
-      dstString = _writeProntoMappingToStr(dstString, e, rootIdent+1);
-    });
+    for(CompatToolMapping ctm in compatToolMappings) {
+        dstString = _writeProntoMappingToStr(dstString, ctm, rootIdent + 1);
+    }
+
     dstString+= _al("}","\t",rootIdent);
 
     contents = contents.replaceAll(r, dstString);
 
-    await file.writeAsString(contents);
-
+    await File(writePath).writeAsString(contents);
   }
 
   String _al(String source, String strToAdd, int count) {

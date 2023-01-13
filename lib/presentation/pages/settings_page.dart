@@ -124,7 +124,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     Expanded(child: Text(tr("backup_count"))),
                     Expanded(
                       child: Slider(
-                        min: 0.0,
+                        min: 1.0,
                         max: 10.0,
                         divisions: 10,
                         value: settings.maxBackupsCount.toDouble(),
