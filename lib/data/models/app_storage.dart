@@ -1,10 +1,14 @@
+enum StorageType { ShaderCache, CompatData }
+enum GameType { Steam, NonSteam }
+
 class AppStorage {
   String appId;
-  int shaderCacheSize;
-  int compatDataSize;
+  int size;
+  StorageType storageType;
   String name;
   String installdir;
-  bool isSteamApp;
+  GameType gameType;
+  bool isUnknown;
 
-  AppStorage(this.appId, this.name, this.installdir, this.shaderCacheSize, this.compatDataSize, this.isSteamApp);
+  AppStorage(this.appId, this.name, this.installdir,this.storageType, this.size, this.gameType, this.isUnknown);
 }

@@ -8,33 +8,28 @@ import 'package:flutter_dialogs/flutter_dialogs.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:game_miner/data/models/app_storage.dart';
 import 'package:game_miner/data/repositories/apps_storage_repository.dart';
+import 'package:game_miner/data/repositories/game_miner_data_repository.dart';
 import 'package:game_miner/data/repositories/settings_repository.dart';
 import 'package:game_miner/logic/Tools/file_tools.dart';
 import 'package:game_miner/logic/Tools/string_tools.dart';
 import 'package:get_it/get_it.dart';
 import 'package:meta/meta.dart';
 
+import '../../data/models/game_miner_data.dart';
 import '../../data/models/steam_app.dart';
 
 part 'game_data_mgr_state.dart';
 
-enum StorageType { ShaderCache, CompatData }
 
-enum GameType { Steam, NonSteam }
 
 enum SortBy { Name, Status }
 
 enum SortDirection { Asc, Desc }
 
 class AppDataStorageEntry {
-  String appId;
-  String name;
-  int size;
+  AppStorage appStorage;
   bool selected;
-  StorageType storageType;
-  GameType gameType;
-
-  AppDataStorageEntry(this.appId, this.name, this.size, this.selected, this.storageType, this.gameType);
+  AppDataStorageEntry(this.appStorage, this.selected);
 }
 
 class StorageStats {
@@ -70,17 +65,23 @@ class GameDataMgrCubit extends Cubit<GameDataMgrState> {
     String homeFolder = FileTools.getHomeFolder();
     _searchPath = "$homeFolder/.local/share/Steam/steamapps";
 
+    var gmd = GetIt.I<GameMinerDataRepository>().getGameMinerData();
     var appsStorage = await GetIt.I<AppsStorageRepository>().load(GetIt.I<SettingsRepository>().getSettings().currentUserId);
 
+    //TODO: Update through repository
     for (AppStorage as in appsStorage) {
-      if (as.shaderCacheSize >= 0) {
-        _appDataStorageEntries.add(AppDataStorageEntry(
-            as.appId, as.name, as.shaderCacheSize, false, StorageType.ShaderCache, as.isSteamApp ? GameType.Steam : GameType.NonSteam));
+      String name = as.name;
+      //Try to resolve unknown game name from database
+      if(as.isUnknown) {
+        if(gmd.appsIdToName.containsKey(as.appId)) {
+          as.name = gmd.appsIdToName[as.appId]!;
+        }
+        else {
+          as.name = "Unknown";
+        }
       }
-      if (as.compatDataSize >= 0) {
-        _appDataStorageEntries.add(AppDataStorageEntry(
-            as.appId, as.name, as.compatDataSize, false, StorageType.CompatData, as.isSteamApp ? GameType.Steam : GameType.NonSteam));
-      }
+      _appDataStorageEntries.add(AppDataStorageEntry(as,false));
+
     }
 
     _filteredDataStorageEntries.addAll(_appDataStorageEntries);
@@ -98,7 +99,7 @@ class GameDataMgrCubit extends Cubit<GameDataMgrState> {
 
   void filterByName(String searchTerm) {
     searchTerm = searchTerm.toLowerCase();
-    _filteredDataStorageEntries = _appDataStorageEntries.where((element) => element.name.toLowerCase().contains(searchTerm)).toList();
+    _filteredDataStorageEntries = _appDataStorageEntries.where((element) => element.appStorage.name.toLowerCase().contains(searchTerm)).toList();
     StorageStats ss = _getStorageStats();
     emit(AppDataStorageLoaded(_filteredDataStorageEntries, ss.compatFolderCount, ss.shaderDataFolderCount, ss.compatSize, ss.shaderDataSize));
     //sortFilteredGames();
@@ -110,12 +111,12 @@ class GameDataMgrCubit extends Cubit<GameDataMgrState> {
     int shaderDataSize = 0;
     int shaderDataFolderCount = 0;
     for (AppDataStorageEntry ds in _appDataStorageEntries) {
-      if (ds.storageType == StorageType.CompatData) {
+      if (ds.appStorage.storageType == StorageType.CompatData) {
         ++compatFolderCount;
-        compatSize += ds.size;
+        compatSize += ds.appStorage.size;
       } else {
         ++shaderDataFolderCount;
-        shaderDataSize += ds.size;
+        shaderDataSize += ds.appStorage.size;
       }
     }
 
@@ -126,7 +127,7 @@ class GameDataMgrCubit extends Cubit<GameDataMgrState> {
     showPlatformDialog(
       context: context,
       builder: (context) => BasicDialogAlert(
-        title: Text(e.storageType == StorageType.CompatData ? tr('delete_compat_data') : tr('delete_shader_data')),
+        title: Text(e.appStorage.storageType == StorageType.CompatData ? tr('delete_compat_data') : tr('delete_shader_data')),
         content: Row(
           children: [
             const Padding(
@@ -142,7 +143,7 @@ class GameDataMgrCubit extends Cubit<GameDataMgrState> {
                     text: TextSpan(children: [
               TextSpan(text: tr("going_to")),
               TextSpan(text: tr("delete_capitals"), style: TextStyle(color: Colors.redAccent)),
-              TextSpan(text: tr(e.storageType == StorageType.CompatData ? "compat_data_deletion" : "shadercache_data_deletion", args: [e.name])),
+              TextSpan(text: tr(e.appStorage.storageType == StorageType.CompatData ? "compat_data_deletion" : "shadercache_data_deletion", args: [e.appStorage.name])),
               TextSpan(text: tr("warning_action_undone"), style: const TextStyle(color: Colors.red, fontSize: 18, height: 2))
             ]))),
           ],
@@ -152,14 +153,13 @@ class GameDataMgrCubit extends Cubit<GameDataMgrState> {
             title: Text("OK"),
             onPressed: () async {
               try {
-                String folderStorageType = e.storageType == StorageType.CompatData ? "compatdata" : "shadercache";
-                String pathToDelete = "$_searchPath/$folderStorageType/${e.appId}";
+                String folderStorageType = e.appStorage.storageType == StorageType.CompatData ? "compatdata" : "shadercache";
+                String pathToDelete = "$_searchPath/$folderStorageType/${e.appStorage.appId}";
                 await Directory(pathToDelete).delete(recursive: true);
-                _appDataStorageEntries.removeWhere((element) => element.appId == e.appId && element.storageType == e.storageType);
-                _filteredDataStorageEntries.removeWhere((element) => element.appId == e.appId && element.storageType == e.storageType);
+                _removeItemFromLists(e);
 
-                EasyLoading.showSuccess(tr(e.storageType == StorageType.CompatData ? "compatdata_deleted" : "shadercache_deleted",
-                    args: [StringTools.bytesToStorageUnity(e.size)]));
+                EasyLoading.showSuccess(tr(e.appStorage.storageType == StorageType.CompatData ? "compatdata_deleted" : "shadercache_deleted",
+                    args: [StringTools.bytesToStorageUnity(e.appStorage.size)]));
 
                 var ss = _getStorageStats();
 
@@ -182,6 +182,12 @@ class GameDataMgrCubit extends Cubit<GameDataMgrState> {
         ],
       ),
     );
+  }
+
+  void _removeItemFromLists(AppDataStorageEntry e) {
+    _appDataStorageEntries.removeWhere((element) => element.appStorage.appId == e.appStorage.appId && element.appStorage.storageType == e.appStorage.storageType);
+    _filteredDataStorageEntries.removeWhere((element) => element.appStorage.appId == e.appStorage.appId && element.appStorage.storageType == e.appStorage.storageType);
+    GetIt.I<AppsStorageRepository>().remove(e.appStorage);
   }
 
   selectNone() {
@@ -251,9 +257,9 @@ class GameDataMgrCubit extends Cubit<GameDataMgrState> {
     SortDirection sd = _sortDirectionStates[0] ? SortDirection.Desc : SortDirection.Asc;
 
     if (sd == SortDirection.Asc) {
-      _filteredDataStorageEntries.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+      _filteredDataStorageEntries.sort((a, b) => a.appStorage.name.toLowerCase().compareTo(b.appStorage.name.toLowerCase()));
     } else {
-      _filteredDataStorageEntries.sort((a, b) => b.name.toLowerCase().compareTo(a.name.toLowerCase()));
+      _filteredDataStorageEntries.sort((a, b) => b.appStorage.name.toLowerCase().compareTo(a.appStorage.name.toLowerCase()));
     }
 
     var ss = _getStorageStats();
@@ -266,9 +272,9 @@ class GameDataMgrCubit extends Cubit<GameDataMgrState> {
     SortDirection sd = _sortDirectionStates[0] ? SortDirection.Desc : SortDirection.Asc;
 
     if (sd == SortDirection.Asc) {
-      _filteredDataStorageEntries.sort((a, b) => a.storageType.index.compareTo(b.storageType.index));
+      _filteredDataStorageEntries.sort((a, b) => a.appStorage.storageType.index.compareTo(b.appStorage.storageType.index));
     } else {
-      _filteredDataStorageEntries.sort((a, b) => b.storageType.index.compareTo(a.storageType.index));
+      _filteredDataStorageEntries.sort((a, b) => b.appStorage.storageType.index.compareTo(a.appStorage.storageType.index));
     }
 
     var ss = _getStorageStats();
@@ -281,9 +287,9 @@ class GameDataMgrCubit extends Cubit<GameDataMgrState> {
     SortDirection sortDirection = _sortDirectionStates[0] ? SortDirection.Desc : SortDirection.Asc;
 
     if (sortDirection == SortDirection.Asc) {
-      _filteredDataStorageEntries.sort((a, b) => a.size.compareTo(b.size));
+      _filteredDataStorageEntries.sort((a, b) => a.appStorage.size.compareTo(b.appStorage.size));
     } else {
-      _filteredDataStorageEntries.sort((a, b) => b.size.compareTo(a.size));
+      _filteredDataStorageEntries.sort((a, b) => b.appStorage.size.compareTo(a.appStorage.size));
     }
 
     var ss = _getStorageStats();
@@ -329,19 +335,18 @@ class GameDataMgrCubit extends Cubit<GameDataMgrState> {
               bool errorDeleting = false;
               for (AppDataStorageEntry adse in toDelete) {
                 try {
-                  String folderStorageType = adse.storageType == StorageType.CompatData ? "compatdata" : "shadercache";
-                  String pathToDelete = "$_searchPath/$folderStorageType/${adse.appId}";
+                  String folderStorageType = adse.appStorage.storageType == StorageType.CompatData ? "compatdata" : "shadercache";
+                  String pathToDelete = "$_searchPath/$folderStorageType/${adse.appStorage.appId}";
                   await Directory(pathToDelete).delete(recursive: true);
-                  _filteredDataStorageEntries.remove(adse);
-                  _appDataStorageEntries.remove(adse);
+                  _removeItemFromLists(adse);
                   deletedGames.add(adse);
                 } catch (e) {
-                  print("${adse.name} can't be deleted");
+                  print("${adse.appStorage.name} can't be deleted");
                   errorDeleting = true;
                 }
               }
 
-              int deletedBytes = deletedGames.fold(0, (int value, element) => element.size + value);
+              int deletedBytes = deletedGames.fold(0, (int value, element) => element.appStorage.size + value);
 
               if (errorDeleting) {
                 EasyLoading.showError(tr("error_deleting_game_data", args: [StringTools.bytesToStorageUnity(deletedBytes)]));

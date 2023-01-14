@@ -54,22 +54,24 @@ class AppsStorageRepository extends CacheRepository<AppStorage> {
       for(SteamApp sa in steamApps) {
         AppStorage? appStorage = finalAppsStorage.singleWhereOrNull((element) => element.appId == sa.appId);
         if(appStorage != null) {
-          appStorage.isSteamApp = true;
+          appStorage.gameType = GameType.Steam;
           appStorage.name = sa.name;
           appStorage.installdir = sa.installdir;
+          appStorage.isUnknown = false;
         }
       }
 
       //Get shortcuts data
       List<SteamShortcut> scs = await _steamShortcutDataProvider.loadShortcutGames(userId);
 
-      var nonSteamAppStorage  = finalAppsStorage.where((element) => element.isSteamApp == false);
+      var nonSteamAppStorage  = finalAppsStorage.where((element) => element.gameType == GameType.NonSteam);
 
       for(AppStorage as in nonSteamAppStorage) {
         SteamShortcut? shortcut = scs.firstWhereOrNull((element) => element.appId.toString() == as.appId);
         if(shortcut!=null) {
           as.name = shortcut.appName;
           as.installdir = shortcut.startDir;
+          as.isUnknown = false;
         }
       }
 
@@ -77,5 +79,9 @@ class AppsStorageRepository extends CacheRepository<AppStorage> {
     }
 
     return finalAppsStorage!;
+  }
+
+  void remove(AppStorage as) {
+    getObjectsFromCache(cacheKey)!.removeWhere((element) => element.appId == as.appId && element.storageType == as.storageType);
   }
 }

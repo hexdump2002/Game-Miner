@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:game_miner/logic/Tools/string_tools.dart';
 import 'package:game_miner/presentation/widgets/searchbar/searchbar_widget.dart';
 
+import '../../data/models/app_storage.dart';
 import '../../logic/blocs/game_data_mgr_cubit.dart';
 import '../../main.dart';
 
@@ -161,9 +162,9 @@ class _GameDataMgrPageState extends State<GameDataMgrPage> {
           //print("Cache size: ${e.shaderCacheSize} ${e.compatDataSize}");
           return DataRow(cells: [
             DataCell(Checkbox(value: e.selected, onChanged: (bool? value) => _bloc.setSelectedState(e, value!))),
-            DataCell(Text(e.appId)),
-            DataCell(Text(e.name)),
-            DataCell(Text(StringTools.bytesToStorageUnity(e.size))),
+            DataCell(Text(e.appStorage.appId)),
+            DataCell(Text(e.appStorage.name)),
+            DataCell(Text(StringTools.bytesToStorageUnity(e.appStorage.size))),
             DataCell(_getStorageType(e)),
             DataCell(_getGameType(e)),
             DataCell(IconButton(
@@ -180,8 +181,8 @@ class _GameDataMgrPageState extends State<GameDataMgrPage> {
   }
 
   Widget _getGameType(AppDataStorageEntry as) {
-    Color color = as.gameType == GameType.Steam ? Colors.blue : Colors.red;
-    String text = as.gameType == GameType.Steam ? "Yes" : "No";
+    Color color = as.appStorage.gameType == GameType.Steam ? Colors.blue : Colors.red;
+    String text = as.appStorage.gameType == GameType.Steam ? "Yes" : "No";
     return Container(
       padding: EdgeInsets.fromLTRB(8, 8, 8, 8),
       decoration: BoxDecoration(borderRadius: BorderRadius.circular(20), color: color),
@@ -190,8 +191,8 @@ class _GameDataMgrPageState extends State<GameDataMgrPage> {
   }
 
   Widget _getStorageType(AppDataStorageEntry as) {
-    Color color = as.storageType == StorageType.CompatData ? Colors.blue : Colors.red;
-    String text = as.storageType == StorageType.CompatData ? "CompatData" : "ShaderCache";
+    Color color = as.appStorage.storageType == StorageType.CompatData ? Colors.blue : Colors.red;
+    String text = as.appStorage.storageType == StorageType.CompatData ? "CompatData" : "ShaderCache";
     return Container(
         padding: EdgeInsets.fromLTRB(8, 8, 8, 8),
         decoration: BoxDecoration(borderRadius: BorderRadius.circular(20), color: color),

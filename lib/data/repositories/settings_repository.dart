@@ -13,7 +13,7 @@ class SettingsRepository {
   final _controller = StreamController<Settings>();
   Stream<Settings> get settings => _controller.stream;
 
-  Settings? loadSettings(String userId) {
+  Settings? load(String userId) {
     if(_settings == null) {
       _settings = _settingsDataProvider.loadSettings(userId);
       _settings!.currentUserId = userId;
@@ -25,7 +25,7 @@ class SettingsRepository {
   }
 
   Settings getSettings() {
-    if(settings == null) {
+    if(_settings == null) {
       throw Exception("Settings are null because they hasn't been loaded. Aborting...");
     }
     return _settings!;

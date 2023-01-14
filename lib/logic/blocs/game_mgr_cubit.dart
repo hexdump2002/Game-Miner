@@ -5,9 +5,11 @@ import 'package:flutter_dialogs/flutter_dialogs.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 
 import 'package:game_miner/data/models/compat_tool.dart';
+import 'package:game_miner/data/repositories/apps_storage_repository.dart';
 
 import 'package:game_miner/data/repositories/compat_tools_mapping_repository.dart';
 import 'package:game_miner/data/repositories/compat_tools_repository.dart';
+import 'package:game_miner/data/repositories/game_miner_data_repository.dart';
 import 'package:game_miner/data/repositories/games_repository.dart';
 import 'package:game_miner/data/repositories/settings_repository.dart';
 import 'package:game_miner/logic/Tools/file_tools.dart';
@@ -22,9 +24,11 @@ import 'package:path/path.dart' as p;
 
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../data/models/app_storage.dart';
 import '../../data/models/compat_tool_mapping.dart';
 import '../../data/models/game_executable.dart';
 import '../../data/models/game.dart';
+import '../../data/models/game_miner_data.dart';
 import '../../data/models/settings.dart';
 import '../Tools/game_tools.dart';
 
@@ -184,7 +188,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
       await _gameRepository.saveGames(shortcutsPath,_baseGames);
     }
 
-
+    saveGameMinerDataAppidMappings(_baseGames);
     await saveCompatToolMappings(settings);
 
     if (showInfo) {
@@ -561,5 +565,33 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
     if(!b || !Directory(path).existsSync()) {
       EasyLoading.showError(tr("folder_not_exists"));
     }
+  }
+
+  void saveGameMinerDataAppidMappings(List<Game> baseGames) {
+    /*//TODO:We can get the data from here but the correct way should be creating a SteamApps repository but... today I'm too tired
+    AppsStorageRepository asr = GetIt.I<AppsStorageRepository>();
+    var appsStorage = asr.getAll()!;*/
+
+    GameMinerDataRepository repo = GetIt.I<GameMinerDataRepository>();
+    GameMinerData gmd = repo.getGameMinerData();
+    //Add added apps to the list
+    for(Game game in baseGames) {
+      for(GameExecutable ge in game.exeFileEntries) {
+        if(ge.added)
+        {
+            gmd.appsIdToName[ge.appId.toString()] = ge.name;
+        }
+      }
+    }
+
+    //It seems steam handles these games as it should deleting the data when uninstalled
+    /*for(AppStorage appStorage in appsStorage) {
+      if(appStorage.isSteamApp) {
+        gmd.appsIdToName[appStorage.appId] = appStorage.name;
+      }
+    }*/
+
+    repo.update(gmd);
+    repo.save();
   }
 }

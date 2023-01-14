@@ -8,6 +8,7 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:game_miner/data/data_providers/compat_tools_data_provider.dart';
 import 'package:game_miner/data/models/app_storage.dart';
 import 'package:game_miner/data/models/steam_app.dart';
+import 'package:game_miner/data/repositories/game_miner_data_repository.dart';
 import 'package:game_miner/data/repositories/settings_repository.dart';
 import 'package:game_miner/data/repositories/apps_storage_repository.dart';
 import 'package:game_miner/data/repositories/steam_user_repository.dart';
@@ -33,8 +34,25 @@ Stream<Settings> stream = GetIt.I<SettingsRepository>().settings.distinct((Setti
   return previous.darkTheme != next.darkTheme;
 });
 
+Future<void> initDependencies() async {
+  setupServiceLocator();
+
+  SteamUserRepository userRepository = GetIt.I<SteamUserRepository>();
+  List<SteamUser> users = await userRepository.loadUsers();
+  SteamUser? su = userRepository.getFirstUser();
+  if (su == null) throw NotFoundException("No steam user was found in the system. Aborting...");
+
+  GetIt.I<SettingsRepository>().load(su.id);
+  await GetIt.I<GameMinerDataRepository>().load();
+
+  //TODO: Check if we have a steam installation and get folder
+}
+
+
 void main() async {
-  await setupServiceLocator();
+  await initDependencies();
+
+  SettingsRepository settingsRepository = GetIt.I<SettingsRepository>();
 
   // Needs to be called so that we can await for EasyLocalization.ensureInitialized();
   WidgetsFlutterBinding.ensureInitialized();
@@ -43,14 +61,8 @@ void main() async {
   //Close steam client
   SteamTools.closeSteamClient();
 
-  SteamUserRepository userRepository = await GetIt.I<SteamUserRepository>();
-  List<SteamUser> users = await userRepository.loadUsers();
-  SteamUser? su = userRepository.getFirstUser();
-  if (su == null) throw NotFoundException("No steam user was found in the system. Aborting...");
-  GetIt.I<SettingsRepository>().loadSettings(su.id);
-
   AppsStorageRepository repo = GetIt.I<AppsStorageRepository>();
-  List<AppStorage>? steamApps = await repo.load(su.id);
+  List<AppStorage>? steamApps = await repo.load(settingsRepository.getSettings().currentUserId);
 
   runApp(EasyLocalization(child: MyApp(), supportedLocales: [Locale('en'), Locale('es')], path: 'assets/translations', fallbackLocale: Locale('en')));
   EasyLoading.instance.userInteractions = false;
