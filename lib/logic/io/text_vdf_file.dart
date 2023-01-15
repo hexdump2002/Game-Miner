@@ -39,8 +39,10 @@ class TxtVdfFile {
   }
 
   //Expected the point to be on '{' char
-  Map<String, dynamic> _readObjectProperties(Map<String, dynamic> outputMap) {
+  Map<String, dynamic> _readObjectProperties() {
     consume(char: openBrace);
+
+    Map<String, dynamic> object= {};
 
     while(!_isEndOfObject()) {
       bool isObjectProperty = _isNextObjectProperty();
@@ -49,15 +51,15 @@ class TxtVdfFile {
       if(isObjectProperty) {
         _filePos = savedFilePos;
         Map<String, dynamic> o = _readObject(<String,dynamic>{});
-        outputMap[propName] = o;
+        object[propName] = o[propName];
       }
       else {
         String value = _readString();
-        outputMap[propName] = value;
+        object[propName] = value;
       }
     }
 
-    return outputMap;
+    return object;
   }
 
 
@@ -70,7 +72,7 @@ class TxtVdfFile {
     _findNextNotEmptyChar();
     peek(char: openBrace);
 
-    Map<String, dynamic> objProperties = _readObjectProperties(<String, dynamic>{});
+    Map<String, dynamic> objProperties = _readObjectProperties();
 
     outputMap[key] = objProperties;
 
@@ -148,9 +150,9 @@ class TxtVdfFile {
 
     String str = "";
     consume(char:doubleQuoteChar);
-    do {
+    while(peek() != doubleQuoteChar) {
       str+= String.fromCharCode(consume());
-    }while(peek() != doubleQuoteChar);
+    }
 
     consume(char:doubleQuoteChar);
 

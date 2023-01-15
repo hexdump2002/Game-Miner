@@ -1,4 +1,4 @@
-import 'package:game_miner/data/models/steam_user.dart';
+/*import 'package:game_miner/data/models/steam_user.dart';
 
 import '../../logic/Tools/file_tools.dart';
 
@@ -18,3 +18,4 @@ class SteamUsersDataProvider {
     return folders.map<SteamUser>((e) => SteamUser(e, "No name")).toList();
   }
 }
+*/

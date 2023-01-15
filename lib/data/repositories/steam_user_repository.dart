@@ -1,4 +1,4 @@
-import 'package:game_miner/data/data_providers/steam_users_data_provider.dart';
+/*import 'package:game_miner/data/data_providers/steam_users_data_provider.dart';
 import 'package:game_miner/data/models/steam_user.dart';
 import 'package:game_miner/data/repositories/cache_repository.dart';
 import 'package:get_it/get_it.dart';
@@ -23,4 +23,4 @@ class SteamUserRepository extends CacheRepository<SteamUser> {
     var users = getObjectsFromCache("SteamUsers");
     return users!=null && users.isNotEmpty ?  users[0] : null;
   }
-}
+}*/

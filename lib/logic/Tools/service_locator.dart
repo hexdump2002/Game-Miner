@@ -5,6 +5,7 @@ import 'package:game_miner/data/data_providers/compat_tools_mapping_data_provide
 import 'package:game_miner/data/data_providers/game_miner_data_provider.dart';
 import 'package:game_miner/data/data_providers/settings_data_provider.dart';
 import 'package:game_miner/data/data_providers/steam_apps_data_provider.dart';
+import 'package:game_miner/data/data_providers/steam_config_data_provider.dart';
 import 'package:game_miner/data/data_providers/steam_shortcuts_data_provider.dart';
 import 'package:game_miner/data/repositories/compat_tools_mapping_repository.dart';
 import 'package:game_miner/data/repositories/compat_tools_repository.dart';
@@ -35,14 +36,15 @@ void setupServiceLocator()  {
   serviceLocator.registerLazySingleton<SettingsDataProvider>(() => SettingsDataProvider());
   serviceLocator.registerLazySingleton<AppsStorageDataProvider>(() => AppsStorageDataProvider());
   serviceLocator.registerLazySingleton<GameMinerDataProvider>(() => GameMinerDataProvider());
-  serviceLocator.registerLazySingleton<SteamUsersDataProvider>(()=>SteamUsersDataProvider());
+  serviceLocator.registerLazySingleton<SteamConfigDataProvider>(() => SteamConfigDataProvider());
+  //serviceLocator.registerLazySingleton<SteamUsersDataProvider>(()=>SteamUsersDataProvider());
 
   //Repositories
   serviceLocator.registerLazySingleton<CompatToolsRepository>(() => CompatToolsRepository());
   serviceLocator.registerLazySingleton<CompatToolsMappipngRepository>(()=>CompatToolsMappipngRepository());
   serviceLocator.registerLazySingleton<GamesRepository>(() => GamesRepository());
   serviceLocator.registerLazySingleton<AppsStorageRepository>(() => AppsStorageRepository());
-  serviceLocator.registerLazySingleton<SteamUserRepository>(() => SteamUserRepository());
+  //serviceLocator.registerLazySingleton<SteamUserRepository>(() => SteamUserRepository());
   serviceLocator.registerLazySingleton<SettingsRepository>(() => SettingsRepository());
   serviceLocator.registerLazySingleton<GameMinerDataRepository>(() => GameMinerDataRepository(gameMinerAbsolutePath));
 }

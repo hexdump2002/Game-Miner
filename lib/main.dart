@@ -6,8 +6,10 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:game_miner/data/data_providers/compat_tools_data_provider.dart';
+import 'package:game_miner/data/data_providers/steam_config_data_provider.dart';
 import 'package:game_miner/data/models/app_storage.dart';
 import 'package:game_miner/data/models/steam_app.dart';
+import 'package:game_miner/data/models/steam_config.dart';
 import 'package:game_miner/data/repositories/game_miner_data_repository.dart';
 import 'package:game_miner/data/repositories/settings_repository.dart';
 import 'package:game_miner/data/repositories/apps_storage_repository.dart';
@@ -37,12 +39,15 @@ Stream<Settings> stream = GetIt.I<SettingsRepository>().settings.distinct((Setti
 Future<void> initDependencies() async {
   setupServiceLocator();
 
-  SteamUserRepository userRepository = GetIt.I<SteamUserRepository>();
+  SteamConfigDataProvider scdp = GetIt.I<SteamConfigDataProvider>();
+  SteamConfig sc = await scdp.load();
+
+  /*SteamUserRepository userRepository = GetIt.I<SteamUserRepository>();
   List<SteamUser> users = await userRepository.loadUsers();
   SteamUser? su = userRepository.getFirstUser();
-  if (su == null) throw NotFoundException("No steam user was found in the system. Aborting...");
+  if (su == null) throw NotFoundException("No steam user was found in the system. Aborting...");*/
 
-  GetIt.I<SettingsRepository>().load(su.id);
+  GetIt.I<SettingsRepository>().load("su.id"); //TODO: Fix
   await GetIt.I<GameMinerDataRepository>().load();
 
   //TODO: Check if we have a steam installation and get folder
