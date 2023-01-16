@@ -20,6 +20,10 @@ class SteamConfigDataProvider {
     List<LibraryFolder> libraryFolders = await _loadLibraryFolders(p.join(basePath,'libraryfolders.vdf'));
     List<SteamUser> steamLoggedUsers = await _loadLoggedUsers(p.join(basePath,'loginusers.vdf'));
 
+    for(SteamUser steamUser in steamLoggedUsers) {
+      var map = await _getLocalConfigForUser(steamUser.steamId32);
+      steamUser.avatarHash = map["userlocalconfigstore"]?["friends"]?[steamUser.steamId32]?["avatar"];
+    }
 
     return SteamConfig(steamLoggedUsers, libraryFolders);
   }
@@ -69,5 +73,16 @@ class SteamConfigDataProvider {
 
 
     return steamUsers;
+  }
+
+
+  Future<Map<String, dynamic>> _getLocalConfigForUser(String userId) async {
+    TxtVdfFile file = TxtVdfFile();
+    String homeFolder = FileTools.getHomeFolder();
+    String path = "$homeFolder/.local/share/Steam/userdata/$userId/config/localconfig.vdf";
+    await file.open(path, FileMode.read);
+    Map<String,dynamic> map = await file.read();
+
+    return map;
   }
 }

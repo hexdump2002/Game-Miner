@@ -31,7 +31,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
   void initState() {}
 
   GameMgrCubit _nsCubit(context) => BlocProvider.of<GameMgrCubit>(context);
-  final Settings _settings = GetIt.I<SettingsRepository>().getSettingsForCurrentUser();
+  final UserSettings _userSettings = GetIt.I<SettingsRepository>()!.getSettingsForCurrentUser()!;
 
   @override
   Widget build(BuildContext context) {
@@ -102,7 +102,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
                   IconButton(
                     onPressed: () {
                       if (_formKey.currentState!.validate()) {
-                        _nsCubit(context).saveData(_settings);
+                        _nsCubit(context).saveData();
                       } else {
                         print("There are errors in the form. Fix them!");
                       }
@@ -119,7 +119,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
                   ),
                   IconButton(
                     onPressed: () {
-                      _nsCubit(context).refresh(_settings);
+                      _nsCubit(context).refresh();
                     },
                     icon: Icon(Icons.refresh),
                     tooltip: tr("refresh"),
@@ -230,7 +230,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
                           ),
                           IconButton(
                             padding: const EdgeInsets.all(0),
-                            disabledColor: _settings.darkTheme ? Colors.grey.shade800 : Colors.grey.shade300,
+                            disabledColor: _userSettings.darkTheme ? Colors.grey.shade800 : Colors.grey.shade300,
                             onPressed: () {
                               _nsCubit(context).openFolder(gameView.game);
                             },
@@ -238,7 +238,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
                             tooltip: tr("open_folder"),
                           ),
                           IconButton(
-                            disabledColor:_settings.darkTheme ? Colors.grey.shade800 : Colors.grey.shade300,
+                            disabledColor:_userSettings.darkTheme ? Colors.grey.shade800 : Colors.grey.shade300,
                             onPressed: gameView.game.isExternal
                                 ? null
                                 : () {
@@ -248,7 +248,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
                             tooltip: gameView.game.isExternal ? null : tr("rename_game"),
                           ),
                           IconButton(
-                            disabledColor:_settings.darkTheme ? Colors.grey.shade800 : Colors.grey.shade300,
+                            disabledColor:_userSettings.darkTheme ? Colors.grey.shade800 : Colors.grey.shade300,
                             onPressed: gameView.game.isExternal
                                 ? null
                                 : () {
@@ -307,7 +307,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
                 Switch(
                     value: uge.added,
                     onChanged: (value) {
-                      _nsCubit(context).swapExeAdding(uge, _settings.defaultCompatTool);
+                      _nsCubit(context).swapExeAdding(uge);
                     }),
                 //activeTrackColor: Colors.lightGreenAccent,
                 //activeColor: Colors.green,

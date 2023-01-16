@@ -5,6 +5,7 @@ import 'package:universal_disk_space/universal_disk_space.dart';
 class TxtVdfFile {
   late final File _file;
   final int doubleQuoteChar = "\"".codeUnitAt(0);
+  final int scapedCharSymbol ="\\".codeUnitAt(0);
   final int openBrace = "{".codeUnitAt(0);
   final int closingBrace = "}".codeUnitAt(0);
 
@@ -150,15 +151,29 @@ class TxtVdfFile {
 
     String str = "";
     consume(char:doubleQuoteChar);
-    while(peek() != doubleQuoteChar) {
-      str+= String.fromCharCode(consume());
+
+    bool finished = false;
+    while(!finished) {
+      if(peek() == scapedCharSymbol){
+        //Consume both chars, the scaped flag and the char
+        str+= String.fromCharCode(consume());
+        str+= String.fromCharCode(consume());
+      }
+      else
+      {
+        if(peek() == doubleQuoteChar) {
+          consume(char:doubleQuoteChar);
+          finished = true;
+        }
+        else
+        {
+          str+=String.fromCharCode(consume());
+        }
+      }
     }
 
-    consume(char:doubleQuoteChar);
+
 
     return str;
   }
-
-
-
 }

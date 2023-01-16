@@ -13,15 +13,29 @@ class SettingsRepository {
   final _controller = StreamController<Settings>();
   Stream<Settings> get settings => _controller.stream;
 
-  Settings? load(String userId) {
+  Settings load() {
     if(_settings == null) {
-      _settings = _settingsDataProvider.loadSettings(userId);
-      _settings!.currentUserId = userId;
+      _settings = _settingsDataProvider.loadSettings();
+      //_settings!.currentUserId = userId;
       _addToStream(_settings!);
     }
 
     //Return a copy of the settings
-    return Settings.fromJson(_settings!.toJson());
+    return _settings!;
+  }
+
+  UserSettings? getSettingsForUser(String userId) {
+    if(_settings == null) {
+      throw Exception("Settings has not been initialized. Aborting");
+    }
+    return _settings!.getUserSettings(userId);
+  }
+
+  UserSettings? getSettingsForCurrentUser() {
+    if(_settings == null) {
+      throw Exception("Settings has not been initialized. Aborting");
+    }
+    return _settings!.getUserSettings(_settings!.currentUserId);
   }
 
   Settings getSettings() {
@@ -31,13 +45,20 @@ class SettingsRepository {
     return _settings!;
   }
 
+  void updateUserSettings(String userId, UserSettings us) {
+    if(_settings == null) {
+      throw Exception("Settings has not been initialized. Aborting");
+    }
+    _settings!.setUserSettings(userId, us);
+  }
   void update(Settings settings) {
     _settings = settings;
+    _addToStream(_settings!);
   }
 
   void save() {
     _settingsDataProvider.saveSettings(_settings!);
-    _addToStream(_settings!);
+    //_addToStream(_settings!);
   }
 
   /*Settings loadAndSaveDefault(String currentUserId) {
@@ -46,13 +67,6 @@ class SettingsRepository {
 
     return Settings.fromJson(_settings!.toJson());
   }*/
-
-  Settings getSettingsForCurrentUser() {
-    if(_settings == null) {
-      throw Exception("Settings has not been initialized. Aborting");
-    }
-    return Settings.fromJson(_settings!.toJson());
-  }
 
   void _addToStream(Settings settings) => _controller.sink.add(settings);
 }

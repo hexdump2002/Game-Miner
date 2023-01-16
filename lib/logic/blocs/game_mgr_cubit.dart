@@ -56,6 +56,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
   final GamesRepository _gameRepository = GetIt.I<GamesRepository>();
   final CompatToolsMappipngRepository _compatToolsMappipngRepository = GetIt.I<CompatToolsMappipngRepository>();
 
+  late final UserSettings _currentUserSettings;
   late final Settings _settings;
 
   @override
@@ -79,10 +80,11 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
 
   GameMgrCubit() : super(IninitalState()) {
     _settings = GetIt.I<SettingsRepository>().getSettings();
-    loadData(_settings);
+    _currentUserSettings = _settings!.getUserSettings(_settings!.currentUserId)!;
+    loadData(_currentUserSettings);
   }
 
-  Future<void> loadData(Settings settings) async {
+  Future<void> loadData(UserSettings settings) async {
     final stopwatch = Stopwatch()..start();
 
     List<Game>? games = _gameRepository.getGames();
@@ -94,7 +96,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
       print("Cache Miss. Loading Games");
       emit(RetrievingGameData());
 
-      _baseGames = await _gameRepository.loadGames(_settings.currentUserId, _settings.searchPaths);
+      _baseGames = await _gameRepository.loadGames(_settings.currentUserId, _currentUserSettings.searchPaths);
 
 
 
@@ -124,9 +126,9 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
     print('[Logic] Time taken to execute method: ${stopwatch.elapsed}');
   }
 
-  refresh(Settings settings) {
+  refresh() {
     _gameRepository.invalidateGamesCache();
-    loadData(settings);
+    loadData(_currentUserSettings);
   }
 
   List<String> getAvailableCompatToolDisplayNames() {
@@ -145,12 +147,12 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
     return _availableCompatTools.firstWhere((element) => element.displayName == displayName).code;
   }
 
-  swapExeAdding(GameExecutable ge, String protonCode) {
+  swapExeAdding(GameExecutable ge) {
     ge.added = !ge.added;
 
     if (ge.added) {
       ge.appId = SteamTools.generateAppId("${ge.startDir}/${ge.relativeExePath}");
-      ge.fillProtonMappingData(protonCode, "", "250");
+      ge.fillProtonMappingData(_currentUserSettings.defaultCompatTool, "", "250");
       //_globalStats.MoveGameByStatus(uge, VMGameAddedStatus.Added);
     } else {
       ge.appId = 0;
@@ -170,7 +172,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
         _addedExternalCount, _ssdFreeSizeInBytes, _sdCardFreeInBytes, _ssdTotalSizeInBytes, _sdCardTotalInBytes, _sortStates, _sortDirectionStates));
   }
 
-  void saveData(Settings settings, {showInfo = true}) async {
+  void saveData({showInfo = true}) async {
     if (showInfo) {
       EasyLoading.show(status: tr("saving_games"));
     }
@@ -178,10 +180,10 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
     String homeFolder = FileTools.getHomeFolder();
     String shortcutsPath = "$homeFolder/.steam/steam/userdata/${_settings.currentUserId}/config/shortcuts.vdf";
 
-    if(settings.backupsEnabled) {
+    if(_currentUserSettings.backupsEnabled) {
       await FileTools.saveFileSecure<List<Game>>(shortcutsPath, _baseGames, <String,dynamic>{}, (String path, List<Game> games, Map<String,dynamic> extraParams) async {
         return _gameRepository.saveGames(path, games);
-      }, settings.maxBackupsCount);
+      }, _currentUserSettings.maxBackupsCount);
     }
     else
     {
@@ -189,14 +191,14 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
     }
 
     saveGameMinerDataAppidMappings(_baseGames);
-    await saveCompatToolMappings(settings);
+    await saveCompatToolMappings();
 
     if (showInfo) {
       EasyLoading.showSuccess(tr("data_saved"));
     }
   }
 
-  Future<void> saveCompatToolMappings(Settings settings) async {
+  Future<void> saveCompatToolMappings() async {
     Map<int, CompatToolMapping> usedProtonMappings = {};
     _baseGames.forEach((e) {
       e.exeFileEntries.forEach((uge) {
@@ -212,11 +214,11 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
     String homeFolder = FileTools.getHomeFolder();
     String configPath = "$homeFolder/.local/share/Steam/config/config.vdf";
 
-    if(settings.backupsEnabled) {
+    if(_currentUserSettings.backupsEnabled) {
       Map<String,dynamic> extraParams = {"sourceFile": configPath};
       await FileTools.saveFileSecure<List<CompatToolMapping>>(configPath, compatToolMappings, extraParams, (String path, List<CompatToolMapping> games, Map<String,dynamic> extraParams) async {
         await _compatToolsMappipngRepository.saveCompatToolMappings(path, compatToolMappings, extraParams);
-      }, settings.maxBackupsCount);
+      }, _currentUserSettings.maxBackupsCount);
     }
     else
     {
@@ -286,7 +288,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
                 _refreshGameCount();
 
                 //Persist new shortcuts file (TODO: split data saved to just save what is needed instead of everything everytime)
-                saveData(_settings, showInfo: false);
+                saveData(showInfo: false);
 
                 emit(GamesDataChanged(
                     _filteredGames,

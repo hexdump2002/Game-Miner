@@ -19,6 +19,7 @@ import '../../data/data_providers/app_storage_data_provider.dart';
 import '../../data/data_providers/steam_users_data_provider.dart';
 import '../../data/data_providers/user_library_games_data_provider.dart';
 import '../../data/models/steam_user.dart';
+import '../../data/repositories/steam_config_repository.dart';
 import '../../data/repositories/steam_user_repository.dart';
 import 'package:path/path.dart' as p;
 final serviceLocator = GetIt.I;
@@ -47,4 +48,5 @@ void setupServiceLocator()  {
   //serviceLocator.registerLazySingleton<SteamUserRepository>(() => SteamUserRepository());
   serviceLocator.registerLazySingleton<SettingsRepository>(() => SettingsRepository());
   serviceLocator.registerLazySingleton<GameMinerDataRepository>(() => GameMinerDataRepository(gameMinerAbsolutePath));
+  serviceLocator.registerLazySingleton<SteamConfigRepository>(() => SteamConfigRepository());
 }

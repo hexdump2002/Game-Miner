@@ -8,12 +8,12 @@ import '../models/settings.dart';
 class SettingsDataProvider {
   final String _configFilePath = "settings.cfg";
 
-  Settings loadSettings(String userId/*List<ProtonVersion> externalProtons*/) {
+  Settings loadSettings() {
 
     Directory appFolder = Directory.current;
     String fullPath = "${appFolder.path}/$_configFilePath";
 
-    Settings settings = Settings(userId);
+    Settings settings = Settings();
 
     var file = File(fullPath);
     if(!file.existsSync())

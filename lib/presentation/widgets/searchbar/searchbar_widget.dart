@@ -25,8 +25,10 @@ class _SearchBarState extends State<SearchBar> {
   Widget build(BuildContext context) {
 
     Settings settings = GetIt.I<SettingsRepository>().getSettings();
-    Color bgColor = settings.darkTheme ? Colors.white10 : Colors.blue.shade600;
-    Color borderColor = settings.darkTheme ? Colors.black26 : Colors.blue.shade700;
+    UserSettings userSettings = settings.getCurrentUserSettings()!;
+
+    Color bgColor = userSettings.darkTheme ? Colors.white10 : Colors.blue.shade600;
+    Color borderColor = userSettings.darkTheme ? Colors.black26 : Colors.blue.shade700;
     TextEditingController txtQuery = TextEditingController();
 
     return TextFormField(

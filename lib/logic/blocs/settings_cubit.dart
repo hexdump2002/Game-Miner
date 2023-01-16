@@ -16,16 +16,19 @@ import '../../data/models/settings.dart';
 part 'settings_state.dart';
 
 class SettingsCubit extends Cubit<SettingsState> {
-  late Settings _settings ; //Settings after modifications
-  late Settings _oldSettings; //Settings we got when we entered
+  late UserSettings _currentUserSettings ; //Settings after modifications
+  late UserSettings _oldCurrentUserSettings; //Settings we got when we entered
+  late String _currentUserId;
 
   List<CompatTool> _availableCompatTools = [];
 
-  SettingsCubit() : super(SettingsInitial(Settings("NO NUMBER"))) {
+  SettingsCubit() : super(SettingsInitial(UserSettings())) {
     SettingsRepository repo = GetIt.I<SettingsRepository>();
-    _settings = repo.getSettings();
-    _oldSettings = _settings.clone();
-    emit(SettingsLoaded(_settings));
+    _currentUserId = repo.getSettings().currentUserId;
+    _currentUserSettings = repo.getSettingsForCurrentUser()!;
+    _oldCurrentUserSettings = _currentUserSettings.clone();
+
+    emit(SettingsLoaded(_currentUserSettings));
   }
 
   Future<List<CompatTool>> initialize() async {
@@ -35,16 +38,20 @@ class SettingsCubit extends Cubit<SettingsState> {
   }
 
 
-  Settings getSettings() { return _settings;}
+  UserSettings getUserSettings() { return _currentUserSettings;}
 
   void refresh() {
-    emit(SettingsChangedState(_settings));
+    emit(SettingsChangedState(_currentUserSettings));
   }
 
   List<String> getAvailableCompatToolDisplayNames() {
     List<String> ctn = _availableCompatTools.map<String>( (e) => e.displayName).toList();
     ctn.insert(0, "None");
     return ctn;
+  }
+
+  String getDefaultCompatToolDisplayNameFromCode() {
+      return getCompatToolDisplayNameFromCode(_currentUserSettings.defaultCompatTool);
   }
 
   String getCompatToolDisplayNameFromCode(String code) {
@@ -57,6 +64,10 @@ class SettingsCubit extends Cubit<SettingsState> {
     return _availableCompatTools.firstWhere((element) => element.displayName == displayName).code;
   }
 
+  void setDefaultCompatToolFromName(String value) {
+    _currentUserSettings.defaultCompatTool =  getCompatToolCodeFromDisplayName(value);
+  }
+
 
   void save({bool showMessages=true}) {
     if(showMessages) EasyLoading.show(status: "saving_settings");
@@ -67,19 +78,19 @@ class SettingsCubit extends Cubit<SettingsState> {
     if(showMessages) EasyLoading.showSuccess(tr("settings_saved"));
 
     //Request a reload next time i
-    if(!_areSettingsPathEqual(_settings, _oldSettings)) {
+    if(!_areSettingsPathEqual(_currentUserSettings, _oldCurrentUserSettings)) {
       GetIt.I<GamesRepository>().invalidateGamesCache();
     }
 
     //Leave the needed backups
     String homeFolder = FileTools.getHomeFolder();
 
-    int currentBackups = _settings.backupsEnabled ? _settings.maxBackupsCount : 0;
+    int currentBackups = _currentUserSettings.backupsEnabled ? _currentUserSettings.maxBackupsCount : 0;
 
-    FileTools.clampBackupsToCount("$homeFolder/.local/share/Steam/userdata/${_settings.currentUserId}/config/shortcuts.vdf", currentBackups);
+    FileTools.clampBackupsToCount("$homeFolder/.local/share/Steam/userdata/${_currentUserId}/config/shortcuts.vdf", currentBackups);
     FileTools.clampBackupsToCount("$homeFolder/.local/share/Steam/config/config.vdf", currentBackups);
 
-    emit(SettingsSaved(_settings));
+    emit(SettingsSaved(_currentUserSettings));
   }
 
   /*bool existsConfig() {
@@ -87,7 +98,7 @@ class SettingsCubit extends Cubit<SettingsState> {
     return File("${appFolder.path}/$_configFilePath").existsSync();
   }*/
 
-  bool _areSettingsPathEqual(Settings a, Settings b)
+  bool _areSettingsPathEqual(UserSettings a, UserSettings b)
   {
     List<String> listA = a.searchPaths;
     List<String> listB = b.searchPaths;
@@ -107,14 +118,14 @@ class SettingsCubit extends Cubit<SettingsState> {
     String? selectedDirectory = await FilePicker.platform.getDirectoryPath();
 
     if (selectedDirectory != null) {
-      bool existed = _settings.searchPaths.contains(selectedDirectory);
+      bool existed = _currentUserSettings.searchPaths.contains(selectedDirectory);
       if(existed)
       {
         EasyLoading.showError(tr("path_duplicated"));
       }
       else {
-        _settings.searchPaths.add(selectedDirectory);
-        emit(SearchPathsChanged(_settings));
+        _currentUserSettings.searchPaths.add(selectedDirectory);
+        emit(SearchPathsChanged(_currentUserSettings));
       }
     } else {
       // User canceled the picker
@@ -122,24 +133,27 @@ class SettingsCubit extends Cubit<SettingsState> {
   }
 
   removePath(String e) {
-    _settings.searchPaths.remove(e);
-    emit(SearchPathsChanged(_settings));
+    _currentUserSettings.searchPaths.remove(e);
+    emit(SearchPathsChanged(_currentUserSettings));
   }
 
   void setDarkThemeState(bool state) {
-    _settings.darkTheme = state;
-    emit(GeneralOptionsChanged(_settings));
+    _currentUserSettings.darkTheme = state;
+    emit(GeneralOptionsChanged(_currentUserSettings));
   }
 
   void setEnableBackups(bool value) {
-    _settings.backupsEnabled = value;
-    emit(GeneralOptionsChanged(_settings));
+    _currentUserSettings.backupsEnabled = value;
+    emit(GeneralOptionsChanged(_currentUserSettings));
   }
 
   void setMaxBackupCount(double value) {
-    _settings.maxBackupsCount = value.toInt();
-    emit(GeneralOptionsChanged(_settings));
+    _currentUserSettings.maxBackupsCount = value.toInt();
+    emit(GeneralOptionsChanged(_currentUserSettings));
   }
+
+
+
 
 /*  bool getDarkThemeState() {
     return _settings.darkTheme;

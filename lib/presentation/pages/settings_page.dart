@@ -52,7 +52,7 @@ class _SettingsPageState extends State<SettingsPage> {
         }));
   }
 
-  Widget _buildGeneralOptions(Settings settings) {
+  Widget _buildGeneralOptions(UserSettings settings) {
     return Expanded(
         flex: 4,
         child: Card(
@@ -78,13 +78,9 @@ class _SettingsPageState extends State<SettingsPage> {
                           items: _bloc.getAvailableCompatToolDisplayNames().map<DropdownMenuItem<String>>((String e) {
                             return DropdownMenuItem<String>(value: e, child: Text(e));
                           }).toList(),
-                          value: _bloc.getCompatToolDisplayNameFromCode(_bloc
-                              .getSettings()
-                              .defaultCompatTool),
+                          value: _bloc.getDefaultCompatToolDisplayNameFromCode(),
                           onChanged: (String? value) =>
-                          _bloc
-                              .getSettings()
-                              .defaultCompatTool = _bloc.getCompatToolCodeFromDisplayName(value!),
+                          _bloc.setDefaultCompatToolFromName(value!),
                           decoration: const InputDecoration()),
                     )
                   ])),
@@ -168,7 +164,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     child: BlocBuilder<SettingsCubit, SettingsState>(
                       //buildWhen: (previous, current) => current is SearchPathsChanged || current is SettingsChangedState,
                       builder: (context, state) {
-                        Settings settings;
+                        UserSettings settings;
                         settings = state.settings;
 
                         return Column(
