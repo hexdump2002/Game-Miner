@@ -114,5 +114,13 @@ class SteamShortcutDataProvider {
     return val == kEofMark;
   }
 
+  Future<void> updateShortcut(String shortcutsPath,String userId, SteamShortcut ss ) async {
+    var shortcuts = await loadShortcutGames(userId);
+    shortcuts.removeWhere((element) => element.appId == ss.appId);
+    shortcuts.add(ss);
+
+    await saveShortcuts(shortcutsPath, shortcuts);
+  }
+
 
 }

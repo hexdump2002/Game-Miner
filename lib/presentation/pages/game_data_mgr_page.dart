@@ -43,21 +43,7 @@ class _GameDataMgrPageState extends State<GameDataMgrPage> {
             ),
             BlocBuilder<GameDataMgrCubit, GameDataMgrState>(builder: (context, state) {
               return Row(children: [
-                IconButton(
-                  onPressed: () {
-                    _bloc.selectNone();
-                  },
-                  icon: const Icon(Icons.close),
-                  tooltip: tr("select_none"),
-                ),
-                IconButton(
-                  onPressed: () {
-                    _bloc.selectAll();
-                  },
-                  icon: const Icon(Icons.check),
-                  tooltip: tr("select_all"),
-                ),
-                IconButton(
+               IconButton(
                   onPressed: () {
                     _bloc.deleteAll(context);
                   },

@@ -32,6 +32,7 @@ class Settings {
   UserSettings? getCurrentUserSettings() {
     return getUserSettings(currentUserId);
   }
+
 }
 
 class UserSettings {

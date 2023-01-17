@@ -85,10 +85,7 @@ class GamesRepository extends CacheRepository<Game> {
     removeCacheKey(cacheKey);
   }
 
-  //TODO: Move all this to write to a in memory buffer and then dump it to the file
-  Future<void> saveGames(/*String userId, */ String shortcutsPath, List<Game> games) async {
-
-
+  List<SteamShortcut> _convertGameToShortcuts(List<Game> games) {
     //Convert Games into steam shortcuts data provider model (only the ones selected)
     List<SteamShortcut> shortcuts = [];
 
@@ -122,10 +119,26 @@ class GamesRepository extends CacheRepository<Game> {
       }
     }
 
-    await _steamShortcutsDataProvider.saveShortcuts(/*userId,*/shortcutsPath, shortcuts);
+    return shortcuts;
   }
 
+  //TODO: Move all this to write to a in memory buffer and then dump it to the file
+  Future<bool> saveGames(/*String userId, */ String shortcutsPath, List<Game> games) async {
+    var shortcuts = _convertGameToShortcuts(games);
+    await _steamShortcutsDataProvider.saveShortcuts(/*userId,*/shortcutsPath, shortcuts);
+    return true;
+  }
 
+  Future<bool> saveGame(String shortcutPath, String userId, Game game) async {
+    var shortcuts = _convertGameToShortcuts([game]);
 
+    //This means that no exe of this game has been added, so, no need to save anything
+    if(shortcuts.isEmpty) {
+      return false;
+    }
 
+    await _steamShortcutsDataProvider.updateShortcut(shortcutPath,userId,shortcuts[0]);
+
+    return true;
+  }
 }

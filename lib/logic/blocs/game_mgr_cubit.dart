@@ -50,6 +50,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
   List<GameView> _gameViews = [];
   List<GameView> _filteredGames = [];
   List<CompatTool> _availableCompatTools = [];
+
   //List<CompatToolMapping> _compatToolsMappings = [];
 
   final CompatToolsRepository _compatToolsRepository = GetIt.I<CompatToolsRepository>();
@@ -91,14 +92,11 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
 
     if (games != null) {
       _baseGames = games;
-
     } else {
       print("Cache Miss. Loading Games");
       emit(RetrievingGameData());
 
       _baseGames = await _gameRepository.loadGames(_settings.currentUserId, _currentUserSettings.searchPaths);
-
-
 
       var folderStats = await Stats.getGamesFolderStats(_baseGames);
       assert(folderStats.statsByGame.length == _baseGames.length);
@@ -180,14 +178,13 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
     String homeFolder = FileTools.getHomeFolder();
     String shortcutsPath = "$homeFolder/.steam/steam/userdata/${_settings.currentUserId}/config/shortcuts.vdf";
 
-    if(_currentUserSettings.backupsEnabled) {
-      await FileTools.saveFileSecure<List<Game>>(shortcutsPath, _baseGames, <String,dynamic>{}, (String path, List<Game> games, Map<String,dynamic> extraParams) async {
+    if (_currentUserSettings.backupsEnabled) {
+      await FileTools.saveFileSecure<List<Game>>(shortcutsPath, _baseGames, <String, dynamic>{},
+          (String path, List<Game> games, Map<String, dynamic> extraParams) async {
         return _gameRepository.saveGames(path, games);
       }, _currentUserSettings.maxBackupsCount);
-    }
-    else
-    {
-      await _gameRepository.saveGames(shortcutsPath,_baseGames);
+    } else {
+      await _gameRepository.saveGames(shortcutsPath, _baseGames);
     }
 
     saveGameMinerDataAppidMappings(_baseGames);
@@ -214,15 +211,14 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
     String homeFolder = FileTools.getHomeFolder();
     String configPath = "$homeFolder/.local/share/Steam/config/config.vdf";
 
-    if(_currentUserSettings.backupsEnabled) {
-      Map<String,dynamic> extraParams = {"sourceFile": configPath};
-      await FileTools.saveFileSecure<List<CompatToolMapping>>(configPath, compatToolMappings, extraParams, (String path, List<CompatToolMapping> games, Map<String,dynamic> extraParams) async {
-        await _compatToolsMappipngRepository.saveCompatToolMappings(path, compatToolMappings, extraParams);
+    if (_currentUserSettings.backupsEnabled) {
+      Map<String, dynamic> extraParams = {"sourceFile": configPath};
+      await FileTools.saveFileSecure<List<CompatToolMapping>>(configPath, compatToolMappings, extraParams,
+          (String path, List<CompatToolMapping> games, Map<String, dynamic> extraParams) async {
+        return await _compatToolsMappipngRepository.saveCompatToolMappings(path, compatToolMappings, extraParams);
       }, _currentUserSettings.maxBackupsCount);
-    }
-    else
-    {
-      await _compatToolsMappipngRepository.saveCompatToolMappings(configPath, compatToolMappings, <String,dynamic>{});
+    } else {
+      await _compatToolsMappipngRepository.saveCompatToolMappings(configPath, compatToolMappings, <String, dynamic>{});
     }
   }
 
@@ -261,7 +257,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
                     text: TextSpan(children: [
               TextSpan(text: tr("going_to"), style: TextStyle(color: Colors.black)),
               TextSpan(text: tr("delete_capitals"), style: TextStyle(color: Colors.redAccent)),
-              TextSpan(text: tr("delete_game_dialog_2", args:['${game.name}']), style: TextStyle(color: Colors.black)),
+              TextSpan(text: tr("delete_game_dialog_2", args: ['${game.name}']), style: TextStyle(color: Colors.black)),
               TextSpan(text: tr("warning_action_undone"), style: TextStyle(color: Colors.red, fontSize: 18, height: 2))
             ]))),
           ],
@@ -367,8 +363,20 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
                   game.name = _genericTextController.text;
                   game.path = p.join(containerFolder, game.name);
 
-                  await Directory(oldPath).rename(game.path);
+                  //When a game is renamed we must rename the shortcuts too
+                  String homeFolder = FileTools.getHomeFolder();
+                  String shortcutsPath = "$homeFolder/.steam/steam/userdata/${_settings.currentUserId}/config/shortcuts.vdf";
 
+                  if (_currentUserSettings.backupsEnabled) {
+                    await FileTools.saveFileSecure<List<Game>>(shortcutsPath, [game], <String, dynamic>{'userId': _settings.currentUserId},
+                        (String path, List<Game> games, Map<String, dynamic> extraParams) async {
+                      return await _gameRepository.saveGame(path, extraParams['userId'], games[0]);
+                    }, _currentUserSettings.maxBackupsCount);
+                  } else {
+                    await _gameRepository.saveGame(shortcutsPath,_settings.currentUserId, game);
+                  }
+
+                  await Directory(oldPath).rename(game.path);
 
                   emit(GamesDataChanged(
                       _filteredGames,
@@ -387,6 +395,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
                   EasyLoading.showSuccess(tr("game_renamed"));
                 } catch (e) {
                   EasyLoading.showError(tr("game_couldnt_be_renamed", args: [game.name]));
+                  print(e);
                 } finally {
                   Navigator.pop(context);
                 }
@@ -564,8 +573,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
     String path = StringTools.removeQuotes(game.path); // external ones are not touched so they can come with this
     bool b = await launchUrl(Uri.parse("file:$path"));
 
-
-    if(!b || !Directory(path).existsSync()) {
+    if (!b || !Directory(path).existsSync()) {
       EasyLoading.showError(tr("folder_not_exists"));
     }
   }
@@ -578,11 +586,10 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
     GameMinerDataRepository repo = GetIt.I<GameMinerDataRepository>();
     GameMinerData gmd = repo.getGameMinerData();
     //Add added apps to the list
-    for(Game game in baseGames) {
-      for(GameExecutable ge in game.exeFileEntries) {
-        if(ge.added)
-        {
-            gmd.appsIdToName[ge.appId.toString()] = ge.name;
+    for (Game game in baseGames) {
+      for (GameExecutable ge in game.exeFileEntries) {
+        if (ge.added) {
+          gmd.appsIdToName[ge.appId.toString()] = ge.name;
         }
       }
     }

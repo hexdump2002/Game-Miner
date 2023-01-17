@@ -102,7 +102,8 @@ class FileTools {
     return await Directory(path).exists();
   }
 
-  static Future<void> saveFileSecure<T>(String path, T data, Map<String, dynamic> extraParams, Future<void> Function(String,T, Map<String,dynamic> extraParams) writer, int maxBackups) async {
+  //Returns if the writer wrote anything. If not, there was no file modification
+  static Future<bool> saveFileSecure<T>(String path, T data, Map<String, dynamic> extraParams, Future<bool> Function(String,T, Map<String,dynamic> extraParams) writer, int maxBackups) async {
     String dirName = p.dirname(path);
     String fileName = p.basename(path);
 
@@ -120,13 +121,17 @@ class FileTools {
 
     }
 
-
     //Create temp file, copy over the old old one and delete temp
     String tempFileName ="${dirName}/tempFile";
-    await writer(tempFileName,data, extraParams);
-    var tempFile = File(tempFileName);
-    await tempFile.copy(path);
-    await tempFile.delete();
+    bool didWrite = await writer(tempFileName,data, extraParams);
+    if(didWrite) {
+      var tempFile = File(tempFileName);
+      await tempFile.copy(path);
+      await tempFile.delete();
+      return true;
+    }
+
+    return false;
   }
 
   //Tuple[0] new backup file Tuple[1] the backup file that must be deleted to rotate (because we reach max backups

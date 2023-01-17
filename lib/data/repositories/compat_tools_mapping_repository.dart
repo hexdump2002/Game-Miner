@@ -30,8 +30,9 @@ class CompatToolsMappipngRepository extends CacheRepository<CompatToolMapping>{
     return data ?? [];
   }
 
-  Future<void> saveCompatToolMappings(String path, List<CompatToolMapping> compatToolMappings, Map<String, dynamic> extraParams) async {
+  Future<bool> saveCompatToolMappings(String path, List<CompatToolMapping> compatToolMappings, Map<String, dynamic> extraParams) async {
     await _ctmr.saveCompatToolMappings(path, compatToolMappings, extraParams);
+    return true;
   }
 
 

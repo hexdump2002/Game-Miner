@@ -9,14 +9,27 @@ import 'package:game_miner/data/models/game_executable.dart';
 import 'package:path/path.dart' as pathLib;
 
 class Game {
-  late String path;
+  late String _path;
   late String name;
   bool isExternal = false;
   int gameSize = 0;
   final List<GameExecutable> exeFileEntries = [];
 
+  String get path => _path;
+  set path(String value) {
+
+    for(GameExecutable ex in exeFileEntries) {
+      if(ex.startDir.startsWith("\"$_path\"")) {
+        ex.startDir=ex.startDir.replaceFirst(_path, value);
+      }
+    }
+    _path= value;
+
+  }
+
   //User Folders Game (Internal)
-  Game(this.path, this.name) {
+  Game(String path, this.name)  {
+    _path = path;
     isExternal = false;
   }
 

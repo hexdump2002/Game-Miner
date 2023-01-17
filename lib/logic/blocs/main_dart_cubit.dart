@@ -40,6 +40,11 @@ class MainPageCubit extends Cubit<MainPageState> {
     SettingsRepository sr = GetIt.I<SettingsRepository>();
     Settings settings = sr.getSettings();
     settings.currentUserId = steamUser.steamId32;
+    UserSettings? us=settings.getCurrentUserSettings();
+    //Did we saved a config for this user?
+    if(us== null) {
+      settings.setUserSettings(settings.currentUserId, UserSettings());
+    }
     sr.update(settings);
     sr.save();
 
