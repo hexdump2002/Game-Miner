@@ -73,6 +73,8 @@ class SettingsCubit extends Cubit<SettingsState> {
     if(showMessages) EasyLoading.show(status: "saving_settings");
 
     SettingsRepository repo = GetIt.I<SettingsRepository>();
+    //Super hacky, this should be inmutable, blah, blah. Just fire up the event
+    repo.update(repo.getSettings());
     repo.save();
 
     if(showMessages) EasyLoading.showSuccess(tr("settings_saved"));

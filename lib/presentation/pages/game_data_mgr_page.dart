@@ -1,3 +1,4 @@
+import 'package:data_table_2/data_table_2.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -42,51 +43,6 @@ class _GameDataMgrPageState extends State<GameDataMgrPage> {
             ),
             BlocBuilder<GameDataMgrCubit, GameDataMgrState>(builder: (context, state) {
               return Row(children: [
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: ToggleButtons(
-                      direction: Axis.horizontal,
-                      onPressed: (int index) {
-                        if (index == 0) {
-                          _bloc.sortByName();
-                        } else if (index == 1) {
-                          _bloc.sortByStorageType();
-                        } else if (index == 2) {
-                          _bloc.sortBySize();
-                        }
-                      },
-                      borderRadius: const BorderRadius.all(Radius.circular(8)),
-                      /*borderColor: Colors.blue,
-                      selectedBorderColor: Colors.blue[200],
-                      selectedColor: Colors.white,
-                      fillColor: Colors.blue[300],
-                      color: Colors.blue[300],*/
-                      isSelected: _bloc.getSortStates(),
-                      children: [
-                        Tooltip(message: tr("sort_by_name"), child: const Icon(Icons.receipt)),
-                        Tooltip(message: tr("sort_by_storage_type"), child: const Icon(Icons.stars)),
-                        Tooltip(message: tr("sort_by_size"), child: const Icon(Icons.storage))
-                      ]),
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(0, 8, 16, 8),
-                  child: ToggleButtons(
-                      direction: Axis.horizontal,
-                      onPressed: (int index) {
-                        index == 0 ? _bloc.setSortDirection(SortDirection.Asc) : _bloc.setSortDirection(SortDirection.Desc);
-                      },
-                      borderRadius: const BorderRadius.all(Radius.circular(8)),
-                      /*borderColor: Colors.blue,
-                      selectedBorderColor: Colors.blue[200],
-                      selectedColor: Colors.white,
-                      fillColor: Colors.blue[300],
-                      color: Colors.blue[300],*/
-                      isSelected: _bloc.getSortDirectionStates(),
-                      children: [
-                        Tooltip(message: tr("descending"), child: const Icon(Icons.south)),
-                        Tooltip(message: tr("ascending"), child: const Icon(Icons.north))
-                      ]),
-                ),
                 IconButton(
                   onPressed: () {
                     _bloc.selectNone();
@@ -126,14 +82,14 @@ class _GameDataMgrPageState extends State<GameDataMgrPage> {
             } else if (state is AppDataStorageLoaded) {
               return Column(
                 children: [
-                  Expanded(child: ListView(children: [_buildPage(state.steamApps)])),
+                  Expanded(child: _buildPage(state.steamApps, state.sortingTableIndex, state.sortingAscending)),
                   _buildInfoBar(context, state, themeExtension)
                 ],
               );
             } else if (state is AppDataStorageChanged) {
               return Column(
                 children: [
-                  Expanded(child: ListView(children: [_buildPage(state.steamApps)])),
+                  Expanded(child: _buildPage(state.steamApps, state.sortingTableIndex, state.sortingAscending)),
                   _buildInfoBar(context, state, themeExtension)
                 ],
               );
@@ -144,7 +100,63 @@ class _GameDataMgrPageState extends State<GameDataMgrPage> {
         ));
   }
 
-  Widget _buildPage(List<AppDataStorageEntry> appsStorage) {
+  Widget _buildPage(List<AppDataStorageEntry> appsStorage, int sortColumnIndex, bool ascending) {
+    return DataTable2(
+      columnSpacing: 16,
+      sortColumnIndex: sortColumnIndex,
+      sortAscending: ascending,
+      showCheckboxColumn: true,
+      columns: [
+        //const DataColumn(label: Text('', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold))),
+        const DataColumn(label: Text('Id', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold))),
+        DataColumn(
+          label: Text(tr('name_header'), style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          onSort: (columnIndex, ascending) => _bloc.sort(columnIndex, ascending),
+        ),
+        DataColumn(
+            label: Text(tr('size_header'), style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            onSort: (columnIndex, ascending) => _bloc.sort(columnIndex, ascending)),
+        DataColumn(
+            label: Text(tr('type_header'), style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            onSort: (columnIndex, ascending) => _bloc.sort(columnIndex, ascending)),
+        DataColumn(
+            label: const Text('Steam', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            onSort: (columnIndex, ascending) => _bloc.sort(columnIndex, ascending)),
+        DataColumn(label: Text(tr('actions_header'), style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold))),
+      ],
+      rows: appsStorage.map((e) {
+        //print("Appid:${e.appId}");
+        //print("Cache size: ${e.shaderCacheSize} ${e.compatDataSize}");
+        return DataRow(onSelectChanged: (value) => _bloc.setSelectedState(e, value!), selected: e.selected, cells: [
+          DataCell(Text(e.appStorage.appId)),
+          DataCell(Text(e.appStorage.name)),
+          DataCell(Text(StringTools.bytesToStorageUnity(e.appStorage.size))),
+          DataCell(_getStorageType(e)),
+          DataCell(_getGameType(e)),
+          DataCell(Row(
+            children: [
+              IconButton(
+                onPressed: () {
+                  _bloc.deleteData(context, e);
+                },
+                icon: Icon(Icons.delete),
+                tooltip: tr("delete"),
+              ),
+              /*IconButton(
+                onPressed: () {
+                  _bloc.openFolder(e.appStorage.installdir);
+                },
+                icon: Icon(Icons.folder),
+                tooltip: tr("open_folder"),
+              )*/
+            ],
+          )),
+        ]);
+      }).toList(),
+    );
+  }
+
+  /*Widget _buildPage(List<AppDataStorageEntry> appsStorage) {
     return Container(
       child: DataTable(
         columnSpacing: 0,
@@ -178,7 +190,7 @@ class _GameDataMgrPageState extends State<GameDataMgrPage> {
         }).toList(),
       ),
     );
-  }
+  }*/
 
   Widget _getGameType(AppDataStorageEntry as) {
     Color color = as.appStorage.gameType == GameType.Steam ? Colors.blue : Colors.red;

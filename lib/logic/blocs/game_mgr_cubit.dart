@@ -364,10 +364,11 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
                   var oldPath = game.path;
                   var containerFolder = p.dirname(game.path);
 
+                  game.name = _genericTextController.text;
                   game.path = p.join(containerFolder, game.name);
 
                   await Directory(oldPath).rename(game.path);
-                  game.name = _genericTextController.text;
+
 
                   emit(GamesDataChanged(
                       _filteredGames,

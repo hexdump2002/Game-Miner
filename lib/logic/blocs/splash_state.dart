@@ -5,8 +5,6 @@ abstract class SplashState {}
 
 class SplashInitial extends SplashState {}
 
-class SplashAllWorkDone extends SplashState {}
-
 
 class ShowSteamUsersDialog extends SplashState {
   final String caption;
@@ -17,4 +15,8 @@ class ShowSteamUsersDialog extends SplashState {
 class UserAutoLogged extends SplashState {
   final SteamUser user;
   UserAutoLogged(this.user);
+}
+
+class SplashWorkDone extends SplashState {
+
 }

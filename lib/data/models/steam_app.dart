@@ -23,6 +23,8 @@ class SteamApp {
   Map<String,dynamic> mountedConfig = {};
 
 
+  late bool hasShaderCache;
+  late bool hasCompatData;
   late int shaderCacheSize;
   late int compatDataSize;
 
@@ -30,7 +32,7 @@ class SteamApp {
 
   SteamApp();
 
-  factory SteamApp.FromMap(Map<String, dynamic> obj, int shaderCacheSize, int compatDataSize) {
+  factory SteamApp.FromMap(Map<String, dynamic> obj, bool hasShaderCache, bool hasCompatData, int shaderCacheSize, int compatDataSize) {
 
     SteamApp sa = SteamApp();
 
@@ -60,6 +62,8 @@ class SteamApp {
     sa.mountedConfig = obj["mountedconfig"];
     sa.shaderCacheSize = shaderCacheSize;
     sa.compatDataSize = compatDataSize;
+    sa.hasShaderCache = hasShaderCache;
+    sa.hasCompatData = hasCompatData;
 
     return sa;
   }

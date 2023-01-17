@@ -58,7 +58,6 @@ class SettingsRepository {
 
   void save() {
     _settingsDataProvider.saveSettings(_settings!);
-    //_addToStream(_settings!);
   }
 
   /*Settings loadAndSaveDefault(String currentUserId) {

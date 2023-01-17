@@ -25,7 +25,6 @@ import 'data/models/steam_user.dart';
 import 'logic/Tools/service_locator.dart';
 
 Stream<Settings> stream = GetIt.I<SettingsRepository>().settings.distinct((Settings previous, Settings next) {
-
   if(next.currentUserId.isEmpty) return false;
   if(previous.currentUserId.isEmpty) return true;
   return previous.getCurrentUserSettings()!.darkTheme != next.getCurrentUserSettings()!.darkTheme;

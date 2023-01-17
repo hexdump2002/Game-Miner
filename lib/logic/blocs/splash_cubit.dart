@@ -47,12 +47,12 @@ class SplashCubit extends Cubit<SplashState> {
 
     if(settings.currentUserId.isEmpty)
     {
-      /*if(sc.steamUsers.length == 1) {
+      if(sc.steamUsers.length == 1) {
         emit(UserAutoLogged(sc.steamUsers[0]));
       }
-      else {*/
+      else {
         emit(ShowSteamUsersDialog("Select user", sc.steamUsers));
-      //}
+      }
     }
     else
     {
@@ -64,9 +64,6 @@ class SplashCubit extends Cubit<SplashState> {
 
   void finalizeSetup(BuildContext context,SteamUser steamUser) async
   {
-    //Do not pop the dialog it will cause a bad tree state when using navigator again to move to main screen
-    //Navigator.pop(context);
-
     SettingsRepository sr = GetIt.I<SettingsRepository>();
     Settings settings = sr.load();
 
@@ -81,16 +78,18 @@ class SplashCubit extends Cubit<SplashState> {
     //Close steam client
     SteamTools.closeSteamClient();
 
+    SteamConfigRepository scr = GetIt.I<SteamConfigRepository>();
+    List<String> paths = scr.getConfig().libraryFolders.map((e) => e.path).toList();
     AppsStorageRepository repo = GetIt.I<AppsStorageRepository>();
-    List<AppStorage>? steamApps = await repo.load(settings.currentUserId);
+    List<AppStorage>? steamApps = await repo.load(settings.currentUserId, paths);
 
-    SchedulerBinding.instance.addPostFrameCallback((_) {
+    /*SchedulerBinding.instance.addPostFrameCallback((_) {
       Navigator.pushReplacementNamed(context, "/main");
-    });
-    /*Future.delayed(Duration(microseconds: 200))
-        .then((value) {
-      Navigator.pushReplacementNamed(context, "/main");
-        });*/
+    });*/
+
+    //Navigator.pushReplacementNamed(context, "/main");
+    emit(SplashWorkDone());
+
   }
 
 }

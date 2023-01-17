@@ -38,26 +38,26 @@ class AppsStorageRepository extends CacheRepository<AppStorage> {
     return appsStorage;
   }
 
-  Future<List<AppStorage>> load(String userId) async {
+  Future<List<AppStorage>> load(String userId, List<String> gameLibraryFolders) async {
 
     List<AppStorage>? finalAppsStorage = getObjectsFromCache(cacheKey);
 
     if(finalAppsStorage == null) {
       //Steam apps (Apps that were downloaded and installed through steam)
-      var steamApps = await _steamAppsDataProvider.load();
+      var steamApps = await _steamAppsDataProvider.load(gameLibraryFolders);
 
       //Here we have all app ids (Steam apps and not steam apps) that keep data in compatdata or shadercache folders
-      finalAppsStorage = await _appIdsStorageDataProvider.load();
+      finalAppsStorage = await _appIdsStorageDataProvider.load(gameLibraryFolders);
 
       //We want to return all AppStorage entries. But let's flag the ones that are Steam games and the ones that arent
       //We build AppStorage for every SteamApp too if it has any storage assigned in compatdata or shadercache
       for(SteamApp sa in steamApps) {
-        AppStorage? appStorage = finalAppsStorage.singleWhereOrNull((element) => element.appId == sa.appId);
-        if(appStorage != null) {
-          appStorage.gameType = GameType.Steam;
-          appStorage.name = sa.name;
-          appStorage.installdir = sa.installdir;
-          appStorage.isUnknown = false;
+        List<AppStorage> appStorages = finalAppsStorage.where((element) => element.appId == sa.appId).toList();
+        for(AppStorage appStorage in appStorages) {
+            appStorage.gameType = GameType.Steam;
+            appStorage.name = sa.name;
+            appStorage.installdir = sa.installdir;
+            appStorage.isUnknown = false;
         }
       }
 

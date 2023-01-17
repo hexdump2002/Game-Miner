@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_dialogs/flutter_dialogs.dart';
 import 'package:game_miner/logic/blocs/main_dart_cubit.dart';
@@ -32,7 +33,7 @@ class _SplashPageState extends State<SplashPage> {
     return Scaffold(
         appBar: null,
         body: BlocListener<SplashCubit, SplashState>(
-          listenWhen: (previous, current) => current is ShowSteamUsersDialog || current is UserAutoLogged,
+          //listenWhen: (previous, current) => current is ShowSteamUsersDialog || current is UserAutoLogged || current is SplashAllWorkDone,
           listener: (context, state) {
             if(state is ShowSteamUsersDialog) {
               ShowSteamUsersDialog sde = state as ShowSteamUsersDialog;
@@ -41,6 +42,11 @@ class _SplashPageState extends State<SplashPage> {
             else if(state is UserAutoLogged)
             {
               _bloc.finalizeSetup(context, state.user);
+            }
+            else if(state is SplashWorkDone) {
+              SchedulerBinding.instance.addPostFrameCallback((_) {
+                Navigator.pushReplacementNamed(context, "/main");
+              });
             }
           },
           child: Container(
@@ -68,14 +74,25 @@ class _SplashPageState extends State<SplashPage> {
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Row(children: [
-                      Text(
-                        "Initializing...  ",
-                        style: TextStyle(fontSize: 20),
-                      ),
-                      SizedBox(width: 20, height: 20, child: const CircularProgressIndicator())
-                    ], mainAxisAlignment: MainAxisAlignment.end),
+                    padding: const EdgeInsets.fromLTRB(0,0,0,16),
+                    child: Row(
+                      children: [
+                        Expanded(child: Container()),
+                        Container(
+                          decoration: BoxDecoration(color:Colors.purple.shade800, borderRadius: BorderRadius.only(bottomLeft: Radius.circular(15), topLeft: Radius.circular(15))),
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Row(children: [
+                              Text(
+                                "Initializing...  ",
+                                style: TextStyle(fontSize: 20, color:Colors.purpleAccent.shade100),
+                              ),
+                              SizedBox(width: 20, height: 20, child: const CircularProgressIndicator(color:Colors.white70))
+                            ], mainAxisAlignment: MainAxisAlignment.end),
+                          ),
+                        ),
+                      ],
+                    ),
                   )
                 ],
               )),
@@ -87,7 +104,10 @@ class _SplashPageState extends State<SplashPage> {
       context: context,
       builder: (context) => BasicDialogAlert(
         title: Text(caption),
-        content: SteamUserSelector(userSelectedCallback: _bloc.finalizeSetup)
+        content: SteamUserSelector(userSelectedCallback: (context, steamUser) {
+          Navigator.pop(context);
+          _bloc.finalizeSetup(context,steamUser);
+        },)
         ),
 
       );

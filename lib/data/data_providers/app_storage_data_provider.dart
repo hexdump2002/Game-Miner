@@ -12,35 +12,55 @@ import '../models/steam_app.dart';
 
 
 class AppsStorageDataProvider {
-  Future<List<AppStorage>> load() async {
+  Future<List<AppStorage>> load(List<String> searchPaths) async {
     List<AppStorage> appsStorage = [];
 
-    String homeFolder = FileTools.getHomeFolder();
+    /*String homeFolder = FileTools.getHomeFolder();
 
-    String searchPath = "$homeFolder/.local/share/Steam/steamapps"; //Changed because of flatpak
+    String searchPath = "$homeFolder/.local/share/Steam/steamapps"; //Changed because of flatpak*/
 
-    bool searchInCompatData = await FileTools.existsFolder("$searchPath/compatdata");
-    bool searchInShaderCacheData = await FileTools.existsFolder("$searchPath/shadercache");
+    for(String path in searchPaths) {
+      var searchPath = path;
 
-    if(searchInCompatData) {
-      var appIds = await FileTools.getFolderFilesAsync("$searchPath/compatdata", retrieveRelativePaths: true, recursive: false,  onlyFolders: true);
-      for(String appId in appIds) {
-        Map<String, int> metaData = await FileTools.getFolderMetaData("$searchPath/compatdata/$appId", recursive: true);
-        appsStorage.add(AppStorage(appId,"","",StorageType.CompatData, metaData['size']!,GameType.NonSteam,true));
+      String compatdataPath = "$searchPath/steamapps/compatdata";
+      String shaderCacheDataPath = "$searchPath/steamapps/shadercache";
+      bool searchInCompatData = await FileTools.existsFolder(compatdataPath);
+      bool searchInShaderCacheData = await FileTools.existsFolder(shaderCacheDataPath);
+
+      if (searchInCompatData) {
+        var appIds = await FileTools.getFolderFilesAsync(compatdataPath, retrieveRelativePaths: true, recursive: false, onlyFolders: true);
+        for (String appId in appIds) {
+          Map<String, int> metaData = await FileTools.getFolderMetaData("$compatdataPath/$appId", recursive: true);
+          appsStorage.add(AppStorage(
+              appId,
+              "",
+              "",
+              StorageType.CompatData,
+              metaData['size']!,
+              GameType.NonSteam,
+              true));
+        }
       }
-    }
 
-    if(searchInShaderCacheData) {
-      var appIds = await FileTools.getFolderFilesAsync("$searchPath/shadercache", retrieveRelativePaths: true, recursive: false,  onlyFolders: true);
-      for(String appId in appIds){
-        AppStorage? as = appsStorage.firstWhereOrNull((element) => element.appId == appId);
-        Map<String, int> metaData = await FileTools.getFolderMetaData("$searchPath/shadercache/$appId", recursive: true);
-        //if(as == null)  {
-          appsStorage.add(AppStorage(appId,"","",StorageType.ShaderCache,metaData['size']!, GameType.NonSteam, true));
-        /*}
-        else {
-          as.shaderCacheSize = metaData['size']!;
-        }*/
+      if (searchInShaderCacheData) {
+        var appIds = await FileTools.getFolderFilesAsync(shaderCacheDataPath, retrieveRelativePaths: true, recursive: false, onlyFolders: true);
+        for (String appId in appIds) {
+          AppStorage? as = appsStorage.firstWhereOrNull((element) => element.appId == appId);
+          Map<String, int> metaData = await FileTools.getFolderMetaData("$shaderCacheDataPath/$appId", recursive: true);
+          //if(as == null)  {
+          appsStorage.add(AppStorage(
+              appId,
+              "",
+              "",
+              StorageType.ShaderCache,
+              metaData['size']!,
+              GameType.NonSteam,
+              true));
+          /*}
+          else {
+            as.shaderCacheSize = metaData['size']!;
+          }*/
+        }
       }
     }
 

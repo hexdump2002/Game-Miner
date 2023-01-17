@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -79,9 +80,9 @@ class _MainPageState extends State<MainPage> {
                   child: CircleAvatar(
                       radius: 30,
                       child: su.avatarUrlMedium != null
-                          ? Image.network(
-                              su.avatarUrlMedium!,
-                              errorBuilder: (context, error, stackTrace) {
+                          ? CachedNetworkImage(imageUrl: su.avatarUrlMedium!,
+                              placeholder: (context, url) => CircularProgressIndicator(),
+                              errorWidget: (context, error, stackTrace) {
                                 return const Icon(Icons.person);
                               },
                             )

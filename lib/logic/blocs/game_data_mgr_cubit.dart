@@ -10,21 +10,17 @@ import 'package:game_miner/data/models/app_storage.dart';
 import 'package:game_miner/data/repositories/apps_storage_repository.dart';
 import 'package:game_miner/data/repositories/game_miner_data_repository.dart';
 import 'package:game_miner/data/repositories/settings_repository.dart';
+import 'package:game_miner/data/repositories/steam_config_repository.dart';
 import 'package:game_miner/logic/Tools/file_tools.dart';
 import 'package:game_miner/logic/Tools/string_tools.dart';
 import 'package:get_it/get_it.dart';
 import 'package:meta/meta.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../data/models/game_miner_data.dart';
 import '../../data/models/steam_app.dart';
 
 part 'game_data_mgr_state.dart';
-
-
-
-enum SortBy { Name, Status }
-
-enum SortDirection { Asc, Desc }
 
 class AppDataStorageEntry {
   AppStorage appStorage;
@@ -45,9 +41,8 @@ class GameDataMgrCubit extends Cubit<GameDataMgrState> {
   final List<AppDataStorageEntry> _appDataStorageEntries = [];
   List<AppDataStorageEntry> _filteredDataStorageEntries = [];
   String _searchPath = "";
-
-  List<bool> _sortStates = [true, false, false];
-  List<bool> _sortDirectionStates = [false, true];
+  int _sortingColumnIndex = 1;
+  bool _sortAscending = true;
 
   GameDataMgrCubit() : super(GameDataMgrInitial()) {
     initialize();
@@ -66,7 +61,9 @@ class GameDataMgrCubit extends Cubit<GameDataMgrState> {
     _searchPath = "$homeFolder/.local/share/Steam/steamapps";
 
     var gmd = GetIt.I<GameMinerDataRepository>().getGameMinerData();
-    var appsStorage = await GetIt.I<AppsStorageRepository>().load(GetIt.I<SettingsRepository>().getSettings().currentUserId);
+    var steamConfig = GetIt.I<SteamConfigRepository>().getConfig();
+    List<String> paths = steamConfig.libraryFolders.map((e) => e.path).toList();
+    var appsStorage = await GetIt.I<AppsStorageRepository>().load(GetIt.I<SettingsRepository>().getSettings().currentUserId, paths);
 
     //TODO: Update through repository
     for (AppStorage as in appsStorage) {
@@ -85,8 +82,9 @@ class GameDataMgrCubit extends Cubit<GameDataMgrState> {
     }
 
     _filteredDataStorageEntries.addAll(_appDataStorageEntries);
+    sortByName(_sortingColumnIndex, true,false);
     StorageStats ss = _getStorageStats();
-    emit(AppDataStorageLoaded(_filteredDataStorageEntries, ss.compatFolderCount, ss.shaderDataFolderCount, ss.compatSize, ss.shaderDataSize));
+    emit(AppDataStorageLoaded(_filteredDataStorageEntries, ss.compatFolderCount, ss.shaderDataFolderCount, ss.compatSize, ss.shaderDataSize,_sortingColumnIndex,_sortAscending));
 
     EasyLoading.dismiss();
   }
@@ -94,14 +92,14 @@ class GameDataMgrCubit extends Cubit<GameDataMgrState> {
   void setSelectedState(AppDataStorageEntry adse, bool value) {
     adse.selected = value;
     StorageStats ss = _getStorageStats();
-    emit(AppDataStorageChanged(_filteredDataStorageEntries, ss.compatFolderCount, ss.shaderDataFolderCount, ss.compatSize, ss.shaderDataSize));
+    emit(AppDataStorageChanged(_filteredDataStorageEntries, ss.compatFolderCount, ss.shaderDataFolderCount, ss.compatSize, ss.shaderDataSize,_sortingColumnIndex,_sortAscending));
   }
 
   void filterByName(String searchTerm) {
     searchTerm = searchTerm.toLowerCase();
     _filteredDataStorageEntries = _appDataStorageEntries.where((element) => element.appStorage.name.toLowerCase().contains(searchTerm)).toList();
     StorageStats ss = _getStorageStats();
-    emit(AppDataStorageLoaded(_filteredDataStorageEntries, ss.compatFolderCount, ss.shaderDataFolderCount, ss.compatSize, ss.shaderDataSize));
+    emit(AppDataStorageLoaded(_filteredDataStorageEntries, ss.compatFolderCount, ss.shaderDataFolderCount, ss.compatSize, ss.shaderDataSize,_sortingColumnIndex,_sortAscending));
     //sortFilteredGames();
   }
 
@@ -164,7 +162,7 @@ class GameDataMgrCubit extends Cubit<GameDataMgrState> {
                 var ss = _getStorageStats();
 
                 emit(AppDataStorageLoaded(
-                    _filteredDataStorageEntries, ss.compatFolderCount, ss.shaderDataFolderCount, ss.compatSize, ss.shaderDataSize));
+                    _filteredDataStorageEntries, ss.compatFolderCount, ss.shaderDataFolderCount, ss.compatSize, ss.shaderDataSize,_sortingColumnIndex,_sortAscending));
               } catch (e) {
                 EasyLoading.showError(tr('data_couldnt_be_deleted'));
                 print(e.toString());
@@ -197,7 +195,7 @@ class GameDataMgrCubit extends Cubit<GameDataMgrState> {
 
     var ss = _getStorageStats();
 
-    emit(AppDataStorageLoaded(_filteredDataStorageEntries, ss.compatFolderCount, ss.shaderDataFolderCount, ss.compatSize, ss.shaderDataSize));
+    emit(AppDataStorageLoaded(_filteredDataStorageEntries, ss.compatFolderCount, ss.shaderDataFolderCount, ss.compatSize, ss.shaderDataSize,_sortingColumnIndex,_sortAscending));
   }
 
   selectAll() {
@@ -207,14 +205,14 @@ class GameDataMgrCubit extends Cubit<GameDataMgrState> {
 
     var ss = _getStorageStats();
 
-    emit(AppDataStorageLoaded(_filteredDataStorageEntries, ss.compatFolderCount, ss.shaderDataFolderCount, ss.compatSize, ss.shaderDataSize));
+    emit(AppDataStorageLoaded(_filteredDataStorageEntries, ss.compatFolderCount, ss.shaderDataFolderCount, ss.compatSize, ss.shaderDataSize,_sortingColumnIndex,_sortAscending));
   }
 
   void refresh() {
     GetIt.I<AppsStorageRepository>().invalidateCache();
     _loadData();
   }
-
+/*
   List<bool> getSortStates() {
     return _sortStates;
   }
@@ -235,65 +233,95 @@ class GameDataMgrCubit extends Cubit<GameDataMgrState> {
     }
 
     var ss = _getStorageStats();
-    emit(AppDataStorageLoaded(_filteredDataStorageEntries, ss.compatFolderCount, ss.shaderDataFolderCount, ss.compatSize, ss.shaderDataSize));
+    emit(AppDataStorageLoaded(_filteredDataStorageEntries, ss.compatFolderCount, ss.shaderDataFolderCount, ss.compatSize, ss.shaderDataSize,_sortingColumnIndex));
   }
-
-  void sortFilteredGames() {
-    if (_sortStates[0]) {
-      sortByName();
-    } else if (_sortStates[1]) {
-      sortByStorageType();
-    } else {
-      sortBySize();
+*/
+  /*void sortFilteredGames() {
+    if (_sortingColumnIndex == 2) {
+      sortByName(_sortingColumnIndex, _sortAscending);
+    } else if (_sortingColumnIndex == 3) {
+      sortByStorageType(_sortingColumnIndex, _sortAscending);
+    }  else if (_sortingColumnIndex == 4)  {
+      sortBySize(_sortingColumnIndex, _sortAscending);
     }
 
     var ss = _getStorageStats();
-    emit(AppDataStorageLoaded(_filteredDataStorageEntries, ss.compatFolderCount, ss.shaderDataFolderCount, ss.compatSize, ss.shaderDataSize));
+    emit(AppDataStorageLoaded(_filteredDataStorageEntries, ss.compatFolderCount, ss.shaderDataFolderCount, ss.compatSize, ss.shaderDataSize,_sortingColumnIndex,_sortAscending));
+  }*/
+
+  void sort(int columnIndex, bool ascending, {bool emitEvent:true}) {
+    _sortingColumnIndex = columnIndex;
+    _sortAscending = ascending;
+
+    if (_sortingColumnIndex==1) {
+      sortByName(_sortingColumnIndex, _sortAscending,emitEvent);
+    } else if (_sortingColumnIndex==2) {
+      sortByStorageType(_sortingColumnIndex, _sortAscending,emitEvent);
+    } else if(_sortingColumnIndex==3){
+      sortBySize(_sortingColumnIndex, _sortAscending,emitEvent);
+    }
+    else if(_sortingColumnIndex==4){
+      sortBySteam(_sortingColumnIndex, _sortAscending,emitEvent);
+    }
   }
 
-  void sortByName({SortDirection? direction}) {
-    _sortStates = [true, false, false];
+  void sortByName(int columnIndex, bool ascending, bool emitEvent) {
 
-    SortDirection sd = _sortDirectionStates[0] ? SortDirection.Desc : SortDirection.Asc;
-
-    if (sd == SortDirection.Asc) {
+    if (ascending) {
       _filteredDataStorageEntries.sort((a, b) => a.appStorage.name.toLowerCase().compareTo(b.appStorage.name.toLowerCase()));
     } else {
       _filteredDataStorageEntries.sort((a, b) => b.appStorage.name.toLowerCase().compareTo(a.appStorage.name.toLowerCase()));
     }
 
     var ss = _getStorageStats();
-    emit(AppDataStorageLoaded(_filteredDataStorageEntries, ss.compatFolderCount, ss.shaderDataFolderCount, ss.compatSize, ss.shaderDataSize));
+
+    if(emitEvent) {
+      emit(AppDataStorageLoaded(_filteredDataStorageEntries, ss.compatFolderCount, ss.shaderDataFolderCount, ss.compatSize, ss.shaderDataSize,_sortingColumnIndex, _sortAscending));
+    }
   }
 
-  void sortByStorageType() {
-    _sortStates = [false, true, false];
+  void sortByStorageType(int columnIndex, bool ascending, bool emitEvent) {
 
-    SortDirection sd = _sortDirectionStates[0] ? SortDirection.Desc : SortDirection.Asc;
-
-    if (sd == SortDirection.Asc) {
+    if (ascending) {
       _filteredDataStorageEntries.sort((a, b) => a.appStorage.storageType.index.compareTo(b.appStorage.storageType.index));
     } else {
       _filteredDataStorageEntries.sort((a, b) => b.appStorage.storageType.index.compareTo(a.appStorage.storageType.index));
     }
 
     var ss = _getStorageStats();
-    emit(AppDataStorageLoaded(_filteredDataStorageEntries, ss.compatFolderCount, ss.shaderDataFolderCount, ss.compatSize, ss.shaderDataSize));
+
+    if(emitEvent) {
+      emit(AppDataStorageLoaded(_filteredDataStorageEntries, ss.compatFolderCount, ss.shaderDataFolderCount, ss.compatSize, ss.shaderDataSize,_sortingColumnIndex, _sortAscending));
+    }
   }
 
-  void sortBySize() {
-    _sortStates = [false, false, true];
+  void sortBySize(int columnIndex, bool ascending, bool emitEvent) {
 
-    SortDirection sortDirection = _sortDirectionStates[0] ? SortDirection.Desc : SortDirection.Asc;
-
-    if (sortDirection == SortDirection.Asc) {
+    if (ascending) {
       _filteredDataStorageEntries.sort((a, b) => a.appStorage.size.compareTo(b.appStorage.size));
     } else {
       _filteredDataStorageEntries.sort((a, b) => b.appStorage.size.compareTo(a.appStorage.size));
     }
 
     var ss = _getStorageStats();
-    emit(AppDataStorageLoaded(_filteredDataStorageEntries, ss.compatFolderCount, ss.shaderDataFolderCount, ss.compatSize, ss.shaderDataSize));
+
+    if(emitEvent) {
+      emit(AppDataStorageLoaded(_filteredDataStorageEntries, ss.compatFolderCount, ss.shaderDataFolderCount, ss.compatSize, ss.shaderDataSize,_sortingColumnIndex, _sortAscending));
+    }
+  }
+
+  void sortBySteam(int columnIndex, bool ascending, bool emitEvent) {
+    if (ascending) {
+      _filteredDataStorageEntries.sort((a, b) => a.appStorage.gameType.index.compareTo(b.appStorage.gameType.index));
+    } else {
+      _filteredDataStorageEntries.sort((a, b) => b.appStorage.gameType.index.compareTo(a.appStorage.gameType.index));
+    }
+
+    var ss = _getStorageStats();
+
+    if(emitEvent) {
+      emit(AppDataStorageLoaded(_filteredDataStorageEntries, ss.compatFolderCount, ss.shaderDataFolderCount, ss.compatSize, ss.shaderDataSize,_sortingColumnIndex, _sortAscending));
+    }
   }
 
   void deleteAll(BuildContext context) {
@@ -356,7 +384,7 @@ class GameDataMgrCubit extends Cubit<GameDataMgrState> {
 
               var ss = _getStorageStats();
               emit(AppDataStorageLoaded(
-                  _filteredDataStorageEntries, ss.compatFolderCount, ss.shaderDataFolderCount, ss.compatSize, ss.shaderDataSize));
+                  _filteredDataStorageEntries, ss.compatFolderCount, ss.shaderDataFolderCount, ss.compatSize, ss.shaderDataSize,_sortingColumnIndex, _sortAscending));
 
               Navigator.pop(context);
             },
@@ -371,4 +399,16 @@ class GameDataMgrCubit extends Cubit<GameDataMgrState> {
       ),
     );
   }
+
+  void openFolder(String path) async {
+    path = StringTools.removeQuotes(path); // external ones are not touched so they can come with this
+    bool b = await launchUrl(Uri.parse("file:$path"));
+
+
+    if(!b || !Directory(path).existsSync()) {
+      EasyLoading.showError(tr("folder_not_exists"));
+    }
+  }
+
+
 }

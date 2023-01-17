@@ -13,55 +13,61 @@ import '../models/steam_app.dart';
 class SteamAppsDataProvider {
 
   //TODO:This should return all steam apps detected in steamapps. Not just the ones with storage in shadercache or compatdata
-  Future<List<SteamApp>> load() async {
+  Future<List<SteamApp>> load(List<String> libraryFolders) async {
 
     List<SteamApp> apps = [];
 
     String homeFolder = FileTools.getHomeFolder();
 
-    String searchPath = "$homeFolder/.local/share/Steam/steamapps"; //Changed because of flatpak
-
-    bool searchInCompatData = await FileTools.existsFolder("$searchPath/compatdata");
-    bool searchInShaderCacheData = await FileTools.existsFolder("$searchPath/shadercache");
-
-    List<SteamApp> steamApps = await _loadSteamApps(searchPath, searchInCompatData, searchInShaderCacheData);
+    List<SteamApp> steamApps = await _loadSteamApps(libraryFolders);
     return steamApps;
 
   }
 
-  Future<List<SteamApp>> _loadSteamApps(String searchPath, searchInCompatData, searchInShaderCacheData) async {
+  Future<List<SteamApp>> _loadSteamApps(List<String> libraryFolders) async {
 
     List<SteamApp> apps = [];
 
-    //Todo, check for empty folder
-    var steamAppFiles = await FileTools.getFolderFilesAsync(searchPath, retrieveRelativePaths: false, recursive: false, regExFilter: r'.+.acf$', onlyFolders: false);
 
-    for(String steamAppPath in steamAppFiles) {
-      TxtVdfFile file = TxtVdfFile();
-      file.open(steamAppPath, FileMode.read);
-      Map<String, dynamic> obj = await file.read();
-      file.close();
+    for(String path in libraryFolders) {
 
-      int shaderCacheSize = -1;
-      int compatDataSize = -1;
+      String steamAppsFolder = "$path/steamapps";
 
-      if(!obj["appstate"].containsKey("appid")) throw NotFoundException("Appid field was not found in app manifest $steamAppPath");
+      //Todo, check for empty folder
+      var steamAppFiles = await FileTools.getFolderFilesAsync(
+          steamAppsFolder, retrieveRelativePaths: false, recursive: false, regExFilter: r'.+.acf$', onlyFolders: false);
 
-      String appId =  obj["appstate"]["appid"];
+      for (String steamAppPath in steamAppFiles) {
+        TxtVdfFile file = TxtVdfFile();
+        file.open(steamAppPath, FileMode.read);
+        Map<String, dynamic> obj = await file.read();
+        file.close();
 
-      if (searchInCompatData && await FileTools.existsFolder("$searchPath/compatdata/$appId")) {
-          Map<String, int> metaData = await FileTools.getFolderMetaData("$searchPath/compatdata/$appId", recursive: true);
+        int shaderCacheSize = -1;
+        int compatDataSize = -1;
+
+        if (!obj["appstate"].containsKey("appid")) throw NotFoundException("Appid field was not found in app manifest $steamAppPath");
+
+        String appId = obj["appstate"]["appid"];
+
+        String appCompatdataPath = "$steamAppsFolder/compatdata/$appId";
+        String appShaderCacheDataPath = "$steamAppsFolder/shadercache/$appId";
+        bool searchInCompatData = await FileTools.existsFolder(appCompatdataPath);
+        bool searchInShaderCacheData = await FileTools.existsFolder(appShaderCacheDataPath);
+
+        if (searchInCompatData) {
+          Map<String, int> metaData = await FileTools.getFolderMetaData(appCompatdataPath, recursive: true);
           compatDataSize = metaData['size']!;
-      }
-      if(searchInShaderCacheData && await FileTools.existsFolder("$searchPath/shadercache/$appId")) {
-        Map<String, int> metaData = await FileTools.getFolderMetaData("$searchPath/shadercache/$appId",recursive: true);
-        shaderCacheSize = metaData['size']!;
-      }
+        }
+        if (searchInShaderCacheData) {
+          Map<String, int> metaData = await FileTools.getFolderMetaData(appShaderCacheDataPath, recursive: true);
+          shaderCacheSize = metaData['size']!;
+        }
 
-      SteamApp app = SteamApp.FromMap(obj['appstate'], shaderCacheSize, compatDataSize, );
-      apps.add(app);
+        SteamApp app = SteamApp.FromMap(obj['appstate'], searchInShaderCacheData, searchInCompatData, shaderCacheSize, compatDataSize);
+        apps.add(app);
+      }
     }
-
     return apps;
   }
 

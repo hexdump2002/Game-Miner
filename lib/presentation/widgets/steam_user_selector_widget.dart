@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dialogs/flutter_dialogs.dart';
 import 'package:get_it/get_it.dart';
@@ -37,10 +38,10 @@ class _SteamUserSelectorState extends State<SteamUserSelector> {
                 child: CircleAvatar(
                   radius:22,
                   child: steamUsers[index].avatarUrlSmall != null
-                      ? Image.network(
-                    steamUsers[index].avatarUrlMedium!,
+                      ? CachedNetworkImage(imageUrl: steamUsers[index].avatarUrlMedium!,
                     fit: BoxFit.fill,
-                    errorBuilder: (context, error, stackTrace) {
+                    placeholder: (context, url) => const CircularProgressIndicator(),
+                    errorWidget: (context, error, stackTrace) {
                       return const Icon(Icons.person);
                     },
                   )

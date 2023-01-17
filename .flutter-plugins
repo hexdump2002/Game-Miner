@@ -18,6 +18,7 @@ shared_preferences_foundation=/home/hexdump/Documents/Dev/Tools/flutter/.pub-cac
 shared_preferences_linux=/home/hexdump/Documents/Dev/Tools/flutter/.pub-cache/hosted/pub.dartlang.org/shared_preferences_linux-2.1.2/
 shared_preferences_web=/home/hexdump/Documents/Dev/Tools/flutter/.pub-cache/hosted/pub.dartlang.org/shared_preferences_web-2.0.4/
 shared_preferences_windows=/home/hexdump/Documents/Dev/Tools/flutter/.pub-cache/hosted/pub.dartlang.org/shared_preferences_windows-2.1.2/
+sqflite=/home/hexdump/Documents/Dev/Tools/flutter/.pub-cache/hosted/pub.dartlang.org/sqflite-2.2.3/
 url_launcher=/home/hexdump/Documents/Dev/Tools/flutter/.pub-cache/hosted/pub.dartlang.org/url_launcher-6.1.7/
 url_launcher_android=/home/hexdump/Documents/Dev/Tools/flutter/.pub-cache/hosted/pub.dartlang.org/url_launcher_android-6.0.22/
 url_launcher_ios=/home/hexdump/Documents/Dev/Tools/flutter/.pub-cache/hosted/pub.dartlang.org/url_launcher_ios-6.0.17/
