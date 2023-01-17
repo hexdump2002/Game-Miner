@@ -19,7 +19,7 @@ class Game {
   set path(String value) {
 
     for(GameExecutable ex in exeFileEntries) {
-      if(ex.startDir.startsWith("\"$_path\"")) {
+      if(ex.startDir.startsWith("$_path")) {
         ex.startDir=ex.startDir.replaceFirst(_path, value);
       }
     }

@@ -76,7 +76,7 @@ class SplashCubit extends Cubit<SplashState> {
     }
 
     //Close steam client
-    SteamTools.closeSteamClient();
+    //SteamTools.closeSteamClient();
 
     SteamConfigRepository scr = GetIt.I<SteamConfigRepository>();
     List<String> paths = scr.getConfig().libraryFolders.map((e) => e.path).toList();
