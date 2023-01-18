@@ -11,6 +11,11 @@ Game miner has different tools aimed to very specific tasks. Right now it has a 
 
 Game Manager
 
+![Game Manager](/site_images/game_manager.png?raw=true "Game manager")
+![Game Data Manager](/site_images/game_data_manager.png?raw=true "Game data manager")
+![Settings](/site_images/settings.png?raw=true "Settings")
+![User Switch](/site_images/user_select.png?raw=true "User switch")
+
 
 
 
