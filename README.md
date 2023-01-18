@@ -43,20 +43,17 @@ This tool will also show a high level view of how much storage is taken by each 
 
 ### Settings
 
+All your seetings are managed in this screen. Settings take place when saved so, remember to save after you have modified them.
+
 ![Settings](/site_images/settings_explanation.png?raw=true "Settings")
 
+### Issues and Limitations
 
-Game is 
+Steam client when closed writes a bunch of configuration files to disk. It doesn't matter if the configurations have been modified or not and this leads to changes being lost if you use game miner while Steam is open. So, when game miner is launched it closes the steam client automatically to avoid any data loss. But, this brings another problem, when steam client is not active, virtual keyboard won't appear so you won't be able to use all game miner functionalities. Mainly renaming, searches, etc. There are some options to avoid this caveats:
 
-## Getting Started
+1) Install a virtual keyboard like Core Keyboard that is always active.
+2) Open steam client, then open game miner and o all the changes you need and before saving your changes exit steam. Now you are able to save without any data loss and leveraging the steam keyboard.
+3) Usea bluetooh keyboard.
 
-This project is a starting point for a Flutter application.
 
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Game miner has been developed by Hexdump 2023
