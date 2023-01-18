@@ -19,6 +19,12 @@ Game miner has different tools aimed to very specific tasks. Right now it has a 
 
 ### Game Manager and Navigation tools
 
+Use the Game Manager tool to add, remove and edit the games you want to see in your steam library.
+
+The game manager tool also provides an overview of each game status (represented by colored squares), storage stats and also provides diffent actions to apply on the physical folder that holds the game like deleting or renaming.
+
+Game Miner supports multi user so, if more than one steam account is used in your device, you will be able to switch among them clicking on the avatar picture. Settings and configurations are saved by user to avoid configuration clashing.
+
 ![Game Manager](/site_images/navigation_and_game_manager_explanation.png?raw=true "Game manager")
 ![Game Manager](/site_images/game_manager_expanded_explanation.png?raw=true "Game manager")
 
