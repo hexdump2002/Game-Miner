@@ -24,12 +24,12 @@ Game miner has different tools aimed to very specific tasks. Right now it has a 
 
 ### Data Manager tool
 
-![Data Manager](/site_images/navigation_and_game_manager_explanation.png?raw=true "Data manager")
+![Data Manager](/site_images/data_manager_explanation.png?raw=true "Data manager")
 
 
 ### Settings
 
-![Settings](/site_images/navigation_and_game_manager_explanation.png?raw=true "Settings")
+![Settings](/site_images/settings_explanation.png?raw=true "Settings")
 
 
 Game is 
