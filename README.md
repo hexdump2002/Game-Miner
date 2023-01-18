@@ -9,12 +9,14 @@ Game Miner was created with the steam deck in mind but should work on any linux 
 
 Game miner has different tools aimed to very specific tasks. Right now it has a Game Manager, a Game Data Manager and a summary tool. The sumary tool is not yet ready for release but will be dropped shortly. 
 
-Game Manager
-
 ![Game Manager](/site_images/game_manager.png?raw=true "Game manager")
 ![Game Data Manager](/site_images/game_data_manager.png?raw=true "Game data manager")
 ![Settings](/site_images/settings.png?raw=true "Settings")
 ![User Switch](/site_images/user_select.png?raw=true "User switch")
+
+# Game Miner tools
+
+## Game Manager
 
 
 
