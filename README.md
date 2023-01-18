@@ -20,6 +20,7 @@ Game miner has different tools aimed to very specific tasks. Right now it has a 
 ### Game Manager and Navigation tools
 
 ![Game Manager](/site_images/navigation_and_game_manager_explanation.png?raw=true "Game manager")
+![Game Manager](/site_images/game_manager_expanded_explanation.png?raw=true "Game manager")
 
 
 ### Data Manager tool
