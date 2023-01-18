@@ -34,6 +34,10 @@ Every row in the game manager represents a folder in your game library. They can
 
 ### Data Manager tool
 
+The data manager tool is where you manage all the data that your steam and non steam games store in your hard drive. You can delete game data in batches or one by one.
+
+This tool will also show a high level view of how much storage is taken by each game and by cache size and compat tool types. This way, you will be able to track how big your game data is.
+
 ![Data Manager](/site_images/data_manager_explanation.png?raw=true "Data manager")
 
 
