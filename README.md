@@ -11,6 +11,8 @@ Game miner has different tools aimed to very specific tasks. Right now it has a 
 
 Game Manager
 
+![Employee data](/site_images/game_manager.png?raw=true "Employee Data title")
+
 
 
 
