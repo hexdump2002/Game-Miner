@@ -67,4 +67,9 @@ class SteamTools {
     var result = await Process.run('killall',["steam"]);
     return result.exitCode==0;
   }
+
+  static Future<bool> isSteamRunning() async {
+    var result = await Process.run('ps',["-A"]);
+    return result.stdout.toString().contains(RegExp(r'\bsteam\b'));
+  }
 }

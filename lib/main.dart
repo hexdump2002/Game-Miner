@@ -7,6 +7,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 
 import 'package:game_miner/data/repositories/settings_repository.dart';
+import 'package:game_miner/logic/Tools/file_tools.dart';
+import 'package:game_miner/logic/Tools/steam_tools.dart';
 
 import 'package:game_miner/logic/blocs/main_dart_cubit.dart';
 
