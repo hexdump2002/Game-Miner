@@ -82,6 +82,7 @@ class MyApp extends StatelessWidget {
         initialData: Settings(), //PLACEHOLDER
         builder: (context, AsyncSnapshot<Settings> snapshot) {
           return MaterialApp(
+            debugShowCheckedModeBanner: false,
             localizationsDelegates: context.localizationDelegates,
             supportedLocales: context.supportedLocales,
             locale: context.locale,
