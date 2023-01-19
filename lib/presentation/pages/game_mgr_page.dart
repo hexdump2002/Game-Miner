@@ -128,26 +128,30 @@ class _GameMgrPageState extends State<GameMgrPage> {
               },
             )
           ]),
-      body: Container(
-          alignment: Alignment.center,
-          child: /*BlocConsumer<SettingsCubit, SettingsState>(listener: (
-            context,
-            state,
-          ) {
-            if (state is SettingsSaved) {
-              BlocProvider.of<NonSteamGamesCubit>(context).refresh(BlocProvider.of<SettingsCubit>(context).getSettings());
-            }
-          }, builder: (context, settingsState) {
-            return */
-              BlocBuilder<GameMgrCubit, GameMgrBaseState>(builder: (context, nsgState) {
-            //print("[NonSteamGamesCubit Builder] State -> $nsgState");
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: _buildDataScreen(context, nsgState),
-            );
-          }) /*;
-          })*/
-          ),
+      body: ExpandableTheme( data : const ExpandableThemeData(
+        hasIcon: false
+        ),
+        child: Container(
+            alignment: Alignment.center,
+            child: /*BlocConsumer<SettingsCubit, SettingsState>(listener: (
+              context,
+              state,
+            ) {
+              if (state is SettingsSaved) {
+                BlocProvider.of<NonSteamGamesCubit>(context).refresh(BlocProvider.of<SettingsCubit>(context).getSettings());
+              }
+            }, builder: (context, settingsState) {
+              return */
+                BlocBuilder<GameMgrCubit, GameMgrBaseState>(builder: (context, nsgState) {
+              //print("[NonSteamGamesCubit Builder] State -> $nsgState");
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: _buildDataScreen(context, nsgState),
+              );
+            }) /*;
+            })*/
+            ),
+      ),
     );
 
     stopwatch.stop();
