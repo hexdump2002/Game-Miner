@@ -5,6 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:expandable/expandable.dart';
+import 'package:flutter_popup_menu_button/menu_direction.dart';
+import 'package:flutter_popup_menu_button/menu_icon.dart';
+import 'package:flutter_popup_menu_button/menu_item.dart';
+import 'package:flutter_popup_menu_button/popup_menu_button.dart';
 import 'package:game_miner/data/repositories/settings_repository.dart';
 import 'package:game_miner/logic/Tools/string_tools.dart';
 import 'package:game_miner/logic/blocs/game_mgr_cubit.dart';
@@ -128,9 +132,8 @@ class _GameMgrPageState extends State<GameMgrPage> {
               },
             )
           ]),
-      body: ExpandableTheme( data : const ExpandableThemeData(
-        hasIcon: false
-        ),
+      body: ExpandableTheme(
+        data: const ExpandableThemeData(hasIcon: false),
         child: Container(
             alignment: Alignment.center,
             child: /*BlocConsumer<SettingsCubit, SettingsState>(listener: (
@@ -205,6 +208,57 @@ class _GameMgrPageState extends State<GameMgrPage> {
     throw Exception("Unknown state type");
   }
 
+  Widget _buildMenu(GameView gameView) {
+    return FlutterPopupMenuButton(
+      direction: MenuDirection.left,
+      decoration: const BoxDecoration(borderRadius: BorderRadius.all(Radius.circular(20)), color: Colors.white),
+      popupMenuSize: const Size(200, 200),
+      child: FlutterPopupMenuIcon(
+        key: GlobalKey(),
+        child: Icon(Icons.more_vert),
+      ),
+      children: [
+        FlutterPopupMenuItem(
+            closeOnItemClick: true,
+            onTap: () => _nsCubit(context).openFolder(gameView.game),
+            child: ListTile(
+              leading: Icon(Icons.folder
+                  //disabledColor: _userSettings.darkTheme ? Colors.grey.shade800 : Colors.grey.shade300,
+                  ),
+              title: Text(tr("open_folder")),
+            )),
+        FlutterPopupMenuItem(
+            closeOnItemClick: true,
+            onTap: () => _nsCubit(context).renameGame(context, gameView.game),
+            child: ListTile(
+              leading: Icon(Icons.edit
+                  //disabledColor: _userSettings.darkTheme ? Colors.grey.shade800 : Colors.grey.shade300,
+                  ),
+              title: Text(tr("rename_game")),
+            )),
+        FlutterPopupMenuItem(
+            closeOnItemClick: true,
+            onTap: ()  /*gameView.game.isExternal
+                ? null
+                : */ {
+                    _nsCubit(context).deleteGame(context, gameView.game);
+                  },
+            child: ListTile(
+              leading: Icon(Icons.delete),
+              title: Text("Delete"),
+            )),
+        FlutterPopupMenuItem(
+            closeOnItemClick: true,
+            onTap: () => _nsCubit(context).openFolder(gameView.game),
+            child: ListTile(
+              hoverColor: Colors.black,
+              leading: Icon(Icons.import_export),
+              title: Text("Export config"),
+            )),
+      ],
+    );
+  }
+
   Widget _createGameCards(BuildContext context, BaseDataChanged state, CustomTheme themeExtension) {
     var gamesView = state.games;
 
@@ -232,7 +286,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
                             padding: const EdgeInsets.fromLTRB(0, 0, 16, 0),
                             child: _getExeCurrentStateIcon(GameTools.getGameStatus(gameView.game)),
                           ),
-                          IconButton(
+                          /*IconButton(
                             padding: const EdgeInsets.all(0),
                             disabledColor: _userSettings.darkTheme ? Colors.grey.shade800 : Colors.grey.shade300,
                             onPressed: () {
@@ -260,7 +314,8 @@ class _GameMgrPageState extends State<GameMgrPage> {
                                   },
                             icon: Icon(Icons.delete),
                             tooltip: gameView.game.isExternal ? null : tr("delete"),
-                          )
+                          )*/
+                          _buildMenu(gameView)
                         ],
                       ),
                       if (gamesView[index].isExpanded)
@@ -299,11 +354,16 @@ class _GameMgrPageState extends State<GameMgrPage> {
 
     for (GameExecutable uge in gameExePaths) {
       bool added = uge.added;
+      bool error = uge.brokenLink;
       gameItems.add(Padding(
-        padding: const EdgeInsets.fromLTRB(64, 0, 0, 0),
+        padding: const EdgeInsets.fromLTRB(38, 0, 0, 0),
         child: Column(
           children: [
             Row(children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(0,0,8,0),
+                child: Tooltip(child: Icon(Icons.warning,color: error?Colors.red: Color(0)), message: error? "Exe file does not exist": "" ),
+              ),
               Expanded(
                 child: Text(uge.relativeExePath, style: Theme.of(context).textTheme.headline6, textAlign: TextAlign.left),
               ),
@@ -337,7 +397,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
     GameMgrCubit nsgc = _nsCubit(context);
     return Container(
       color: themeExtension.gameCardExeOptionsBg,
-      margin: EdgeInsets.fromLTRB(16, 8, 128, 8),
+      margin: EdgeInsets.fromLTRB(32, 8, 128, 8),
       child: Padding(
         padding: const EdgeInsets.all(8.0),
         child: Column(
@@ -377,14 +437,17 @@ class _GameMgrPageState extends State<GameMgrPage> {
 
     return  const Icon(Icons.error_outline, color:Colors.red);*/
     Color color;
-    if (gameAddedStatus == GameStatus.FullyAdded) {
+    if (gameAddedStatus == GameStatus.WithErrors) {
+      color = Colors.red;
+    }
+    else if (gameAddedStatus == GameStatus.FullyAdded) {
       color = Colors.green;
     } else if (gameAddedStatus == GameStatus.Added) {
-      color = Colors.orangeAccent;
+      color = Colors.lightBlue.shade300;
     } else if (gameAddedStatus == GameStatus.NonAdded) {
-      color = Colors.red;
+      color = Colors.blue.shade700;
     } else {
-      color = Colors.blue.shade200;
+      color = Colors.purpleAccent.shade200;
     }
 
     Container c = Container(height: 15, width: 15, color: color);
@@ -408,11 +471,19 @@ class _GameMgrPageState extends State<GameMgrPage> {
             Padding(
               padding: EdgeInsets.fromLTRB(8, 0, 8, 0),
               child: Text(
+                state.withErrorsGameCount.toString(),
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+            Container(height: 15, width: 15, color: Colors.blue.shade700),
+            Padding(
+              padding: EdgeInsets.fromLTRB(8, 0, 8, 0),
+              child: Text(
                 state.notAddedGamesCount.toString(),
                 style: TextStyle(color: Colors.white),
               ),
             ),
-            Container(height: 15, width: 15, color: Colors.orange),
+            Container(height: 15, width: 15, color:  Colors.lightBlue.shade300),
             Padding(
               padding: EdgeInsets.fromLTRB(8, 0, 8, 0),
               child: Text(
@@ -420,6 +491,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
                 style: TextStyle(color: Colors.white),
               ),
             ),
+
             Container(height: 15, width: 15, color: Colors.green),
             Padding(
               padding: EdgeInsets.fromLTRB(8, 0, 8, 0),
@@ -428,7 +500,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
                 style: TextStyle(color: Colors.white),
               ),
             ),
-            Container(height: 15, width: 15, color: Colors.blue.shade200),
+            Container(height: 15, width: 15, color: Colors.purpleAccent.shade100),
             Padding(
                 padding: EdgeInsets.fromLTRB(8, 0, 8, 0),
                 child: Text(
@@ -474,4 +546,5 @@ class _GameMgrPageState extends State<GameMgrPage> {
           ],
         ));
   }
+
 }
