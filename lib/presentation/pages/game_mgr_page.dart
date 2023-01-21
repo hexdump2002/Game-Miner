@@ -354,7 +354,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
 
     for (GameExecutable uge in gameExePaths) {
       bool added = uge.added;
-      bool error = uge.brokenLink;
+      bool error = uge.errors.isNotEmpty;
       gameItems.add(Padding(
         padding: const EdgeInsets.fromLTRB(38, 0, 0, 0),
         child: Column(
@@ -362,7 +362,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
             Row(children: [
               Padding(
                 padding: const EdgeInsets.fromLTRB(0,0,8,0),
-                child: Tooltip(child: Icon(Icons.warning,color: error?Colors.red: Color(0)), message: error? "Exe file does not exist": "" ),
+                child: Tooltip(child: Icon(Icons.warning,color: error?Colors.red: Color(0)), message: error? _buildErrorTextForGameExecutable(uge): "" ),
               ),
               Expanded(
                 child: Text(uge.relativeExePath, style: Theme.of(context).textTheme.headline6, textAlign: TextAlign.left),
@@ -417,6 +417,21 @@ class _GameMgrPageState extends State<GameMgrPage> {
                 return null;
               },
             ),
+            TextFormField(
+              initialValue: uge.launchOptions,
+              decoration: const InputDecoration(labelText: "Launch Options"),
+              autovalidateMode: AutovalidateMode.onUserInteraction,
+              onChanged: (value) => {uge.name = value!},
+              /*onSaved: (value) => {
+                uge.name = value!
+              },
+              validator: (String? value) {
+                if (value == null || value.isEmpty) {
+                  return tr("please_enter_text");
+                }
+                return null;
+              },*/
+            ),
             DropdownButtonFormField<String>(
                 items: availableProntons.map<DropdownMenuItem<String>>((String e) {
                   return DropdownMenuItem<String>(value: e, child: Text(e));
@@ -445,7 +460,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
     } else if (gameAddedStatus == GameStatus.Added) {
       color = Colors.lightBlue.shade300;
     } else if (gameAddedStatus == GameStatus.NonAdded) {
-      color = Colors.blue.shade700;
+      color = Colors.grey;
     } else {
       color = Colors.purpleAccent.shade200;
     }
@@ -475,7 +490,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
                 style: TextStyle(color: Colors.white),
               ),
             ),
-            Container(height: 15, width: 15, color: Colors.blue.shade700),
+            Container(height: 15, width: 15, color: Colors.grey),
             Padding(
               padding: EdgeInsets.fromLTRB(8, 0, 8, 0),
               child: Text(
@@ -545,6 +560,26 @@ class _GameMgrPageState extends State<GameMgrPage> {
             ),
           ],
         ));
+  }
+
+  String _buildErrorTextForGameExecutable(GameExecutable uge) {
+    String error ="";
+
+    if(uge.relativeExePath.contains("mygame")){
+      print("yeah");
+    }
+    if(uge.errors.contains(GameExecutableError.BrokenExecutable)) {
+      error+=tr('broken_executable');
+    }
+
+    if(uge.errors.contains(GameExecutableError.InvalidProton)) {
+      if(error.isNotEmpty) {
+        error+="\n\n";
+      }
+      error+=tr('invalid_compat_tool',args: [uge.compatToolCode]);
+    }
+
+    return error;
   }
 
 }
