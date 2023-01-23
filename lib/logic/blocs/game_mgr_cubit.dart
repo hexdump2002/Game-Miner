@@ -45,8 +45,8 @@ class GameViewExecutableErrors {
 class GameView {
   Game game;
   bool isExpanded;
-
-  GameView(this.game, this.isExpanded);
+  bool modified;
+  GameView(this.game, this.isExpanded, this.modified);
 }
 
 class GameMgrCubit extends Cubit<GameMgrBaseState> {
@@ -133,7 +133,9 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
     List<GameView> gameViews = [];
     for (Game g in games) {
       GameTools.handleGameExecutableErrorsForGame(g);
-      gameViews.add(GameView(g, false));
+      bool modified =g.dataCameFromConfigFile();
+
+      gameViews.add(GameView(g, false,modified));
     }
     return gameViews;
   }
@@ -165,8 +167,9 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
     return ct.code;
   }
 
-  swapExeAdding(Game game, GameExecutable ge) {
+  swapExeAdding(GameView gv, GameExecutable ge) {
     ge.added = !ge.added;
+    gv.modified = true;
 
     if (ge.added) {
       ge.appId = SteamTools.generateAppId("${ge.startDir}/${ge.relativeExePath}");
@@ -178,7 +181,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
       //_globalStats.MoveGameByStatus(uge, VMGameAddedStatus.NonAdded);
     }
 
-    GameTools.handleGameExecutableErrorsForGame(game);
+    GameTools.handleGameExecutableErrorsForGame(gv.game);
 
     _refreshGameCount();
 
@@ -206,6 +209,10 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
       _saveData();
     }
 
+    //Reset all game changes
+    for(GameView gv in _gameViews) {
+      gv.modified = false;
+    }
     //This is needed because when a game has an error with proton. It is reset to none but not saved
     _refreshGameCount();
 
@@ -234,7 +241,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
         _addedExternalCount, _ssdFreeSizeInBytes, _sdCardFreeInBytes, _ssdTotalSizeInBytes, _sdCardTotalInBytes, _sortStates, _sortDirectionStates));*/
   }
 
-  void setCompatToolDataFor(Game game, GameExecutable uge, String value) {
+  void setCompatToolDataFor(GameView gv, GameExecutable uge, String value) {
     //assert(value!=null);
 
     if (value == "None") {
@@ -243,14 +250,26 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
       uge.fillProtonMappingData(getCompatToolCodeFromDisplayName(value), "", "250");
     }
 
-    GameTools.handleGameExecutableErrorsForGame(game);
+    gv.modified = true;
+
+    GameTools.handleGameExecutableErrorsForGame(gv.game);
     _refreshGameCount();
 
     emit(GamesDataChanged(_filteredGames, getAvailableCompatToolDisplayNames(), _nonAddedGamesCount, _addedGamesCount, _fullyAddedGamesCount,
         _addedExternalCount, _ssdFreeSizeInBytes, _sdCardFreeInBytes, _ssdTotalSizeInBytes, _sdCardTotalInBytes, _sortStates, _sortDirectionStates));
   }
 
-  void deleteGame(BuildContext context, Game game) {
+  void tryDeleteGame(BuildContext context, Game game) async{
+    if (await SteamTools.isSteamRunning()) {
+    showSteamActiveWhenSaving(context, () {
+      _deleteGame(context, game);
+    });
+    } else {
+      _deleteGame(context, game);
+    }
+  }
+
+  void _deleteGame(BuildContext context, Game game) {
     showPlatformDialog(
       context: context,
       builder: (context) => BasicDialogAlert(
@@ -323,7 +342,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
             },
           ),
           BasicDialogAction(
-            title: Text(tr("Cancel")),
+            title: Text(tr("cancel")),
             onPressed: () {
               Navigator.pop(context);
             },
@@ -431,7 +450,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
                 }
               }),
           BasicDialogAction(
-            title: Text(tr("Cancel")),
+            title: Text(tr("cancel")),
             onPressed: () {
               Navigator.pop(context);
             },
@@ -472,23 +491,16 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
 
     if (sd == SortDirection.Asc) {
       _filteredGames.sort((a, b) {
-        if (a.game.hasErrors() == b.game.hasErrors()) {
-          return 0;
-        } else if (b.game.hasErrors()) {
-          return 1;
-        }
+        int aVal = a.game.hasErrors() ? 2 : a.modified ? 1 : 0;
+        int bVal = b.game.hasErrors() ? 2 : b.modified ? 1 : 0;
+        return aVal.compareTo(bVal);
 
-        return -1;
       });
     } else {
       _filteredGames.sort((a, b) {
-        if (b.game.hasErrors() == a.game.hasErrors()) {
-          return 0;
-        } else if (a.game.hasErrors()) {
-          return 1;
-        }
-
-        return -1;
+        int aVal = a.game.hasErrors() ? 2 : a.modified ? 1 : 0;
+        int bVal = b.game.hasErrors() ? 2 : b.modified ? 1 : 0;
+        return bVal.compareTo(aVal);
       });
     }
 
@@ -701,7 +713,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
             },
           ),
           BasicDialogAction(
-            title: Text(tr("Cancel")),
+            title: Text(tr("cancel")),
             onPressed: () {
               Navigator.pop(context);
             },
@@ -743,6 +755,9 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
   }
 
   void exportGame(Game game) async{
+    String exportPath = "${game.path}/gameminer_config.json";
+    EasyLoading.show(status: tr("exporting_game_config",args:[exportPath]));
     GameTools.exportGame(game);
+    EasyLoading.showSuccess(tr("game_config_exported",args:[exportPath]));
   }
 }

@@ -69,5 +69,16 @@
   "select_all": "Seleccionar todos",
   "delete_selected": "Eliminar seleccionados",
   "broken_executable": "* El ejecutabe no existe",
-  "invalid_compat_tool": "* La herramienta de compatiblidad '{}' No existe."
+  "invalid_compat_tool": "* La herramienta de compatiblidad '{}' No existe.",
+  "sort_by_info": "Ordenar por notificación",
+  "game_has_config_errors": "The game has configuration errors",
+  "invalid_proton_dropdown_item": "Invalid",
+  "warning": "Warning",
+  "cant_save_with_errors": "Some games have errors. Fix them and try to Save again",
+  "cant_rename_with_errors": "Some games have errors. Fix them and try to Rename again",
+  "steam_is_running_cant_action": "Hemos detectado que Steam esta ejecutandose. Game miner necesita que Steam esté cerrado para poder ejecutar esta acción. ¿Quieres cerrar Steam ahora?",
+  "closing_steam": "Cerrando Steam",
+  "exporting_game_config": "Exportando configuración de juego em {}",
+  "game_config_exported": "La configuración de juego fue exportada en {}"
+
 }

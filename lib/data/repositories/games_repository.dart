@@ -67,6 +67,7 @@ class GamesRepository extends CacheRepository<Game> {
                 ge.added = true;
                 ge.appId=SteamTools.generateAppId("${ge.startDir}/${ge.relativeExePath}");
                 ge.fillProtonMappingData(foundGe.compatToolCode, "", "250");
+                ge.dataFromConfigFile = true; //Mark as configured by config file
               }
             }
           }
@@ -89,6 +90,7 @@ class GamesRepository extends CacheRepository<Game> {
           if (gameExecutable != null) {
             gameExecutable.fillFromNonSteamGame(shortcut, e.path);
             gameExecutable.added = true;
+            gameExecutable.dataFromConfigFile = false; //Unmark as configured by config file because it has a shortcut configured
             finished = true;
 
             //Find the proton mapping

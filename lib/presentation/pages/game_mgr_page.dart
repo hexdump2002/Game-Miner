@@ -84,7 +84,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
                           Tooltip(message: tr("sort_by_name"), child: const Icon(Icons.receipt)),
                           Tooltip(message: tr("sort_by_status"), child: const Icon(Icons.stars)),
                           Tooltip(message: tr("sort_by_size"), child: const Icon(Icons.storage)),
-                          Tooltip(message: tr("sort_by_errors"), child: const Icon(Icons.warning))
+                          Tooltip(message: tr("sort_by_info"), child: const Icon(Icons.warning))
                         ]),
                   ),
                   Padding(
@@ -225,39 +225,36 @@ class _GameMgrPageState extends State<GameMgrPage> {
             closeOnItemClick: true,
             onTap: () => _nsCubit(context).openFolder(gameView.game),
             child: ListTile(
-              leading: Icon(Icons.folder
+              leading: const Icon(Icons.folder,color:Colors.grey
                   //disabledColor: _userSettings.darkTheme ? Colors.grey.shade800 : Colors.grey.shade300,
                   ),
-              title: Text(tr("open_folder")),
+              title: Text(tr("open_folder"), style: TextStyle(color:Colors.black),),
             )),
         FlutterPopupMenuItem(
             closeOnItemClick: true,
             onTap: () => _nsCubit(context).tryRenameGame(context, gameView.game),
             child: ListTile(
-              leading: Icon(Icons.edit
+              leading: Icon(Icons.edit,color:Colors.grey
                   //disabledColor: _userSettings.darkTheme ? Colors.grey.shade800 : Colors.grey.shade300,
                   ),
-              title: Text(tr("rename_game")),
+              title: Text(tr("rename_game"), style: TextStyle(color:Colors.black)),
             )),
-        FlutterPopupMenuItem(
+
+        if(!gameView.game.isExternal) FlutterPopupMenuItem(
             closeOnItemClick: true,
-            onTap: () /*gameView.game.isExternal
-                ? null
-                : */
-                {
-              _nsCubit(context).deleteGame(context, gameView.game);
-            },
+            onTap: ()=> _nsCubit(context).tryDeleteGame(context, gameView.game),
             child: ListTile(
-              leading: Icon(Icons.delete),
-              title: Text("Delete"),
+              leading: Icon(Icons.delete,color:Colors.grey),
+              title: Text("Delete", style: TextStyle(color:Colors.black)),
             )),
+        if(!gameView.game.isExternal)
         FlutterPopupMenuItem(
             closeOnItemClick: true,
             onTap: () => _nsCubit(context).exportGame(gameView.game),
             child: ListTile(
-              hoverColor: Colors.black,
-              leading: Icon(Icons.import_export),
-              title: Text("Export config"),
+              hoverColor: Colors.grey,
+              leading: Icon(Icons.import_export,color:Colors.grey),
+              title: Text("Export config", style: TextStyle(color:Colors.black)),
             )),
       ],
     );
@@ -290,10 +287,8 @@ class _GameMgrPageState extends State<GameMgrPage> {
                             padding: const EdgeInsets.fromLTRB(0, 0, 16, 0),
                             child: _getExeCurrentStateIcon(GameTools.getGameStatus(gameView.game)),
                           ),
-                          Tooltip(
-                            child: Icon(Icons.warning, color: gameView.game.hasErrors() ? Colors.red : Color(0x000000)),
-                            message: tr("game_has_config_errors"),
-                          ),
+                          _getErrorsOrModifiedIcon(gameView),
+
                           _buildMenu(gameView)
                         ],
                       ),
@@ -310,18 +305,18 @@ class _GameMgrPageState extends State<GameMgrPage> {
                     padding: EdgeInsets.fromLTRB(0, 16, 0, 16),
                     margin: EdgeInsets.fromLTRB(16, 16, 16, 16),
                     decoration: BoxDecoration(borderRadius: BorderRadius.circular(20), color: Colors.black12),
-                    child: _buildGameTile(context, themeExtension, gameView.game, state.availableProntonNames)),
+                    child: _buildGameTile(context, themeExtension, gamesView[index], state.availableProntonNames)),
                 collapsed: Container(),
               );
             }));
   }
 
-  Widget _buildGameTile(BuildContext context, CustomTheme themeExtension, Game ug, List<String> availableProtons) {
+  Widget _buildGameTile(BuildContext context, CustomTheme themeExtension, GameView gv, List<String> availableProtons) {
     List<Widget> gameItems = [];
 
-    List<GameExecutable> gameExePaths = ug.exeFileEntries;
+    List<GameExecutable> gameExePaths = gv.game.exeFileEntries;
 
-    if (ug.exeFileEntries.isEmpty) {
+    if (gv.game.exeFileEntries.isEmpty) {
       return Padding(
         padding: const EdgeInsets.fromLTRB(0, 0, 0, 16),
         child: Container(
@@ -351,14 +346,14 @@ class _GameMgrPageState extends State<GameMgrPage> {
                 Switch(
                     value: uge.added,
                     onChanged: (value) {
-                      _nsCubit(context).swapExeAdding(ug,uge);
+                      _nsCubit(context).swapExeAdding(gv,uge);
                     }),
                 //activeTrackColor: Colors.lightGreenAccent,
                 //activeColor: Colors.green,
                 //IconButton(onPressed: uge.added ? () => true: null, icon: Icon(Icons.settings))
               ])
             ]),
-            if (uge.added) _buildGameExeForm(ug,uge, themeExtension, availableProtons)
+            if (uge.added) _buildGameExeForm(gv,uge, themeExtension, availableProtons)
           ],
         ),
       ));
@@ -373,7 +368,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
     );
   }
 
-  Widget _buildGameExeForm(Game g, GameExecutable uge, CustomTheme themeExtension, List<String> availableProntons) {
+  Widget _buildGameExeForm(GameView gv, GameExecutable uge, CustomTheme themeExtension, List<String> availableProntons) {
     bool hasCompatToolError = uge.hasErrorType(GameExecutableErrorType.InvalidProton);
     if(hasCompatToolError) {
       availableProntons = [tr("invalid_proton_dropdown_item"), ...availableProntons];
@@ -391,7 +386,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
               initialValue: uge.name,
               decoration: const InputDecoration(labelText: "Name"),
               autovalidateMode: AutovalidateMode.onUserInteraction,
-              onChanged: (value) => {uge.name = value!},
+              onChanged: (value)  {uge.name = value!; gv.modified = true;},
               /*onSaved: (value) => {
                 uge.name = value!
               },*/
@@ -406,7 +401,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
               initialValue: uge.launchOptions,
               decoration: const InputDecoration(labelText: "Launch Options"),
               autovalidateMode: AutovalidateMode.onUserInteraction,
-              onChanged: (value) => {uge.name = value!},
+              onChanged: (value) {uge.name = value!; gv.modified = true;},
               /*onSaved: (value) => {
                 uge.name = value!
               },
@@ -422,7 +417,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
                   return DropdownMenuItem<String>(value: e, child: Text(e));
                 }).toList(),
                 value: hasCompatToolError ? tr('invalid_proton_dropdown_item') : nsgc.getCompatToolDisplayNameFromCode(uge.compatToolCode),
-                onChanged: (String? value) => nsgc.setCompatToolDataFor(g,uge, value!),
+                onChanged: (String? value) => nsgc.setCompatToolDataFor(gv,uge, value!),
                 decoration: const InputDecoration(labelText: "Compat Tool"))
           ],
         ),
@@ -548,5 +543,26 @@ class _GameMgrPageState extends State<GameMgrPage> {
     }
 
     return error;
+  }
+
+  _getErrorsOrModifiedIcon(GameView gv) {
+    Icon icon;
+    String msg="";
+    if(gv.game.hasErrors()) {
+      icon = const Icon(Icons.warning, color:  Colors.red);
+      msg = tr("game_has_config_errors");
+    }
+    else if(gv.modified) {
+      icon = const Icon(Icons.save, color:  Colors.orange);
+      msg = tr("game_modified");
+    }
+    else {
+      icon = const Icon(Icons.save, color: Color(0x00000000));
+    }
+
+    return Tooltip(
+      message: msg,
+      child: icon,
+    );
   }
 }

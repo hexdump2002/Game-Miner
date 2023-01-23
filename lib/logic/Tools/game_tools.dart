@@ -21,7 +21,7 @@ class GameTools {
   static void handleGameExecutableErrorsForGame(Game g) {
     for (GameExecutable ge in g.exeFileEntries) {
       ge.errors.clear();
-      if (ge.brokenLink) ge.errors.add(GameExecutableError(GameExecutableErrorType.BrokenExecutable, ""));
+      if (ge.added && ge.brokenLink) ge.errors.add(GameExecutableError(GameExecutableErrorType.BrokenExecutable, ""));
       if (!hasExecutableCorrectProtonsAssigned(ge)) {
         ge.errors.add(GameExecutableError(GameExecutableErrorType.InvalidProton, ge.compatToolCode));
         ge.compatToolCode = "None";
