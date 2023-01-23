@@ -21,9 +21,9 @@ class CompatToolsRepository extends CacheRepository<CompatTool>{
       setCacheKey(cacheKey, compatTools);
       return List.from(compatTools);
     }
-    else {
-      return List.from(compatTools!);
-    }
+
+    return List.from(compatTools!);
+
   }
 
   Future<String> getCompatToolNameFromCode(String code) async{

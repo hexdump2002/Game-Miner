@@ -116,7 +116,7 @@ ThemeData _getLightTheme() {
     toggleButtonsTheme: ToggleButtonsThemeData(
         selectedBorderColor: Colors.blue[700], selectedColor: Colors.white, fillColor: Colors.blue[200], color: Colors.blue[700]),
     extensions: <ThemeExtension<CustomTheme>>[
-      CustomTheme(gameCardHeaderPath: Colors.grey.shade600, gameCardExeOptionsBg: Colors.grey.shade200, infoBarBgColor: Colors.blueGrey),
+      CustomTheme(gameCardHeaderPath: Colors.grey.shade600, gameCardExeOptionsBg: Colors.grey.shade200, infoBarBgColor: Colors.blueGrey.shade500),
     ],
   );
 

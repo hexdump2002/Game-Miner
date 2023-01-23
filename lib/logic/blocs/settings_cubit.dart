@@ -154,6 +154,11 @@ class SettingsCubit extends Cubit<SettingsState> {
     emit(GeneralOptionsChanged(_currentUserSettings));
   }
 
+  void setCloseSteamAtStartUp(bool value) {
+    _currentUserSettings.closeSteamAtStartUp = value;
+    emit(GeneralOptionsChanged(_currentUserSettings));
+  }
+
 
 
 

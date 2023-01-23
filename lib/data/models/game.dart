@@ -2,17 +2,25 @@ import 'dart:convert';
 import 'dart:ffi';
 import 'dart:io';
 import 'dart:math';
+import 'package:collection/collection.dart';
 
 import 'package:game_miner/data/models/compat_tool_mapping.dart';
 import 'package:game_miner/data/models/steam_shortcut_game.dart';
 import 'package:game_miner/data/models/game_executable.dart';
+import 'package:game_miner/logic/Tools/file_tools.dart';
+import 'package:game_miner/logic/Tools/string_tools.dart';
 import 'package:path/path.dart' as pathLib;
 
+
 class Game {
+  static int _id = 1;
+
+  final int id;
   late String _path;
   late String name;
   bool isExternal = false;
   int gameSize = 0;
+
   final List<GameExecutable> exeFileEntries = [];
 
   String get path => _path;
@@ -27,8 +35,14 @@ class Game {
 
   }
 
+  bool hasErrors() {
+    GameExecutable? exe = exeFileEntries.firstWhereOrNull((element) => element.errors.isNotEmpty);
+    return exe != null;
+  }
+
   //User Folders Game (Internal)
-  Game(String path, this.name)  {
+  Game(String path, this.name) : id=_id {
+    ++_id;
     _path = path;
     isExternal = false;
   }
@@ -51,11 +65,14 @@ class Game {
   void addExeFile(String absoluteFilePath) {
     if (isExternal) throw Exception("Can't add an internal exe to an external game");
 
-    exeFileEntries.add(GameExecutable(path, absoluteFilePath, false));
+    //Check if exe is broken or not
+    bool exists = FileTools.existsFileSync(absoluteFilePath);
+    exeFileEntries.add(GameExecutable(path, absoluteFilePath,!exists));
   }
 
   void addExternalExeFile(SteamShortcut steamShortcut, CompatToolMapping? pm) {
-    var uge = GameExecutable.asExternal(steamShortcut, protonMapping: pm);
+    bool exists = FileTools.existsFileSync(StringTools.removeQuotes(steamShortcut.exePath));
+    var uge = GameExecutable.asExternal(steamShortcut, !exists, protonMapping: pm, );
     isExternal = true;
     exeFileEntries.add(uge);
   }
@@ -65,4 +82,6 @@ class Game {
       addExeFile(filePath);
     });
   }
+
+
 }

@@ -67,5 +67,7 @@
   "backup_count": "Número de backups",
   "select_none": "Seleccionar ninguno",
   "select_all": "Seleccionar todos",
-  "delete_selected": "Eliminar seleccionados"
+  "delete_selected": "Eliminar seleccionados",
+  "broken_executable": "* El ejecutabe no existe",
+  "invalid_compat_tool": "* La herramienta de compatiblidad '{}' No existe."
 }

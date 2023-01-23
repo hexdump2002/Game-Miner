@@ -15,7 +15,7 @@ import 'package:game_miner/logic/blocs/game_mgr_cubit.dart';
 import 'package:game_miner/main.dart';
 import 'package:game_miner/presentation/widgets/searchbar/searchbar_widget.dart';
 import 'package:get_it/get_it.dart';
-
+import 'package:collection/collection.dart';
 import '../../data/models/game_executable.dart';
 import '../../data/models/game.dart';
 import '../../data/models/settings.dart';
@@ -65,6 +65,8 @@ class _GameMgrPageState extends State<GameMgrPage> {
                             nsgpBloc.sortByStatus();
                           } else if (index == 2) {
                             nsgpBloc.sortBySize();
+                          } else if (index == 3) {
+                            nsgpBloc.sortByWithErrors();
                           }
                         },
                         borderRadius: const BorderRadius.all(Radius.circular(8)),
@@ -81,7 +83,8 @@ class _GameMgrPageState extends State<GameMgrPage> {
                         children: [
                           Tooltip(message: tr("sort_by_name"), child: const Icon(Icons.receipt)),
                           Tooltip(message: tr("sort_by_status"), child: const Icon(Icons.stars)),
-                          Tooltip(message: tr("sort_by_size"), child: const Icon(Icons.storage))
+                          Tooltip(message: tr("sort_by_size"), child: const Icon(Icons.storage)),
+                          Tooltip(message: tr("sort_by_errors"), child: const Icon(Icons.warning))
                         ]),
                   ),
                   Padding(
@@ -104,9 +107,9 @@ class _GameMgrPageState extends State<GameMgrPage> {
                         ]),
                   ),
                   IconButton(
-                    onPressed: () {
+                    onPressed: () async{
                       if (_formKey.currentState!.validate()) {
-                        _nsCubit(context).saveData();
+                        await _nsCubit(context).trySave(context);
                       } else {
                         print("There are errors in the form. Fix them!");
                       }
@@ -229,7 +232,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
             )),
         FlutterPopupMenuItem(
             closeOnItemClick: true,
-            onTap: () => _nsCubit(context).renameGame(context, gameView.game),
+            onTap: () => _nsCubit(context).tryRenameGame(context, gameView.game),
             child: ListTile(
               leading: Icon(Icons.edit
                   //disabledColor: _userSettings.darkTheme ? Colors.grey.shade800 : Colors.grey.shade300,
@@ -238,18 +241,19 @@ class _GameMgrPageState extends State<GameMgrPage> {
             )),
         FlutterPopupMenuItem(
             closeOnItemClick: true,
-            onTap: ()  /*gameView.game.isExternal
+            onTap: () /*gameView.game.isExternal
                 ? null
-                : */ {
-                    _nsCubit(context).deleteGame(context, gameView.game);
-                  },
+                : */
+                {
+              _nsCubit(context).deleteGame(context, gameView.game);
+            },
             child: ListTile(
               leading: Icon(Icons.delete),
               title: Text("Delete"),
             )),
         FlutterPopupMenuItem(
             closeOnItemClick: true,
-            onTap: () => _nsCubit(context).openFolder(gameView.game),
+            onTap: () => _nsCubit(context).exportGame(gameView.game),
             child: ListTile(
               hoverColor: Colors.black,
               leading: Icon(Icons.import_export),
@@ -286,35 +290,10 @@ class _GameMgrPageState extends State<GameMgrPage> {
                             padding: const EdgeInsets.fromLTRB(0, 0, 16, 0),
                             child: _getExeCurrentStateIcon(GameTools.getGameStatus(gameView.game)),
                           ),
-                          /*IconButton(
-                            padding: const EdgeInsets.all(0),
-                            disabledColor: _userSettings.darkTheme ? Colors.grey.shade800 : Colors.grey.shade300,
-                            onPressed: () {
-                              _nsCubit(context).openFolder(gameView.game);
-                            },
-                            icon: Icon(Icons.folder),
-                            tooltip: tr("open_folder"),
+                          Tooltip(
+                            child: Icon(Icons.warning, color: gameView.game.hasErrors() ? Colors.red : Color(0x000000)),
+                            message: tr("game_has_config_errors"),
                           ),
-                          IconButton(
-                            disabledColor:_userSettings.darkTheme ? Colors.grey.shade800 : Colors.grey.shade300,
-                            onPressed: gameView.game.isExternal
-                                ? null
-                                : () {
-                                    _nsCubit(context).renameGame(context, gameView.game);
-                                  },
-                            icon: Icon(Icons.edit),
-                            tooltip: gameView.game.isExternal ? null : tr("rename_game"),
-                          ),
-                          IconButton(
-                            disabledColor:_userSettings.darkTheme ? Colors.grey.shade800 : Colors.grey.shade300,
-                            onPressed: gameView.game.isExternal
-                                ? null
-                                : () {
-                                    _nsCubit(context).deleteGame(context, gameView.game);
-                                  },
-                            icon: Icon(Icons.delete),
-                            tooltip: gameView.game.isExternal ? null : tr("delete"),
-                          )*/
                           _buildMenu(gameView)
                         ],
                       ),
@@ -361,8 +340,9 @@ class _GameMgrPageState extends State<GameMgrPage> {
           children: [
             Row(children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(0,0,8,0),
-                child: Tooltip(child: Icon(Icons.warning,color: error?Colors.red: Color(0)), message: error? _buildErrorTextForGameExecutable(uge): "" ),
+                padding: const EdgeInsets.fromLTRB(0, 0, 8, 0),
+                child: Tooltip(
+                    child: Icon(Icons.warning, color: error ? Colors.red : Color(0)), message: error ? _buildErrorTextForGameExecutable(uge) : ""),
               ),
               Expanded(
                 child: Text(uge.relativeExePath, style: Theme.of(context).textTheme.headline6, textAlign: TextAlign.left),
@@ -371,14 +351,14 @@ class _GameMgrPageState extends State<GameMgrPage> {
                 Switch(
                     value: uge.added,
                     onChanged: (value) {
-                      _nsCubit(context).swapExeAdding(uge);
+                      _nsCubit(context).swapExeAdding(ug,uge);
                     }),
                 //activeTrackColor: Colors.lightGreenAccent,
                 //activeColor: Colors.green,
                 //IconButton(onPressed: uge.added ? () => true: null, icon: Icon(Icons.settings))
               ])
             ]),
-            if (uge.added) _buildGameExeForm(uge, themeExtension, availableProtons)
+            if (uge.added) _buildGameExeForm(ug,uge, themeExtension, availableProtons)
           ],
         ),
       ));
@@ -393,7 +373,12 @@ class _GameMgrPageState extends State<GameMgrPage> {
     );
   }
 
-  Widget _buildGameExeForm(GameExecutable uge, CustomTheme themeExtension, List<String> availableProntons) {
+  Widget _buildGameExeForm(Game g, GameExecutable uge, CustomTheme themeExtension, List<String> availableProntons) {
+    bool hasCompatToolError = uge.hasErrorType(GameExecutableErrorType.InvalidProton);
+    if(hasCompatToolError) {
+      availableProntons = [tr("invalid_proton_dropdown_item"), ...availableProntons];
+    }
+
     GameMgrCubit nsgc = _nsCubit(context);
     return Container(
       color: themeExtension.gameCardExeOptionsBg,
@@ -436,9 +421,9 @@ class _GameMgrPageState extends State<GameMgrPage> {
                 items: availableProntons.map<DropdownMenuItem<String>>((String e) {
                   return DropdownMenuItem<String>(value: e, child: Text(e));
                 }).toList(),
-                value: nsgc.getCompatToolDisplayNameFromCode(uge.compatToolCode),
-                onChanged: (String? value) => nsgc.setCompatToolDataFor(uge, value!),
-                decoration: const InputDecoration(labelText: "Proton"))
+                value: hasCompatToolError ? tr('invalid_proton_dropdown_item') : nsgc.getCompatToolDisplayNameFromCode(uge.compatToolCode),
+                onChanged: (String? value) => nsgc.setCompatToolDataFor(g,uge, value!),
+                decoration: const InputDecoration(labelText: "Compat Tool"))
           ],
         ),
       ),
@@ -446,23 +431,16 @@ class _GameMgrPageState extends State<GameMgrPage> {
   }
 
   Widget _getExeCurrentStateIcon(GameStatus gameAddedStatus) {
-    /*if(anyExeAddedAndProtonAssigned) return  const Icon(Icons.thumb_up, color:Colors.green);
 
-    if(anyExeAdded) return  const Icon(Icons.check_circle, color:Colors.orangeAccent);
-
-    return  const Icon(Icons.error_outline, color:Colors.red);*/
     Color color;
-    if (gameAddedStatus == GameStatus.WithErrors) {
-      color = Colors.red;
-    }
-    else if (gameAddedStatus == GameStatus.FullyAdded) {
+    if (gameAddedStatus == GameStatus.FullyAdded) {
       color = Colors.green;
     } else if (gameAddedStatus == GameStatus.Added) {
-      color = Colors.lightBlue.shade300;
+      color = Colors.orange;
     } else if (gameAddedStatus == GameStatus.NonAdded) {
-      color = Colors.grey;
+      color = Colors.red;
     } else {
-      color = Colors.purpleAccent.shade200;
+      color = Colors.blue.shade200;
     }
 
     Container c = Container(height: 15, width: 15, color: color);
@@ -486,19 +464,11 @@ class _GameMgrPageState extends State<GameMgrPage> {
             Padding(
               padding: EdgeInsets.fromLTRB(8, 0, 8, 0),
               child: Text(
-                state.withErrorsGameCount.toString(),
-                style: TextStyle(color: Colors.white),
-              ),
-            ),
-            Container(height: 15, width: 15, color: Colors.grey),
-            Padding(
-              padding: EdgeInsets.fromLTRB(8, 0, 8, 0),
-              child: Text(
                 state.notAddedGamesCount.toString(),
                 style: TextStyle(color: Colors.white),
               ),
             ),
-            Container(height: 15, width: 15, color:  Colors.lightBlue.shade300),
+            Container(height: 15, width: 15, color: Colors.orange),
             Padding(
               padding: EdgeInsets.fromLTRB(8, 0, 8, 0),
               child: Text(
@@ -506,7 +476,6 @@ class _GameMgrPageState extends State<GameMgrPage> {
                 style: TextStyle(color: Colors.white),
               ),
             ),
-
             Container(height: 15, width: 15, color: Colors.green),
             Padding(
               padding: EdgeInsets.fromLTRB(8, 0, 8, 0),
@@ -515,7 +484,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
                 style: TextStyle(color: Colors.white),
               ),
             ),
-            Container(height: 15, width: 15, color: Colors.purpleAccent.shade100),
+            Container(height: 15, width: 15, color: Colors.blue.shade200),
             Padding(
                 padding: EdgeInsets.fromLTRB(8, 0, 8, 0),
                 child: Text(
@@ -563,23 +532,21 @@ class _GameMgrPageState extends State<GameMgrPage> {
   }
 
   String _buildErrorTextForGameExecutable(GameExecutable uge) {
-    String error ="";
+    String error = "";
 
-    if(uge.relativeExePath.contains("mygame")){
-      print("yeah");
-    }
-    if(uge.errors.contains(GameExecutableError.BrokenExecutable)) {
-      error+=tr('broken_executable');
+    GameExecutableError? exeError = uge.errors.firstWhereOrNull((element) => element.type == GameExecutableErrorType.BrokenExecutable);
+    if (exeError!=null) {
+      error += tr('broken_executable');
     }
 
-    if(uge.errors.contains(GameExecutableError.InvalidProton)) {
-      if(error.isNotEmpty) {
-        error+="\n\n";
+    exeError = uge.errors.firstWhereOrNull((element) => element.type == GameExecutableErrorType.InvalidProton);
+    if (exeError!=null) {
+      if (error.isNotEmpty) {
+        error += "\n\n";
       }
-      error+=tr('invalid_compat_tool',args: [uge.compatToolCode]);
+      error += tr('invalid_compat_tool', args: [exeError.data]);
     }
 
     return error;
   }
-
 }

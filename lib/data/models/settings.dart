@@ -8,7 +8,7 @@ class Settings {
   Settings.fromJson(Map<String, dynamic> json) {
     currentUserId = json['currentUserId'];
 
-    Map<String,dynamic> userSettings = json['userSettings'];
+    Map<String, dynamic> userSettings = json['userSettings'];
 
     _userSettings = userSettings.map((key, value) => MapEntry(key, UserSettings.fromJson(value)));
   }
@@ -22,7 +22,7 @@ class Settings {
   }
 
   void setUserSettings(String userId, UserSettings settings) {
-    _userSettings[userId]=settings;
+    _userSettings[userId] = settings;
   }
 
   Settings clone() {
@@ -44,18 +44,30 @@ class UserSettings {
   bool backupsEnabled = true;
   int maxBackupsCount = 5;
 
+  bool closeSteamAtStartUp = true;
+
+  bool warnSteamOpenWhenSaving = true;
+
   UserSettings();
 
   UserSettings.fromJson(Map<String, dynamic> json) {
     searchPaths = json['searchPaths'].map<String>((e) => e as String).toList();
     defaultCompatTool = json['defaultCompatTool'];
     darkTheme = json['darkTheme'];
+    closeSteamAtStartUp = json['closeSteamAtStartUp'];
     backupsEnabled = json['backupsEnabled'];
     maxBackupsCount = json['maxBackupsCount'];
   }
 
   Map<String, dynamic> toJson() {
-    return {'searchPaths': searchPaths, 'defaultCompatTool': defaultCompatTool,  'darkTheme':darkTheme, 'backupsEnabled': backupsEnabled, 'maxBackupsCount': maxBackupsCount};
+    return {
+      'searchPaths': searchPaths,
+      'defaultCompatTool': defaultCompatTool,
+      'darkTheme': darkTheme,
+      'closeSteamAtStartUp': closeSteamAtStartUp,
+      'backupsEnabled': backupsEnabled,
+      'maxBackupsCount': maxBackupsCount
+    };
   }
 
   UserSettings clone() {

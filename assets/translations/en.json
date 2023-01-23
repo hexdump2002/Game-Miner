@@ -68,6 +68,8 @@
   "backup_count": "Backup count",
   "select_none": "Select none",
   "select_all": "Select all",
-  "delete_selected": "Delete selected"
+  "delete_selected": "Delete selected",
+  "broken_executable": "* Executable does not exist",
+  "invalid_compat_tool": "* Compat tool '{}' does not exist."
 
 }

@@ -58,9 +58,15 @@ class SteamTools {
     return crc;
   }
 
-  static Future<bool> openSteamClient() async{
-    var result = await Process.run('steam',[]);
-    return result.exitCode==0;
+  static Future<bool> openSteamClient(bool wait) async{
+    var future = Process.run('steam', []);
+
+    if(wait) {
+      var result = await future;
+      return result.exitCode == 0;
+    }
+
+    return true;
   }
 
   static Future<bool> closeSteamClient() async{

@@ -94,6 +94,14 @@ class FileTools {
     return {'fileCount': fileCount, 'size': totalSize};
   }
 
+  static bool existsFileSync(String path) {
+    return File(path).existsSync();
+  }
+
+  static bool existsFolderSync(String path) {
+    return Directory(path).existsSync();
+  }
+
   static Future<bool> existsFile(String path) async{
     return await File(path).exists();
   }

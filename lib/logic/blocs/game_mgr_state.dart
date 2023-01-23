@@ -28,8 +28,9 @@ class BaseDataChanged extends GameMgrBaseState {
 }
 
 class GamesDataRetrieved extends BaseDataChanged {
-  GamesDataRetrieved( List<GameView> games,
-       List<String> availableProntonNames,
+  GamesDataRetrieved(
+      List<GameView> games,
+      List<String> availableProntonNames,
       int nonAddedGamesCount,
       int addedGamesCount,
       int fullyAddedGamesCount,

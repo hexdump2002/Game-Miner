@@ -1,10 +1,20 @@
 import 'package:game_miner/data/models/compat_tool_mapping.dart';
 import 'package:game_miner/data/models/steam_shortcut_game.dart';
 import 'package:path/path.dart' as p;
+import 'package:collection/collection.dart';
 
 import '../../logic/Tools/string_tools.dart';
 
+enum GameExecutableErrorType {InvalidProton, BrokenExecutable}
+
+class GameExecutableError {
+  GameExecutableErrorType type;
+  String data;
+  GameExecutableError(this.type,this.data);
+}
+
 class GameExecutable {
+  List<GameExecutableError> errors = [];
   late bool brokenLink;
   late String relativeExePath;
   late String name;
@@ -39,10 +49,15 @@ class GameExecutable {
     appId = 0;
     startDir = p.dirname(absoluteExePath);
 
-    clearCompatTOolMappingData();
+    clearCompatToolMappingData();
   }
 
-  GameExecutable.asExternal(SteamShortcut nonSteamGameExe, {CompatToolMapping? protonMapping}) {
+  bool hasErrorType(GameExecutableErrorType geet) {
+    return errors.firstWhereOrNull((element) => element.type == geet)!=null;
+  }
+
+
+  GameExecutable.asExternal(SteamShortcut nonSteamGameExe,this.brokenLink, {CompatToolMapping? protonMapping}) {
     relativeExePath = nonSteamGameExe.exePath;
     entryId = nonSteamGameExe.entryId;
     appId = nonSteamGameExe.appId;
@@ -77,7 +92,7 @@ class GameExecutable {
     compatToolPriority = priority;
   }
 
-  void clearCompatTOolMappingData() {
+  void clearCompatToolMappingData() {
     compatToolCode = "None";
     compatToolConfig = "";
     compatToolPriority = "0";

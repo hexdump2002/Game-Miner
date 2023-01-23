@@ -6,6 +6,10 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:game_miner/data/repositories/compat_tools_repository.dart';
+import 'package:get_it/get_it.dart';
+import 'package:get_it/get_it.dart';
+import 'package:get_it/get_it.dart';
 import 'package:get_it/get_it.dart';
 import 'package:meta/meta.dart';
 import 'package:universal_disk_space/universal_disk_space.dart';
@@ -76,12 +80,16 @@ class SplashCubit extends Cubit<SplashState> {
     }
 
     //Close steam client
-    //SteamTools.closeSteamClient();
+    if(settings.getCurrentUserSettings()!.closeSteamAtStartUp) {
+      SteamTools.closeSteamClient();
+    }
 
     SteamConfigRepository scr = GetIt.I<SteamConfigRepository>();
     List<String> paths = scr.getConfig().libraryFolders.map((e) => e.path).toList();
     AppsStorageRepository repo = GetIt.I<AppsStorageRepository>();
     List<AppStorage>? steamApps = await repo.load(settings.currentUserId, paths);
+
+    GetIt.I<CompatToolsRepository>().loadCompatTools();
 
     /*SchedulerBinding.instance.addPostFrameCallback((_) {
       Navigator.pushReplacementNamed(context, "/main");

@@ -3,8 +3,10 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_dialogs/flutter_dialogs.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:game_miner/data/models/steam_config.dart';
 import 'package:game_miner/data/repositories/steam_user_repository.dart';
+import 'package:game_miner/logic/Tools/steam_tools.dart';
 import 'package:game_miner/logic/blocs/game_data_mgr_cubit.dart';
 import 'package:game_miner/logic/blocs/main_dart_cubit.dart';
 import 'package:game_miner/logic/blocs/game_mgr_cubit.dart';
@@ -61,86 +63,102 @@ class _MainPageState extends State<MainPage> {
   }
 
   Widget _buildVerticalMenu(BuildContext context, SteamUser su, int selectedIndex) {
-    return Row(
+    return Column(
       children: [
-        NavigationRail(
-          selectedIndex: selectedIndex,
-          groupAlignment: 0,
-          onDestinationSelected: (int index) {
-            BlocProvider.of<MainPageCubit>(context).selectedIndex = index;
-          },
-          labelType: NavigationRailLabelType.all,
-          leading: Tooltip(
-            message: su.personName,
-            child: InkWell(
-              onTap: () => _showUserSelector(context, "Change user"),
-              child: CircleAvatar(
-                radius: 35,
-                child: ClipOval(
-                  child: CircleAvatar(
-                      radius: 30,
-                      child: su.avatarUrlMedium != null
-                          ? CachedNetworkImage(imageUrl: su.avatarUrlMedium!,
-                              placeholder: (context, url) => CircularProgressIndicator(),
-                              errorWidget: (context, error, stackTrace) {
-                                return const Icon(Icons.person);
-                              },
-                            )
-                          : const Icon(Icons.person)),
+        Expanded(
+          child: NavigationRail(
+            selectedIndex: selectedIndex,
+            groupAlignment: 0,
+            onDestinationSelected: (int index) {
+              BlocProvider.of<MainPageCubit>(context).selectedIndex = index;
+            },
+            labelType: NavigationRailLabelType.all,
+            leading: Tooltip(
+              message: su.personName,
+              child: InkWell(
+                onTap: () => _showUserSelector(context, "Change user"),
+                child: CircleAvatar(
+                  radius: 35,
+                  child: ClipOval(
+                    child: CircleAvatar(
+                        radius: 30,
+                        child: su.avatarUrlMedium != null
+                            ? CachedNetworkImage(imageUrl: su.avatarUrlMedium!,
+                                placeholder: (context, url) => CircularProgressIndicator(),
+                                errorWidget: (context, error, stackTrace) {
+                                  return const Icon(Icons.person);
+                                },
+                              )
+                            : const Icon(Icons.person)),
+                  ),
                 ),
               ),
             ),
-          ),
+            /*trailing: IconButton(
+              onPressed: () {
+                // Add your onPressed code here!
+              },
+              icon: const Icon(Icons.more_horiz_rounded),
+            ),*/
+            destinations: const <NavigationRailDestination>[
+              NavigationRailDestination(
+                icon: Icon(Icons.gamepad_outlined, size: 40),
+                selectedIcon: Icon(Icons.gamepad, size: 40),
+                label: Padding(
+                  padding: EdgeInsets.fromLTRB(0, 8, 0, 0),
+                  child: Text('Manager'),
+                ),
+              ),
+              NavigationRailDestination(
+                icon: Icon(Icons.cleaning_services_outlined, size: 40),
+                selectedIcon: Icon(Icons.cleaning_services, size: 40),
+                label: Padding(
+                  padding: EdgeInsets.fromLTRB(0, 8, 0, 0),
+                  child: Text('Cleaner'),
+                ),
+              ),
+              NavigationRailDestination(
+                icon: Icon(Icons.settings_outlined, size: 40),
+                selectedIcon: Icon(Icons.settings, size: 40),
+                label: Padding(
+                  padding: EdgeInsets.fromLTRB(0, 8, 0, 0),
+                  child: Text('Settings'),
+                ),
+              ),
+              NavigationRailDestination(
+                icon: Icon(
+                  Icons.info_outline,
+                  size: 40,
+                ),
+                selectedIcon: Icon(Icons.info, size: 40),
+                label: Padding(
+                  padding: EdgeInsets.fromLTRB(0, 8, 0, 0),
+                  child: Text('Information'),
+                ),
+              ),
 
-          /*
-              : const SizedBox(),
-          trailing: showTrailing
-              ? IconButton(
-            onPressed: () {
-              // Add your onPressed code here!
-            },
-            icon: const Icon(Icons.more_horiz_rounded),
-          )
-              : const SizedBox(),*/
-          destinations: const <NavigationRailDestination>[
-            NavigationRailDestination(
-              icon: Icon(Icons.gamepad_outlined, size: 40),
-              selectedIcon: Icon(Icons.gamepad, size: 40),
-              label: Padding(
-                padding: EdgeInsets.fromLTRB(0, 8, 0, 0),
-                child: Text('Manager'),
-              ),
+            ],
+          ),
+        ),
+        Tooltip(
+          message: tr("open_steam"),
+          child: IconButton(
+            //splashRadius: 64,
+            iconSize: 64,
+            icon: Ink.image(
+              image: AssetImage("assets/images/steam.png")
             ),
-            NavigationRailDestination(
-              icon: Icon(Icons.cleaning_services_outlined, size: 40),
-              selectedIcon: Icon(Icons.cleaning_services, size: 40),
-              label: Padding(
-                padding: EdgeInsets.fromLTRB(0, 8, 0, 0),
-                child: Text('Cleaner'),
-              ),
-            ),
-            NavigationRailDestination(
-              icon: Icon(Icons.settings_outlined, size: 40),
-              selectedIcon: Icon(Icons.settings, size: 40),
-              label: Padding(
-                padding: EdgeInsets.fromLTRB(0, 8, 0, 0),
-                child: Text('Settings'),
-              ),
-            ),
-            NavigationRailDestination(
-              icon: Icon(
-                Icons.info_outline,
-                size: 40,
-              ),
-              selectedIcon: Icon(Icons.info, size: 40),
-              label: Padding(
-                padding: EdgeInsets.fromLTRB(0, 8, 0, 0),
-                child: Text('Information'),
-              ),
-            )
-          ],
+            onPressed: () async {
+              // do something when the button is pressed
+              EasyLoading.show(status: tr("opening_steam"));
+              SteamTools.openSteamClient(false);
+              await Future.delayed(const Duration(seconds: 3));
+              EasyLoading.dismiss();
+
+            }),
         ),
       ],
+
     );
   }
 

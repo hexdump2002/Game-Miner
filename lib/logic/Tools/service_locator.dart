@@ -7,7 +7,6 @@ import 'package:game_miner/data/data_providers/settings_data_provider.dart';
 import 'package:game_miner/data/data_providers/steam_apps_data_provider.dart';
 import 'package:game_miner/data/data_providers/steam_config_data_provider.dart';
 import 'package:game_miner/data/data_providers/steam_shortcuts_data_provider.dart';
-import 'package:game_miner/data/repositories/compat_tools_mapping_repository.dart';
 import 'package:game_miner/data/repositories/compat_tools_repository.dart';
 import 'package:game_miner/data/repositories/game_miner_data_repository.dart';
 import 'package:game_miner/data/repositories/games_repository.dart';
@@ -42,7 +41,6 @@ void setupServiceLocator()  {
 
   //Repositories
   serviceLocator.registerLazySingleton<CompatToolsRepository>(() => CompatToolsRepository());
-  serviceLocator.registerLazySingleton<CompatToolsMappipngRepository>(()=>CompatToolsMappipngRepository());
   serviceLocator.registerLazySingleton<GamesRepository>(() => GamesRepository());
   serviceLocator.registerLazySingleton<AppsStorageRepository>(() => AppsStorageRepository());
   //serviceLocator.registerLazySingleton<SteamUserRepository>(() => SteamUserRepository());

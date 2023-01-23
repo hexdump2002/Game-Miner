@@ -53,87 +53,103 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Widget _buildGeneralOptions(UserSettings settings) {
+    var padding = EdgeInsets.fromLTRB(8, 8,8, 0);
     return Expanded(
         flex: 4,
         child: Card(
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Row(
-                  children: [
-                    Text(
-                      tr("general_options"),
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                    ),
-                  ],
-                ),
-              ),
-              Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Row(children: [
-                    Expanded(child: Text(tr("default_proton"))),
-                    Expanded(
-                      child: DropdownButtonFormField<String>(
-                          items: _bloc.getAvailableCompatToolDisplayNames().map<DropdownMenuItem<String>>((String e) {
-                            return DropdownMenuItem<String>(value: e, child: Text(e));
-                          }).toList(),
-                          value: _bloc.getDefaultCompatToolDisplayNameFromCode(),
-                          onChanged: (String? value) =>
-                          _bloc.setDefaultCompatToolFromName(value!),
-                          decoration: const InputDecoration()),
-                    )
-                  ])),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Row(
-                  children: [
-                    Expanded(child: Text(tr("dark_theme"))),
-                    Switch(
-                        value: settings.darkTheme,
-                        onChanged: (value) {
-                          _bloc.setDarkThemeState(value);
-                        }),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Row(
-                  children: [
-                    Expanded(child: Text(tr("enable_backups"))),
-                    Switch(
-                        value: settings.backupsEnabled,
-                        onChanged: (value) {
-                          _bloc.setEnableBackups(value);
-                        }),
-                  ],
-                ),
-              ),
-              if(settings.backupsEnabled)  Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Row(
-                  children: [
-                    Expanded(child: Text(tr("backup_count"))),
-                    Expanded(
-                      child: Slider(
-                        min: 1.0,
-                        max: 10.0,
-                        divisions: 10,
-                        value: settings.maxBackupsCount.toDouble(),
-                        label: '${settings.maxBackupsCount}',
-                        onChanged: (value) {
-                          setState(() {
-                            _bloc.setMaxBackupCount(value);
-                          });
-                        },
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: Row(
+                    children: [
+                      Text(
+                        tr("general_options"),
+                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                       ),
-                    )
-                  ],
+                    ],
+                  ),
                 ),
-              ),
+                Padding(
+                    padding: padding,
+                    child: Row(children: [
+                      Expanded(child: Text(tr("default_proton"))),
+                      Expanded(
+                        child: DropdownButtonFormField<String>(
+                            items: _bloc.getAvailableCompatToolDisplayNames().map<DropdownMenuItem<String>>((String e) {
+                              return DropdownMenuItem<String>(value: e, child: Text(e));
+                            }).toList(),
+                            value: _bloc.getDefaultCompatToolDisplayNameFromCode(),
+                            onChanged: (String? value) =>
+                            _bloc.setDefaultCompatToolFromName(value!),
+                            decoration: const InputDecoration()),
+                      )
+                    ])),
+                Padding(
+                  padding: padding,
+                  child: Row(
+                    children: [
+                      Expanded(child: Text(tr("dark_theme"))),
+                      Switch(
+                          value: settings.darkTheme,
+                          onChanged: (value) {
+                            _bloc.setDarkThemeState(value);
+                          }),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: padding,
+                  child: Row(
+                    children: [
+                      Expanded(child: Text(tr("settings_close_steam_at_startup"))),
+                      Switch(
+                          value: settings.closeSteamAtStartUp,
+                          onChanged: (value) {
+                            _bloc.setCloseSteamAtStartUp(value);
+                          }),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: padding,
+                  child: Row(
+                    children: [
+                      Expanded(child: Text(tr("enable_backups"))),
+                      Switch(
+                          value: settings.backupsEnabled,
+                          onChanged: (value) {
+                            _bloc.setEnableBackups(value);
+                          }),
+                    ],
+                  ),
+                ),
+                if(settings.backupsEnabled)  Padding(
+                  padding: padding,
+                  child: Row(
+                    children: [
+                      Expanded(child: Text(tr("backup_count"))),
+                      Expanded(
+                        child: Slider(
+                          min: 1.0,
+                          max: 10.0,
+                          divisions: 10,
+                          value: settings.maxBackupsCount.toDouble(),
+                          label: '${settings.maxBackupsCount}',
+                          onChanged: (value) {
+                            setState(() {
+                              _bloc.setMaxBackupCount(value);
+                            });
+                          },
+                        ),
+                      )
+                    ],
+                  ),
+                ),
 
-            ],
+              ],
+            ),
           ),
         ));
   }
