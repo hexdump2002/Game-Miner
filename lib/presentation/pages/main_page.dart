@@ -76,7 +76,7 @@ class _MainPageState extends State<MainPage> {
             leading: Tooltip(
               message: su.personName,
               child: InkWell(
-                onTap: () => _showUserSelector(context, "Change user"),
+                onTap: () => _showUserSelector(context, tr("change_user")),
                 child: CircleAvatar(
                   radius: 35,
                   child: ClipOval(

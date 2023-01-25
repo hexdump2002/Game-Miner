@@ -21,10 +21,11 @@ class BaseDataChanged extends GameMgrBaseState {
   final int totalSDCardSpace;
   final List<bool> sortStates;
   final List<bool> sortDirectionStates;
+  final String searchText;
 
 
   BaseDataChanged(this.games, this.availableProntonNames, this.notAddedGamesCount, this.addedGamesCount, this.fullyAddedGamesCount, this.addedExternal,this.freeSSDSpace,
-      this.freeSDCardSpace, this.totalSSDSpace, this.totalSDCardSpace, this.sortStates, this.sortDirectionStates);
+      this.freeSDCardSpace, this.totalSSDSpace, this.totalSDCardSpace, this.sortStates, this.sortDirectionStates, this.searchText);
 }
 
 class GamesDataRetrieved extends BaseDataChanged {
@@ -40,7 +41,8 @@ class GamesDataRetrieved extends BaseDataChanged {
       int totalSSDSpace,
       int totalSDCardSpace,
       List<bool> sortStates,
-      List<bool> sortDirectionStates)
+      List<bool> sortDirectionStates,
+      String searchText)
       : super(
       games,
       availableProntonNames,
@@ -53,7 +55,8 @@ class GamesDataRetrieved extends BaseDataChanged {
       totalSSDSpace,
       totalSDCardSpace,
       sortStates,
-      sortDirectionStates);
+      sortDirectionStates,
+      searchText);
 }
 
 class GamesDataChanged extends BaseDataChanged {
@@ -69,7 +72,8 @@ class GamesDataChanged extends BaseDataChanged {
       int totalSSDSpace,
       int totalSDCardSpace,
       List<bool> sortStates,
-      List<bool> sortDirectionStates)
+      List<bool> sortDirectionStates,
+      String searchText)
       : super(
       games,
       availableProntonNames,
@@ -82,7 +86,8 @@ class GamesDataChanged extends BaseDataChanged {
       totalSSDSpace,
       totalSDCardSpace,
       sortStates,
-      sortDirectionStates);
+      sortDirectionStates,
+      searchText);
 }
 
 class GamesFoldingDataChanged extends BaseDataChanged {
@@ -98,7 +103,8 @@ class GamesFoldingDataChanged extends BaseDataChanged {
       int totalSSDSpace,
       int totalSDCardSpace,
       List<bool> sortStates,
-      List<bool> sortDirectionStates)
+      List<bool> sortDirectionStates,
+      String searchText)
       : super(
       games,
       availableProntonNames,
@@ -111,7 +117,8 @@ class GamesFoldingDataChanged extends BaseDataChanged {
       totalSSDSpace,
       totalSDCardSpace,
       sortStates,
-      sortDirectionStates);
+      sortDirectionStates,
+      searchText);
 }
 
 class SearchTermChanged extends BaseDataChanged {
@@ -127,7 +134,8 @@ class SearchTermChanged extends BaseDataChanged {
       int totalSSDSpace,
       int totalSDCardSpace,
       List<bool> sortStates,
-      List<bool> sortDirectionStates)
+      List<bool> sortDirectionStates,
+      String searchText)
       : super(
       games,
       availableProntonNames,
@@ -140,6 +148,7 @@ class SearchTermChanged extends BaseDataChanged {
       totalSSDSpace,
       totalSDCardSpace,
       sortStates,
-      sortDirectionStates);
+      sortDirectionStates,
+      searchText);
 }
 

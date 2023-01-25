@@ -78,10 +78,16 @@
   "cant_save_with_errors": "Some games have errors. Fix them and try to Save again",
   "cant_rename_with_errors": "Some games have errors. Fix them and try to Rename again",
   "steam_is_running_cant_action": "We have detected that Steam is running. Game miner needs Steam to be closed to proceed with this action. ¿Do you want to close Steam now?",
+  "open_steam": "Open Steam",
   "closing_steam": "Closing Steam",
   "exporting_game_config": "Exporting game config in {}",
-  "game_config_exported": "Game config was exported in {}"
-
-
-
+  "game_config_exported": "Game config was exported in {}",
+  "export_config": "Export config",
+  "data_not_saved_refresh_caption": "Warning",
+  "data_not_saved_refresh": "There is data that you haven't saved. If you refresh you will loose it. Do you want to refresh now?",
+  "data_not_saved_exit_caption": "Warning",
+  "data_not_saved_exit": "There is data that you haven't saved. If you exit Game Miner you will loose it. Do you want to exit now?",
+  "change_user": "Change user",
+  "reset_changing_user": "After changing users Game miner needs to be restarted. Press Ok, and relaunch Game Miner",
+  "game_modified": "With changes"
 }

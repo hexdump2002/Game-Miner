@@ -218,6 +218,8 @@ class GamesRepository extends CacheRepository<Game> {
   }
   
   Future<void> _saveCompatToolMappings(List<Game> games, bool backupsEnabled,{int maxBackupCount=0})  async {
+    List<CompatToolMapping> ctms = await _compatToolsMappingDataProvider.loadCompatToolMappings();
+
     Map<int, CompatToolMapping> usedProtonMappings = {};
     games.forEach((e) {
       e.exeFileEntries.forEach((uge) {
@@ -230,19 +232,33 @@ class GamesRepository extends CacheRepository<Game> {
       });
     });
 
-    List<CompatToolMapping> compatToolMappings = usedProtonMappings.entries.map((entry) => entry.value).toList();
+    //Merge our old compat tool list
+    List<CompatToolMapping> usedCompatToolMappings = usedProtonMappings.entries.map((entry) => entry.value).toList();
+    for(CompatToolMapping usedProtonMapping in usedCompatToolMappings) {
+      CompatToolMapping? foundCtm = ctms.firstWhereOrNull((element) => usedProtonMapping.id == element.id);
+      if(foundCtm!=null) {
+        foundCtm.name = usedProtonMapping.name;
+        foundCtm.config = usedProtonMapping.config;
+        foundCtm.priority = usedProtonMapping.priority;
+      }
+      else {
+        ctms.add(usedProtonMapping);
+      }
+    }
+
+
 
     String homeFolder = FileTools.getHomeFolder();
     String configPath = "$homeFolder/.local/share/Steam/config/config.vdf";
 
     if (backupsEnabled) {
       Map<String, dynamic> extraParams = {"sourceFile": configPath};
-      await FileTools.saveFileSecure<List<CompatToolMapping>>(configPath, compatToolMappings, extraParams,
+      await FileTools.saveFileSecure<List<CompatToolMapping>>(configPath, ctms, extraParams,
               (String path, List<CompatToolMapping> games, Map<String, dynamic> extraParams) async {
-            return await _doSaveCompatToolMappings(path, compatToolMappings, extraParams);
+            return await _doSaveCompatToolMappings(path, ctms, extraParams);
           }, maxBackupCount);
     } else {
-      await _doSaveCompatToolMappings(configPath, compatToolMappings, <String, dynamic>{});
+      await _doSaveCompatToolMappings(configPath, ctms, <String, dynamic>{});
     }
   }
 

@@ -172,7 +172,7 @@ class GameDataMgrCubit extends Cubit<GameDataMgrState> {
             },
           ),
           BasicDialogAction(
-            title: Text(tr("Cancel")),
+            title: Text(tr("cancel")),
             onPressed: () {
               Navigator.pop(context);
             },
@@ -256,9 +256,9 @@ class GameDataMgrCubit extends Cubit<GameDataMgrState> {
     if (_sortingColumnIndex==1) {
       sortByName(_sortingColumnIndex, _sortAscending,emitEvent);
     } else if (_sortingColumnIndex==2) {
-      sortByStorageType(_sortingColumnIndex, _sortAscending,emitEvent);
+      sortBySize (_sortingColumnIndex, _sortAscending,emitEvent);
     } else if(_sortingColumnIndex==3){
-      sortBySize(_sortingColumnIndex, _sortAscending,emitEvent);
+      sortByStorageType(_sortingColumnIndex, _sortAscending,emitEvent);
     }
     else if(_sortingColumnIndex==4){
       sortBySteam(_sortingColumnIndex, _sortAscending,emitEvent);
@@ -390,7 +390,7 @@ class GameDataMgrCubit extends Cubit<GameDataMgrState> {
             },
           ),
           BasicDialogAction(
-            title: Text(tr("Cancel")),
+            title: Text(tr("cancel")),
             onPressed: () {
               Navigator.pop(context);
             },

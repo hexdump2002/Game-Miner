@@ -24,7 +24,7 @@ class GameTools {
       if (ge.added && ge.brokenLink) ge.errors.add(GameExecutableError(GameExecutableErrorType.BrokenExecutable, ""));
       if (!hasExecutableCorrectProtonsAssigned(ge)) {
         ge.errors.add(GameExecutableError(GameExecutableErrorType.InvalidProton, ge.compatToolCode));
-        ge.compatToolCode = "None";
+        //ge.compatToolCode = "None";
       }
     }
   }

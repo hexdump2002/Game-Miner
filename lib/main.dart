@@ -20,6 +20,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:game_miner/presentation/pages/splash_page.dart';
 import 'package:get_it/get_it.dart';
+import 'package:window_manager/window_manager.dart';
 
 
 import 'data/models/settings.dart';
@@ -37,6 +38,7 @@ void main() async {
 
   // Needs to be called so that we can await for EasyLocalization.ensureInitialized();
   WidgetsFlutterBinding.ensureInitialized();
+  await windowManager.ensureInitialized();
   await EasyLocalization.ensureInitialized();
 
   runApp(EasyLocalization(child: MyApp(), supportedLocales: [Locale('en'), Locale('es')], path: 'assets/translations', fallbackLocale: Locale('en')));

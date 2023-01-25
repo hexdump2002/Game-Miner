@@ -39,7 +39,7 @@ class _GameDataMgrPageState extends State<GameDataMgrPage> {
               }),*/
           actions: [
             Expanded(
-              child: Padding(padding: const EdgeInsets.fromLTRB(8, 8, 16, 8), child: SearchBar((term) => _bloc.filterByName(term))),
+              child: Padding(padding: const EdgeInsets.fromLTRB(8, 8, 16, 8), child: SearchBar("", (term) => _bloc.filterByName(term))),
             ),
             BlocBuilder<GameDataMgrCubit, GameDataMgrState>(builder: (context, state) {
               return Row(children: [

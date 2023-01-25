@@ -52,7 +52,7 @@ class _SplashPageState extends State<SplashPage> {
           child: Container(
               width: width,
               height: height,
-              color: Color.fromARGB(255, 0x34, 02, 0x52),
+              color: const Color.fromARGB(255, 38, 44,54),
               child: Column(
                 children: [
                   Expanded(
@@ -79,13 +79,13 @@ class _SplashPageState extends State<SplashPage> {
                       children: [
                         Expanded(child: Container()),
                         Container(
-                          decoration: BoxDecoration(color:Colors.purple.shade800, borderRadius: BorderRadius.only(bottomLeft: Radius.circular(15), topLeft: Radius.circular(15))),
+                          decoration: BoxDecoration(color:Colors.blueGrey.shade800, borderRadius: BorderRadius.only(bottomLeft: Radius.circular(15), topLeft: Radius.circular(15))),
                           child: Padding(
                             padding: const EdgeInsets.all(16.0),
                             child: Row(children: [
                               Text(
                                 "Initializing...  ",
-                                style: TextStyle(fontSize: 20, color:Colors.purpleAccent.shade100),
+                                style: TextStyle(fontSize: 20, color:Colors.blueGrey.shade300),
                               ),
                               SizedBox(width: 20, height: 20, child: const CircularProgressIndicator(color:Colors.white70))
                             ], mainAxisAlignment: MainAxisAlignment.end),

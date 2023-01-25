@@ -10,9 +10,10 @@ typedef SearchFunction(String searchTerm);
 class SearchBar extends StatefulWidget {
   late final SearchFunction _searchFunction;
   final Debouncer _debouncer = Debouncer(milliseconds: 500);
-
-  SearchBar( SearchFunction searchFunction, {Key? key}) : super(key: key) {
+  late final _initialTerm;
+  SearchBar( String initialTerm, SearchFunction searchFunction, {Key? key}) : super(key: key) {
     _searchFunction = searchFunction;
+    _initialTerm = initialTerm;
   }
 
   @override
@@ -21,6 +22,12 @@ class SearchBar extends StatefulWidget {
 
 class _SearchBarState extends State<SearchBar> {
 
+  TextEditingController txtQuery = TextEditingController();
+  @override
+  void initState() {
+    txtQuery.text = widget._initialTerm;
+    super.initState();
+  }
   @override
   Widget build(BuildContext context) {
 
@@ -29,7 +36,8 @@ class _SearchBarState extends State<SearchBar> {
 
     Color bgColor = userSettings.darkTheme ? Colors.white10 : Colors.blue.shade600;
     Color borderColor = userSettings.darkTheme ? Colors.black26 : Colors.blue.shade700;
-    TextEditingController txtQuery = TextEditingController();
+
+
 
     return TextFormField(
       style: const TextStyle(color:Colors.white),

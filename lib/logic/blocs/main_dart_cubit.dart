@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:bloc/bloc.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dialogs/flutter_dialogs.dart';
 import 'package:game_miner/data/repositories/settings_repository.dart';
@@ -8,6 +9,7 @@ import 'package:game_miner/data/repositories/steam_config_repository.dart';
 import 'package:get_it/get_it.dart';
 import 'package:meta/meta.dart';
 
+import '../../data/models/game.dart';
 import '../../data/models/settings.dart';
 import '../../data/models/steam_config.dart';
 
@@ -25,6 +27,8 @@ class MainPageCubit extends Cubit<MainPageState> {
   int get selectedIndex => _selectecIndex;
 
   MainPageCubit(SteamUser su) : super(MainPageInitial(su));
+
+
 
   //Fix move to wherever it may be
   static SteamUser getSteamUser() {
@@ -51,7 +55,7 @@ class MainPageCubit extends Cubit<MainPageState> {
     showPlatformDialog(context: context,
       builder: (context) =>
           BasicDialogAlert(title: const Text("Restart"),
-              content: const Text("After changing users Game miner needs to be restarted. Press Ok, and relaunch Game Miner"),actions: [  BasicDialogAction(
+              content:  Text(tr("reset_changing_user")),actions: [  BasicDialogAction(
                 title: const Text("OK"),
                 onPressed: () {
                   exit(0);

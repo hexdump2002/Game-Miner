@@ -16,11 +16,14 @@ import 'package:game_miner/main.dart';
 import 'package:game_miner/presentation/widgets/searchbar/searchbar_widget.dart';
 import 'package:get_it/get_it.dart';
 import 'package:collection/collection.dart';
+import 'package:window_manager/window_manager.dart';
 import '../../data/models/game_executable.dart';
 import '../../data/models/game.dart';
 import '../../data/models/settings.dart';
 import '../../logic/Tools/game_tools.dart';
 
+
+//WARNING: THIS CLASS USES A LOT OF NON BEST PRACTICES. FOR EXAMPLE: A CUBIT SHOULD BE PORTABLE AND THIS ONE RECEIVES A LOT OF BUILDCONTEXT
 class GameMgrPage extends StatefulWidget {
   const GameMgrPage({Key? key}) : super(key: key);
 
@@ -28,11 +31,42 @@ class GameMgrPage extends StatefulWidget {
   State<GameMgrPage> createState() => _GameMgrPageState();
 }
 
-class _GameMgrPageState extends State<GameMgrPage> {
+class _GameMgrPageState extends State<GameMgrPage> with WindowListener {
   final _formKey = GlobalKey<FormState>();
 
   @override
-  void initState() {}
+  void initState() {
+    windowManager.addListener(this);
+    _init();
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    windowManager.removeListener(this);
+    super.dispose();
+  }
+
+  @override
+  void onWindowClose() async {
+    if(!_nsCubit(context).canExit())
+    {
+      _nsCubit(context).showSimpleDialog(context, tr("data_not_saved_exit_caption"), tr('data_not_saved_exit'), true, true, () async {
+        Navigator.of(context).pop();
+        await windowManager.destroy();
+      });
+    }
+    else {
+      await windowManager.destroy();
+    }
+  }
+
+  void _init() async {
+    // Add this line to override the default close handler
+    await windowManager.setPreventClose(true);
+    setState(() {});
+  }
+
 
   GameMgrCubit _nsCubit(context) => BlocProvider.of<GameMgrCubit>(context);
   final UserSettings _userSettings = GetIt.I<SettingsRepository>()!.getSettingsForCurrentUser()!;
@@ -48,7 +82,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
           title: Text("Game Manager"),
           actions: [
             Expanded(
-              child: Padding(padding: const EdgeInsets.fromLTRB(8, 8, 16, 8), child: SearchBar((term) => _nsCubit(context).filterGamesByName(term))),
+              child: Padding(padding: const EdgeInsets.fromLTRB(8, 8, 16, 8), child: SearchBar( _nsCubit(context).searchText, (term) => _nsCubit(context).filterGamesByName(term))),
             ),
             BlocBuilder<GameMgrCubit, GameMgrBaseState>(
               builder: (context, state) {
@@ -60,13 +94,13 @@ class _GameMgrPageState extends State<GameMgrPage> {
                         onPressed: (int index) {
                           var nsgpBloc = _nsCubit(context);
                           if (index == 0) {
-                            nsgpBloc.sortByName();
+                            nsgpBloc.sortFilteredByName();
                           } else if (index == 1) {
-                            nsgpBloc.sortByStatus();
+                            nsgpBloc.sortFilteredByStatus();
                           } else if (index == 2) {
-                            nsgpBloc.sortBySize();
+                            nsgpBloc.sortFilteredBySize();
                           } else if (index == 3) {
-                            nsgpBloc.sortByWithErrors();
+                            nsgpBloc.sortFilteredByWithErrors();
                           }
                         },
                         borderRadius: const BorderRadius.all(Radius.circular(8)),
@@ -126,7 +160,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
                   ),
                   IconButton(
                     onPressed: () {
-                      _nsCubit(context).refresh();
+                      _nsCubit(context).refresh(context);
                     },
                     icon: Icon(Icons.refresh),
                     tooltip: tr("refresh"),
@@ -212,7 +246,8 @@ class _GameMgrPageState extends State<GameMgrPage> {
   }
 
   Widget _buildMenu(GameView gameView) {
-    return FlutterPopupMenuButton(
+    return !gameView.game.isExternal ?
+      FlutterPopupMenuButton(
       direction: MenuDirection.left,
       decoration: const BoxDecoration(borderRadius: BorderRadius.all(Radius.circular(20)), color: Colors.white),
       popupMenuSize: const Size(200, 200),
@@ -240,14 +275,14 @@ class _GameMgrPageState extends State<GameMgrPage> {
               title: Text(tr("rename_game"), style: TextStyle(color:Colors.black)),
             )),
 
-        if(!gameView.game.isExternal) FlutterPopupMenuItem(
+        FlutterPopupMenuItem(
             closeOnItemClick: true,
             onTap: ()=> _nsCubit(context).tryDeleteGame(context, gameView.game),
             child: ListTile(
               leading: Icon(Icons.delete,color:Colors.grey),
-              title: Text("Delete", style: TextStyle(color:Colors.black)),
+              title: Text(tr("delete"), style: TextStyle(color:Colors.black)),
             )),
-        if(!gameView.game.isExternal)
+
         FlutterPopupMenuItem(
             closeOnItemClick: true,
             onTap: () => _nsCubit(context).exportGame(gameView.game),
@@ -257,12 +292,11 @@ class _GameMgrPageState extends State<GameMgrPage> {
               title: Text("Export config", style: TextStyle(color:Colors.black)),
             )),
       ],
-    );
+    ):  Icon(Icons.more_vert,color: _userSettings.darkTheme ? Colors.grey.shade700 : Colors.grey.shade300);
   }
 
   Widget _createGameCards(BuildContext context, BaseDataChanged state, CustomTheme themeExtension) {
     var gamesView = state.games;
-
     return Form(
         key: _formKey,
         child: ListView.builder(
@@ -270,7 +304,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
             itemBuilder: (BuildContext context, int index) {
               var gameView = gamesView[index];
               return ExpandablePanel(
-                controller: ExpandableController(initialExpanded: gamesView[index].isExpanded)
+                controller: ExpandableController(initialExpanded: gameView.isExpanded)
                   ..addListener(() => _nsCubit(context).swapExpansionStateForItem(index)),
                 header: ListTile(
                   title: Column(
@@ -292,7 +326,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
                           _buildMenu(gameView)
                         ],
                       ),
-                      if (gamesView[index].isExpanded)
+                      if (gameView.isExpanded)
                         Text(
                           "${gameView.game.path}",
                           textAlign: TextAlign.left,
@@ -305,7 +339,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
                     padding: EdgeInsets.fromLTRB(0, 16, 0, 16),
                     margin: EdgeInsets.fromLTRB(16, 16, 16, 16),
                     decoration: BoxDecoration(borderRadius: BorderRadius.circular(20), color: Colors.black12),
-                    child: _buildGameTile(context, themeExtension, gamesView[index], state.availableProntonNames)),
+                    child: _buildGameTile(context, themeExtension, gameView, state.availableProntonNames)),
                 collapsed: Container(),
               );
             }));
@@ -315,6 +349,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
     List<Widget> gameItems = [];
 
     List<GameExecutable> gameExePaths = gv.game.exeFileEntries;
+
 
     if (gv.game.exeFileEntries.isEmpty) {
       return Padding(
@@ -327,6 +362,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
     }
 
     for (GameExecutable uge in gameExePaths) {
+
       bool added = uge.added;
       bool error = uge.errors.isNotEmpty;
       gameItems.add(Padding(
@@ -369,6 +405,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
   }
 
   Widget _buildGameExeForm(GameView gv, GameExecutable uge, CustomTheme themeExtension, List<String> availableProntons) {
+
     bool hasCompatToolError = uge.hasErrorType(GameExecutableErrorType.InvalidProton);
     if(hasCompatToolError) {
       availableProntons = [tr("invalid_proton_dropdown_item"), ...availableProntons];
@@ -383,10 +420,11 @@ class _GameMgrPageState extends State<GameMgrPage> {
         child: Column(
           children: [
             TextFormField(
+              key: Key(uge.appId.toString()),
               initialValue: uge.name,
               decoration: const InputDecoration(labelText: "Name"),
               autovalidateMode: AutovalidateMode.onUserInteraction,
-              onChanged: (value)  {uge.name = value!; gv.modified = true;},
+              onChanged: (value)  {uge.name = value!; gv.modified = true; _nsCubit(context).notifyDataChanged();},
               /*onSaved: (value) => {
                 uge.name = value!
               },*/
@@ -401,7 +439,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
               initialValue: uge.launchOptions,
               decoration: const InputDecoration(labelText: "Launch Options"),
               autovalidateMode: AutovalidateMode.onUserInteraction,
-              onChanged: (value) {uge.name = value!; gv.modified = true;},
+              onChanged: (value) {uge.name = value!; gv.modified = true; _nsCubit(context).notifyDataChanged();},
               /*onSaved: (value) => {
                 uge.name = value!
               },
@@ -546,13 +584,25 @@ class _GameMgrPageState extends State<GameMgrPage> {
   }
 
   _getErrorsOrModifiedIcon(GameView gv) {
+
+    if(gv.game.path.contains("Blas")) {
+      print("Hllo");
+    }
+
     Icon icon;
     String msg="";
-    if(gv.game.hasErrors()) {
+    bool hasErrors = gv.game.hasErrors();
+    bool modified = gv.modified;
+
+    if(hasErrors && modified) {
+      icon = const Icon(Icons.save, color:  Colors.red);
+      msg = tr("game_modified");
+    }
+    else if(hasErrors) {
       icon = const Icon(Icons.warning, color:  Colors.red);
       msg = tr("game_has_config_errors");
     }
-    else if(gv.modified) {
+    else if(modified) {
       icon = const Icon(Icons.save, color:  Colors.orange);
       msg = tr("game_modified");
     }
