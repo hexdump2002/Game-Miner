@@ -73,7 +73,6 @@
   "invalid_compat_tool": "* Compat tool '{}' does not exist.",
   "sort_by_info":"Sort by notification",
   "game_has_config_errors": "The game has configuration errors",
-  "invalid_proton_dropdown_item": "Invalid",
   "warning": "Warning",
   "cant_save_with_errors": "Some games have errors. Fix them and try to Save again",
   "cant_rename_with_errors": "Some games have errors. Fix them and try to Rename again",
@@ -89,5 +88,11 @@
   "data_not_saved_exit": "There is data that you haven't saved. If you exit Game Miner you will loose it. Do you want to exit now?",
   "change_user": "Change user",
   "reset_changing_user": "After changing users Game miner needs to be restarted. Press Ok, and relaunch Game Miner",
-  "game_modified": "With changes"
+  "game_modified": "With changes",
+  "settings_close_steam_at_startup": "Close Steam at startup",
+  "config_not_saved_exit_caption": "Config not saved",
+  "config_not_saved_exit": "The are configuration changes that have not been saved. If you exit you will loose them. Do you want to exit now?",
+  "data_not_saved_exit_caption": "Game data not saved",
+  "data_not_saved_exit": "The is game data that has not been saved. Do you want to exit?"
+
 }

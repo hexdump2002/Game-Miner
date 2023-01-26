@@ -110,12 +110,18 @@ class Stats {
     int totalFilesSize = 0;
 
     for (var game in games) {
-      var metaData = await FileTools.getFolderMetaData(game.path, recursive: true);
-      var fileCount = metaData['fileCount']!;
-      var size = metaData['size']!;
-      statsByGame.add(GameFolderStats(fileCount, size));
-      totalFilesCount += fileCount;
-      totalFilesSize += size;
+      //We won't do anything with external games
+      if(game.isExternal) {
+        game.gameSize = 0;
+      }
+      else {
+        var metaData = await FileTools.getFolderMetaData(game.path, recursive: true);
+        var fileCount = metaData['fileCount']!;
+        var size = metaData['size']!;
+        statsByGame.add(GameFolderStats(fileCount, size));
+        totalFilesCount += fileCount;
+        totalFilesSize += size;
+      }
     }
 
     return GameFoldersStats(totalFilesCount, totalFilesSize, statsByGame);

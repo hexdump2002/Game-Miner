@@ -17,16 +17,18 @@ part 'settings_state.dart';
 
 class SettingsCubit extends Cubit<SettingsState> {
   late UserSettings _currentUserSettings ; //Settings after modifications
-  late UserSettings _oldCurrentUserSettings; //Settings we got when we entered
+  late UserSettings _oldUserSettings; //Settings we got when we entered
   late String _currentUserId;
+  bool _modified = false;
+  bool get modified => _modified;
 
   List<CompatTool> _availableCompatTools = [];
 
   SettingsCubit() : super(SettingsInitial(UserSettings())) {
     SettingsRepository repo = GetIt.I<SettingsRepository>();
-    _currentUserId = repo.getSettings().currentUserId;
-    _currentUserSettings = repo.getSettingsForCurrentUser()!;
-    _oldCurrentUserSettings = _currentUserSettings.clone();
+    _currentUserId = repo.load().currentUserId;
+    _oldUserSettings = repo.getSettingsForCurrentUser()!;
+    _currentUserSettings = _oldUserSettings.clone();
 
     emit(SettingsLoaded(_currentUserSettings));
   }
@@ -39,10 +41,6 @@ class SettingsCubit extends Cubit<SettingsState> {
 
 
   UserSettings getUserSettings() { return _currentUserSettings;}
-
-  void refresh() {
-    emit(SettingsChangedState(_currentUserSettings));
-  }
 
   List<String> getAvailableCompatToolDisplayNames() {
     List<String> ctn = _availableCompatTools.map<String>( (e) => e.displayName).toList();
@@ -66,6 +64,7 @@ class SettingsCubit extends Cubit<SettingsState> {
 
   void setDefaultCompatToolFromName(String value) {
     _currentUserSettings.defaultCompatTool =  getCompatToolCodeFromDisplayName(value);
+    _modified = true;
   }
 
 
@@ -74,13 +73,14 @@ class SettingsCubit extends Cubit<SettingsState> {
 
     SettingsRepository repo = GetIt.I<SettingsRepository>();
     //Super hacky, this should be inmutable, blah, blah. Just fire up the event
-    repo.update(repo.getSettings());
+
+    repo.updateUserSettings(_currentUserId, _currentUserSettings);
     repo.save();
 
     if(showMessages) EasyLoading.showSuccess(tr("settings_saved"));
 
     //Request a reload next time i
-    if(!_areSettingsPathEqual(_currentUserSettings, _oldCurrentUserSettings)) {
+    if(!_areSettingsPathEqual(_currentUserSettings, _oldUserSettings)) {
       GetIt.I<GamesRepository>().invalidateGamesCache();
     }
 
@@ -92,13 +92,12 @@ class SettingsCubit extends Cubit<SettingsState> {
     FileTools.clampBackupsToCount("$homeFolder/.local/share/Steam/userdata/${_currentUserId}/config/shortcuts.vdf", currentBackups);
     FileTools.clampBackupsToCount("$homeFolder/.local/share/Steam/config/config.vdf", currentBackups);
 
+    //Force a reload for every other using getSettings() get the fresh data
+    //repo.load(forceLoad: true);
+
+    _modified = false;
     emit(SettingsSaved(_currentUserSettings));
   }
-
-  /*bool existsConfig() {
-    Directory appFolder = Directory.current;
-    return File("${appFolder.path}/$_configFilePath").existsSync();
-  }*/
 
   bool _areSettingsPathEqual(UserSettings a, UserSettings b)
   {
@@ -127,6 +126,7 @@ class SettingsCubit extends Cubit<SettingsState> {
       }
       else {
         _currentUserSettings.searchPaths.add(selectedDirectory);
+        _modified=true;
         emit(SearchPathsChanged(_currentUserSettings));
       }
     } else {
@@ -136,26 +136,31 @@ class SettingsCubit extends Cubit<SettingsState> {
 
   removePath(String e) {
     _currentUserSettings.searchPaths.remove(e);
+    _modified=true;
     emit(SearchPathsChanged(_currentUserSettings));
   }
 
   void setDarkThemeState(bool state) {
     _currentUserSettings.darkTheme = state;
+    _modified = true;
     emit(GeneralOptionsChanged(_currentUserSettings));
   }
 
   void setEnableBackups(bool value) {
     _currentUserSettings.backupsEnabled = value;
+    _modified = true;
     emit(GeneralOptionsChanged(_currentUserSettings));
   }
 
   void setMaxBackupCount(double value) {
     _currentUserSettings.maxBackupsCount = value.toInt();
+    _modified = true;
     emit(GeneralOptionsChanged(_currentUserSettings));
   }
 
   void setCloseSteamAtStartUp(bool value) {
     _currentUserSettings.closeSteamAtStartUp = value;
+    _modified = true;
     emit(GeneralOptionsChanged(_currentUserSettings));
   }
 

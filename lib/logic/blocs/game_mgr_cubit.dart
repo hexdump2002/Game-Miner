@@ -30,6 +30,7 @@ import '../../data/models/game_executable.dart';
 import '../../data/models/game.dart';
 import '../../data/models/game_miner_data.dart';
 import '../../data/models/settings.dart';
+import '../Tools/dialog_tools.dart';
 import '../Tools/game_tools.dart';
 
 part 'game_mgr_state.dart';
@@ -52,12 +53,15 @@ class GameView {
 }
 
 class GameMgrCubit extends Cubit<GameMgrBaseState> {
-  static List<Game> _baseGames = [];
-  static List<GameView> _gameViews = [];
-  static List<bool> _sortStates = [true, false, false, false];
-  static List<bool> _sortDirectionStates = [false, true];
-  static String _searchText = "";
+  List<Game> _baseGames = [];
+  List<GameView> _gameViews = [];
+  List<bool> _sortStates = [true, false, false, false];
+  List<bool> _sortDirectionStates = [false, true];
+  String _searchText = "";
   String get  searchText => _searchText;
+
+  bool _modified = false;
+  bool get modified => _gameViews.firstWhereOrNull((element) => element.modified==true)!=null;
 
   List<GameView> _filteredGames = [];
   List<GameView> _sortedFilteredGames = []; //Just to not sort everytime
@@ -68,7 +72,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
 
   //final CompatToolsMappingRepository _compatToolsMappipngRepository = GetIt.I<CompatToolsMappingRepository>();
 
-  late final UserSettings _currentUserSettings;
+  late UserSettings _currentUserSettings;
   late final Settings _settings;
 
   @override
@@ -91,23 +95,19 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
 
   GameMgrCubit() : super(IninitalState()) {
     _settings = GetIt.I<SettingsRepository>().getSettings();
-    _currentUserSettings = _settings!.getUserSettings(_settings!.currentUserId)!;
-    loadData(_currentUserSettings);
   }
 
-  Future<void> loadData(UserSettings settings, {forceUpdate = false}) async {
+  void loadData() {
+    _currentUserSettings = _settings!.getUserSettings(_settings!.currentUserId)!;
+    _loadData(_currentUserSettings);
+  }
+
+
+
+  Future<void> _loadData(UserSettings settings) async {
     final stopwatch = Stopwatch()..start();
-
-    //Defaults
-    if(forceUpdate) {
-      _baseGames = [];
-      _gameViews = [];
-
-      _sortStates = [true, false, false, false];
-      _sortDirectionStates = [false, true];
-    }
-
-    List<Game>? games = _baseGames.isEmpty ? _gameRepository.getGames() : _baseGames;
+    
+    List<Game>? games = _gameRepository.getGames();
 
     if (games == null) {
       print("Cache Miss. Loading Games");
@@ -117,18 +117,19 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
       games = await _gameRepository.loadGames(_settings.currentUserId, _currentUserSettings.searchPaths);
 
       var folderStats = await Stats.getGamesFolderStats(/*_baseGames*/ games);
-      assert(folderStats.statsByGame.length == /*_baseGames*/ games.length);
+      //assert(folderStats.statsByGame.length == /*_baseGames*/ games.length); -> That's not true because we are not adding folder metadatas for external games
 
       for (int i = 0; i < folderStats.statsByGame.length; ++i) {
         games[i].gameSize = folderStats.statsByGame[i].size;
         _gameRepository.update(games[i]);
       }
-    }
-    _baseGames =games!;
 
-    if(_gameViews.isEmpty) {
+      _baseGames =games!;
+
       _gameViews = _generateGameViews(_baseGames);
     }
+
+
     _filteredGames =  [];
     _filteredGames.addAll(_gameViews);
     _availableCompatTools = await _compatToolsRepository.loadCompatTools();
@@ -149,9 +150,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
   List<GameView> _generateGameViews(List<Game> games) {
     List<GameView> gameViews = [];
     for (Game g in games) {
-      if(g.path.contains("Blas")) {
-        print("Yeah");
-      }
+
       GameTools.handleGameExecutableErrorsForGame(g);
       bool modified = g.dataCameFromConfigFile();
 
@@ -161,15 +160,15 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
   }
 
   refresh(BuildContext context) {
-    if(canExit()) {
+    if(!modified) {
       _gameRepository.invalidateGamesCache();
-      loadData(_currentUserSettings, forceUpdate: true);
+      loadData();
     }
     else {
       showSimpleDialog(context, tr("data_not_saved_refresh_caption"), tr('data_not_saved_refresh'), true, true, () async {
 
         _gameRepository.invalidateGamesCache();
-        loadData(_currentUserSettings, forceUpdate: true);
+        loadData();
 
 
       });
@@ -226,22 +225,26 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
         _addedExternalCount, _ssdFreeSizeInBytes, _sdCardFreeInBytes, _ssdTotalSizeInBytes, _sdCardTotalInBytes, _sortStates, _sortDirectionStates,searchText));
   }
 
+  //Hacer que se puedan guardar los juegos que estan bien aunqeu hayan errores
   Future<void> trySave(BuildContext context) async {
-    if (GameTools.doGamesHaveErrors(_baseGames)) {
-      showSimpleDialog(context, tr('warning'), tr('cant_save_with_errors'), true, false, null);
+    var gamesWithChangesAndNoErrors = _gameViews.where((element) => element.modified);
+
+    //There is no data to save
+    if(gamesWithChangesAndNoErrors.isEmpty) {
+      EasyLoading.showSuccess(tr("no_changes_nothing_to_save")); //Nothing to save
       return;
     }
 
     if (await SteamTools.isSteamRunning()) {
       showSteamActiveWhenSaving(context, () {
-        _saveData();
+        _saveData(_baseGames);
       });
     } else {
-      _saveData();
+      _saveData(_baseGames);
     }
 
     //Reset all game changes
-    for (GameView gv in _gameViews) {
+    for (GameView gv in gamesWithChangesAndNoErrors) {
       gv.modified = false;
     }
     //This is needed because when a game has an error with proton. It is reset to none but not saved
@@ -251,7 +254,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
         _addedExternalCount, _ssdFreeSizeInBytes, _sdCardFreeInBytes, _ssdTotalSizeInBytes, _sdCardTotalInBytes, _sortStates, _sortDirectionStates,searchText));
   }
 
-  void _saveData({showInfo = true}) async {
+  void _saveData(List<Game> games, {showInfo = true}) async {
     if (showInfo) {
       EasyLoading.show(status: tr("saving_games"));
     }
@@ -259,7 +262,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
     String homeFolder = FileTools.getHomeFolder();
     String shortcutsPath = "$homeFolder/.steam/steam/userdata/${_settings.currentUserId}/config/shortcuts.vdf";
 
-    await _gameRepository.saveGames(shortcutsPath, _baseGames, _currentUserSettings.backupsEnabled, _currentUserSettings.maxBackupsCount);
+    await _gameRepository.saveGames(shortcutsPath, games, _currentUserSettings.backupsEnabled, _currentUserSettings.maxBackupsCount);
 
     if (showInfo) {
       EasyLoading.showSuccess(tr("data_saved"));
@@ -607,7 +610,9 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
 
 
   List<GameView> sortBySize(List<GameView> gvs, {SortDirection? direction}) {
-
+    for(GameView gv in _gameViews) {
+      print("${gv.game.name}   ${StringTools.bytesToStorageUnity(gv.game.gameSize)}");
+    }
     SortDirection sortDirection = _sortDirectionStates[0] ? SortDirection.Desc : SortDirection.Asc;
 
     if (sortDirection == SortDirection.Asc) {
@@ -763,7 +768,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
     showPlatformDialog(
       context: context,
       builder: (context) => BasicDialogAlert(
-        title: Text(tr('Steam is Running')),
+        title: Text(tr('warning')),
         content: Row(
           children: [
             const Padding(
@@ -774,7 +779,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
                 size: 100,
               ),
             ),
-            Expanded(child: Text(tr("steam_is_running")))
+            Expanded(child: Text(tr("steam_is_running_cant_action")))
           ],
         ),
         actions: <Widget>[
@@ -802,56 +807,13 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
     );
   }
 
-  void showSimpleDialog(BuildContext context, String caption, String message, bool okButton, bool koButton, Function? okHandler) {
-    showPlatformDialog(
-      context: context,
-      builder: (context) => BasicDialogAlert(
-        title: Text(caption),
-        content: Row(
-          children: [
-            const Padding(
-              padding: EdgeInsets.all(16.0),
-              child: Icon(
-                Icons.warning,
-                color: Colors.red,
-                size: 100,
-              ),
-            ),
-            Expanded(child: Text(message))
-          ],
-        ),
-        actions: <Widget>[
-          if (okButton)
-            BasicDialogAction(
-              title: Text("OK"),
-              onPressed: () {
-                if(okHandler!=null) {
-                  okHandler();
-                }
-                Navigator.pop(context);
-              },
-            ),
-          if (koButton)
-            BasicDialogAction(
-              title: Text(tr("cancel")),
-              onPressed: () {
-                Navigator.pop(context);
-              },
-            ),
-        ],
-      ),
-    );
-  }
+
 
   void exportGame(Game game) async {
     String exportPath = "${game.path}/gameminer_config.json";
     EasyLoading.show(status: tr("exporting_game_config", args: [exportPath]));
     GameTools.exportGame(game);
     EasyLoading.showSuccess(tr("game_config_exported", args: [exportPath]));
-  }
-
-  bool canExit() {
-    return /*!GameTools.doGamesHaveErrors(_baseGames) &&*/ _gameViews.firstWhereOrNull((element) => element.modified==true) ==null;
   }
 
   void notifyDataChanged() {

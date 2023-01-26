@@ -13,8 +13,9 @@ class SettingsRepository {
   final _controller = StreamController<Settings>();
   Stream<Settings> get settings => _controller.stream;
 
-  Settings load() {
-    if(_settings == null) {
+  //TODO: Change for repository cache
+  Settings load({bool forceLoad=false}) {
+    if(_settings == null || forceLoad) {
       _settings = _settingsDataProvider.loadSettings();
       //_settings!.currentUserId = userId;
       _addToStream(_settings!);
@@ -50,22 +51,24 @@ class SettingsRepository {
       throw Exception("Settings has not been initialized. Aborting");
     }
     _settings!.setUserSettings(userId, us);
+    _addToStream(_settings!);
   }
   void update(Settings settings) {
     _settings = settings;
     _addToStream(_settings!);
   }
 
+  void updateByUser(String userId, UserSettings userSettings) {
+      var userSettings = _settings!.getUserSettings(userId);
+      if(userSettings == null) throw Exception("Can't update existing user settings. UserId was: ${userId}");
+
+      _settings!.setUserSettings(userId,userSettings);
+      _addToStream(_settings!);
+  }
+
   void save() {
     _settingsDataProvider.saveSettings(_settings!);
   }
-
-  /*Settings loadAndSaveDefault(String currentUserId) {
-    _settings = Settings(currentUserId);
-    save();
-
-    return Settings.fromJson(_settings!.toJson());
-  }*/
 
   void _addToStream(Settings settings) => _controller.sink.add(settings);
 }

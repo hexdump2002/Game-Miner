@@ -54,7 +54,7 @@ class MainPageCubit extends Cubit<MainPageState> {
 
     showPlatformDialog(context: context,
       builder: (context) =>
-          BasicDialogAlert(title: const Text("Restart"),
+          BasicDialogAlert(title: const Text("warning"),
               content:  Text(tr("reset_changing_user")),actions: [  BasicDialogAction(
                 title: const Text("OK"),
                 onPressed: () {

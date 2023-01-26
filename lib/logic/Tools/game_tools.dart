@@ -18,6 +18,7 @@ enum GameStatus { NonAdded, Added, FullyAdded, AddedExternal }
 
 
 class GameTools {
+
   static void handleGameExecutableErrorsForGame(Game g) {
     for (GameExecutable ge in g.exeFileEntries) {
       ge.errors.clear();

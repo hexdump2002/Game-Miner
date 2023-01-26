@@ -6,7 +6,7 @@ import 'package:game_miner/logic/blocs/settings_cubit.dart';
 import '../../data/models/settings.dart';
 
 class SettingsPage extends StatefulWidget {
-  SettingsPage({Key? key}) : super(key: key);
+  const SettingsPage({Key? key}) : super(key: key);
 
   @override
   State<SettingsPage> createState() => _SettingsPageState();

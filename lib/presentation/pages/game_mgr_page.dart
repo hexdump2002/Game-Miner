@@ -20,6 +20,7 @@ import 'package:window_manager/window_manager.dart';
 import '../../data/models/game_executable.dart';
 import '../../data/models/game.dart';
 import '../../data/models/settings.dart';
+import '../../data/repositories/games_repository.dart';
 import '../../logic/Tools/game_tools.dart';
 
 
@@ -31,42 +32,19 @@ class GameMgrPage extends StatefulWidget {
   State<GameMgrPage> createState() => _GameMgrPageState();
 }
 
-class _GameMgrPageState extends State<GameMgrPage> with WindowListener {
+class _GameMgrPageState extends State<GameMgrPage>  {
   final _formKey = GlobalKey<FormState>();
 
   @override
   void initState() {
-    windowManager.addListener(this);
-    _init();
+    _nsCubit(context).loadData();
     super.initState();
   }
 
   @override
   void dispose() {
-    windowManager.removeListener(this);
     super.dispose();
   }
-
-  @override
-  void onWindowClose() async {
-    if(!_nsCubit(context).canExit())
-    {
-      _nsCubit(context).showSimpleDialog(context, tr("data_not_saved_exit_caption"), tr('data_not_saved_exit'), true, true, () async {
-        Navigator.of(context).pop();
-        await windowManager.destroy();
-      });
-    }
-    else {
-      await windowManager.destroy();
-    }
-  }
-
-  void _init() async {
-    // Add this line to override the default close handler
-    await windowManager.setPreventClose(true);
-    setState(() {});
-  }
-
 
   GameMgrCubit _nsCubit(context) => BlocProvider.of<GameMgrCubit>(context);
   final UserSettings _userSettings = GetIt.I<SettingsRepository>()!.getSettingsForCurrentUser()!;
@@ -289,7 +267,7 @@ class _GameMgrPageState extends State<GameMgrPage> with WindowListener {
             child: ListTile(
               hoverColor: Colors.grey,
               leading: Icon(Icons.import_export,color:Colors.grey),
-              title: Text("Export config", style: TextStyle(color:Colors.black)),
+              title: Text(tr("export_config"), style: TextStyle(color:Colors.black)),
             )),
       ],
     ):  Icon(Icons.more_vert,color: _userSettings.darkTheme ? Colors.grey.shade700 : Colors.grey.shade300);
@@ -407,8 +385,9 @@ class _GameMgrPageState extends State<GameMgrPage> with WindowListener {
   Widget _buildGameExeForm(GameView gv, GameExecutable uge, CustomTheme themeExtension, List<String> availableProntons) {
 
     bool hasCompatToolError = uge.hasErrorType(GameExecutableErrorType.InvalidProton);
-    if(hasCompatToolError) {
-      availableProntons = [tr("invalid_proton_dropdown_item"), ...availableProntons];
+    GameExecutableError? invalidProtonError =uge.errors.firstWhereOrNull((element) => element.type == GameExecutableErrorType.InvalidProton);
+    if(invalidProtonError!=null) {
+      availableProntons = [invalidProtonError.data, ...availableProntons];
     }
 
     GameMgrCubit nsgc = _nsCubit(context);
@@ -454,7 +433,7 @@ class _GameMgrPageState extends State<GameMgrPage> with WindowListener {
                 items: availableProntons.map<DropdownMenuItem<String>>((String e) {
                   return DropdownMenuItem<String>(value: e, child: Text(e));
                 }).toList(),
-                value: hasCompatToolError ? tr('invalid_proton_dropdown_item') : nsgc.getCompatToolDisplayNameFromCode(uge.compatToolCode),
+                value: invalidProtonError != null? invalidProtonError.data : nsgc.getCompatToolDisplayNameFromCode(uge.compatToolCode),
                 onChanged: (String? value) => nsgc.setCompatToolDataFor(gv,uge, value!),
                 decoration: const InputDecoration(labelText: "Compat Tool"))
           ],
@@ -584,11 +563,6 @@ class _GameMgrPageState extends State<GameMgrPage> with WindowListener {
   }
 
   _getErrorsOrModifiedIcon(GameView gv) {
-
-    if(gv.game.path.contains("Blas")) {
-      print("Hllo");
-    }
-
     Icon icon;
     String msg="";
     bool hasErrors = gv.game.hasErrors();

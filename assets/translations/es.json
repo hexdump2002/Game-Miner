@@ -49,6 +49,7 @@
   "open_folder": "Mostrar directorio",
   "folder_not_exists": "El directorio no existe",
   "delete_compat_data": "Borrar CompatData",
+  "delete_shader_data": "Borrar ShaderCahe Data",
   "compat_data_deletion": " los datos de CompatData para el juego '{}' de tu dispositivo.\n\nEsto destruira todo tu progreso en este juego a menos que soporte partidas en la nube.",
   "shadercache_data_deletion": " la cache de shaders para el juego '{}' de tu dispositivo.\n\nEsto puede producir que cuando vuelvas a jugar se tengan que recrear con las consiguientes perdidas de rendimeinto puntuales.",
   "compatdata_deleted": "Los datos de CompatData fueron borrados.\n\nSe liberaron {}",
@@ -68,11 +69,10 @@
   "select_none": "Seleccionar ninguno",
   "select_all": "Seleccionar todos",
   "delete_selected": "Eliminar seleccionados",
-  "broken_executable": "* El ejecutabe no existe",
+  "broken_executable": "* El ejecutable no existe",
   "invalid_compat_tool": "* La herramienta de compatiblidad '{}' No existe.",
   "sort_by_info": "Ordenar por notificación",
-  "game_has_config_errors": "El juego tiene contine errores de configuración",
-  "invalid_proton_dropdown_item": "Invalido",
+  "game_has_config_errors": "El juego contiene errores de configuración",
   "warning": "Aviso",
   "cant_save_with_errors": "Algunos juegos tienen errores. Solucionalos y vuelve a intentar grabar de nuevo",
   "cant_rename_with_errors": "Algunos juegos tienen errores. Solucionalos y vuelve a intentar renombrar de nuevo",
@@ -88,5 +88,11 @@
   "data_not_saved_exit": "Existen datos que no han sido grabados. Si sales se perderan. ¿Quieres salir ahora?",
   "change_user": "Cambiar usuario",
   "reset_changing_user": "Después de cambiar el usuario Game Miner se tiene que reiniciar. Pulsa Ok y vuelve a lanzar Game Miner",
-  "game_modified": "Con cambios"
+  "game_modified": "Con cambios",
+  "settings_close_steam_at_startup": "Cerrar Steam al iniciar",
+  "config_not_saved_exit_caption": "Config no guardada",
+  "config_not_saved_exit": "Existen cambios no guardados en la configuración. Si sales perderás los cambios. ¿Quieres salir ahora?",
+  "data_not_saved_exit_caption": "Datos de juego no guardados",
+  "data_not_saved_exit": "Hay datos de juego no guardados. Si sales perderás los cambios. ¿Quieres salir ahora?"
+
 }

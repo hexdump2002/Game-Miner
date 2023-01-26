@@ -6,6 +6,7 @@ import 'package:flutter_dialogs/flutter_dialogs.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:game_miner/data/models/steam_config.dart';
 import 'package:game_miner/data/repositories/steam_user_repository.dart';
+import 'package:game_miner/logic/Tools/dialog_tools.dart';
 import 'package:game_miner/logic/Tools/steam_tools.dart';
 import 'package:game_miner/logic/blocs/game_data_mgr_cubit.dart';
 import 'package:game_miner/logic/blocs/main_dart_cubit.dart';
@@ -14,6 +15,7 @@ import 'package:game_miner/logic/blocs/settings_cubit.dart';
 import 'package:game_miner/presentation/pages/game_data_mgr_page.dart';
 import 'package:game_miner/presentation/pages/settings_page.dart';
 import 'package:get_it/get_it.dart';
+import 'package:window_manager/window_manager.dart';
 
 import '../widgets/steam_user_selector_widget.dart';
 import 'game_mgr_page.dart';
@@ -25,15 +27,53 @@ class MainPage extends StatefulWidget {
   State<MainPage> createState() => _MainPageState();
 }
 
-class _MainPageState extends State<MainPage> {
+class _MainPageState extends State<MainPage> with WindowListener{
+  List<dynamic> _cubits = List.generate(4, (index) => null);
   List<Widget?> _pages = List.generate(4, (index) => null);
+
   late MainPageCubit _bloc;
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     _bloc = BlocProvider.of<MainPageCubit>(context);
+    windowManager.addListener(this);
+    _init();
+  }
+
+  @override
+  void dispose() {
+    windowManager.removeListener(this);
+    super.dispose();
+  }
+
+  @override
+  void onWindowClose() async {
+
+    if(_cubits[2]!=null && (_cubits[2] as SettingsCubit).modified) {
+      showSimpleDialog(context, tr("config_not_saved_exit_caption"), tr("config_not_saved_exit"), true, true,  () async {
+        Navigator.of(context).pop();
+        await windowManager.destroy();
+      });
+    }
+    else if((_cubits[0] as GameMgrCubit).modified) {
+      showSimpleDialog(context, tr("data_not_saved_exit_caption"), tr("data_not_saved_exit"), true, true,  () async {
+        Navigator.of(context).pop();
+        await windowManager.destroy();
+      });
+    }
+    else
+    {
+      await windowManager.destroy();
+    }
+
+
+  }
+
+  void _init() async {
+    // Add this line to override the default close handler
+    await windowManager.setPreventClose(true);
+    setState(() {});
   }
 
   @override
@@ -70,7 +110,20 @@ class _MainPageState extends State<MainPage> {
             selectedIndex: selectedIndex,
             groupAlignment: 0,
             onDestinationSelected: (int index) {
-              BlocProvider.of<MainPageCubit>(context).selectedIndex = index;
+              if(canMoveToDiffentPage()) {
+                BlocProvider
+                    .of<MainPageCubit>(context)
+                    .selectedIndex = index;
+              }
+              else {
+                if(_bloc.selectedIndex == 2) {
+                  showSimpleDialog(context, tr("config_not_saved_exit_caption"), tr('config_not_saved_exit'), true, true, () async {
+                    BlocProvider
+                        .of<MainPageCubit>(context)
+                        .selectedIndex = index;
+                  });
+                }
+              }
             },
             labelType: NavigationRailLabelType.all,
             leading: Tooltip(
@@ -146,7 +199,7 @@ class _MainPageState extends State<MainPage> {
             //splashRadius: 64,
             iconSize: 64,
             icon: Ink.image(
-              image: AssetImage("assets/images/steam.png")
+              image: const AssetImage("assets/images/steam.png")
             ),
             onPressed: () async {
               // do something when the button is pressed
@@ -170,17 +223,21 @@ class _MainPageState extends State<MainPage> {
     switch (selectedIndex) {
       case 0:
         {
-          widget = BlocProvider(create: (context) => GameMgrCubit(), child: const GameMgrPage());
+          var cubit = GameMgrCubit();
+          _cubits[0] = cubit;
+          widget = BlocProvider.value(value: cubit,   child: const GameMgrPage());
           break;
         }
       case 1:
         {
-          widget = BlocProvider(create: (context) => GameDataMgrCubit(), child: const GameDataMgrPage());
+          var cubit = GameDataMgrCubit();
+          _cubits[1] = cubit;
+          widget = BlocProvider.value(value: cubit, child: const GameDataMgrPage());
         }
         break;
       case 2:
         widget = BlocProvider(
-          create: (context) => SettingsCubit(),
+          create: (context) { var cubit=SettingsCubit(); _cubits[2] = cubit; return cubit;},
           child: SettingsPage(),
         );
         break;
@@ -204,12 +261,21 @@ class _MainPageState extends State<MainPage> {
           content: SteamUserSelector(userSelectedCallback: (BuildContext context, SteamUser steamUser) => {_bloc.changeUser(context, steamUser)}),
           actions: [
             BasicDialogAction(
-              title: Text(tr("Cancel")),
+              title: Text(tr("cancel")),
               onPressed: () {
                 Navigator.pop(context);
               },
             ),
           ]),
     );
+  }
+
+  bool canMoveToDiffentPage() {
+
+    if(_bloc.selectedIndex == 2 && (_cubits[2] as SettingsCubit).modified) {
+      return false;
+    }
+
+    return true;
   }
 }

@@ -9,7 +9,7 @@ import 'package:game_miner/data/repositories/cache_repository.dart';
 import 'package:game_miner/logic/Tools/game_tools.dart';
 import 'package:game_miner/logic/Tools/steam_tools.dart';
 import 'package:game_miner/logic/Tools/string_tools.dart';
-import 'package:path/path.dart';
+import 'package:path/path.dart' as path;
 import 'package:get_it/get_it.dart';
 import '../../logic/Tools/file_tools.dart';
 import '../data_providers/user_library_games_data_provider.dart';
@@ -65,7 +65,7 @@ class GamesRepository extends CacheRepository<Game> {
                 ge.name = foundGe.executableName;
                 ge.launchOptions = foundGe.executableOptions;
                 ge.added = true;
-                ge.appId=SteamTools.generateAppId("${ge.startDir}/${ge.relativeExePath}");
+                ge.appId=SteamTools.generateAppId(path.joinAll([ge.startDir,ge.relativeExePath])+ge.name);
                 ge.fillProtonMappingData(foundGe.compatToolCode, "", "250");
                 ge.dataFromConfigFile = true; //Mark as configured by config file
               }
@@ -75,14 +75,15 @@ class GamesRepository extends CacheRepository<Game> {
 
       games = userLibraryGames;
 
+      List<Game> externalGames = [];
+
       for (SteamShortcut shortcut in shortcuts) {
         bool finished = false;
         var i = 0;
+        //Check if shortcut (Executable path) matches any of the executables in our library
         while (!finished && i < userLibraryGames.length) {
           Game e = userLibraryGames[i];
-          /*if(shortcut.startDir.contains("Blasp")) {
-            print("yeah");
-          }*/
+
           GameExecutable? gameExecutable = e.exeFileEntries.firstWhereOrNull((exe) {
             return "${e.path}/${exe.relativeExePath}" == StringTools.removeQuotes(shortcut.exePath);
           });
@@ -106,11 +107,11 @@ class GamesRepository extends CacheRepository<Game> {
           ++i;
         }
 
-        //We got a shortcut exe path that did not match any in our games exefiles. This can be because it did not come come from our list of folders (previously added or source folder was deleted in GameMiner) or
-        //The shortcut can belong to a game from our lib but the exe file does not exist.
+        //The shortcut was not found in our library folders
         if (!finished) {
-          String shortcutBaseName = dirname(StringTools.removeQuotes(shortcut.exePath));
-          //We couldn't file an exe file in our games matching ths shortcut but perhaps it still belongs to our game folders and it is a broken link.
+          String shortcutBaseName = path.dirname(StringTools.removeQuotes(shortcut.exePath));
+
+          //We couldn't find an exe file in our games matching this shortcut but perhaps it still belongs to our game folders and it is a broken link.
           Game? game = games.firstWhereOrNull((element) => shortcutBaseName.startsWith(element.path));
           if(game != null)  {
             GameExecutable gameExecutable = GameExecutable(game.path, shortcut.exePath, true);
@@ -130,11 +131,12 @@ class GamesRepository extends CacheRepository<Game> {
             CompatToolMapping? pm = compatToolMappings.firstWhereOrNull((e) => shortcut.appId.toString() == e.id);
             Game ug = Game(shortcut.startDir, shortcut.appName);
             ug.addExternalExeFile(shortcut, pm);
-            games.add(ug);
+            externalGames.add(ug);
           }
         }
       }
 
+      games.addAll(externalGames);
       setCacheKey(cacheKey, games);
     }
 
@@ -147,7 +149,14 @@ class GamesRepository extends CacheRepository<Game> {
   }
 
   List<SteamShortcut> _convertGamesToShortcuts(List<Game> games) {
+    //OutDated:
     //Convert Games into steam shortcuts data provider model (only the ones selected)
+    //We always must save all shortcuts but there are is a case where we don't have to do it although they show as added and it is when
+    //the game has been configured from config file with errors because the game showed changes because they were applied from config file.
+    //When a config file is applied over a game it ussualy defines which exes are active but in this case they haven't been added to steam yet.
+    //Need to save to apply the changes.
+
+    //New: We save everything if protons not found in the system are saved they will show an error next time.
     List<SteamShortcut> shortcuts = [];
 
     for (Game g in games) {
