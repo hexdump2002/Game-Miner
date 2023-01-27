@@ -34,18 +34,19 @@ class SteamConfigDataProvider {
 
     TxtVdfFile file = TxtVdfFile();
     file.open(searchPath, FileMode.read);
-    Map<String, dynamic> obj = await file.read();
+    CanonicalizedMap<String,String, dynamic> obj = await file.read();
     file.close();
 
-    Map<String,dynamic> libraryFoldersMap = obj['libraryfolders'];
+    CanonicalizedMap<String,String,dynamic> libraryFoldersMap = obj['libraryfolders'];
 
     for(String key in libraryFoldersMap.keys) {
-      Map<String,dynamic> libraryFolderMap = libraryFoldersMap[key];
+      CanonicalizedMap<String,String,dynamic> libraryFolderMap = libraryFoldersMap[key];
       String path = libraryFolderMap['path'];
-      Map<String,String> installedAppsMap =  Map<String,String>.from(libraryFolderMap["apps"]);
+      //CanonicalizedMap<String,String,String> installedAppsMap =  CanonicalizedMap<String,String,String>.from(libraryFolderMap["apps"], (key)=> key.toLowerCase());
+      CanonicalizedMap<String,String,dynamic> installedAppsMap = libraryFolderMap["apps"];
       List<LibraryFolderApp> installedApps = [];
       for(String key in installedAppsMap.keys) {
-        installedApps.add(LibraryFolderApp(key, installedAppsMap[key]!));
+        installedApps.add(LibraryFolderApp(key, installedAppsMap[key]! as String) );
       }
 
       libraryFolders.add(LibraryFolder(path, installedApps));
@@ -61,14 +62,14 @@ class SteamConfigDataProvider {
 
     TxtVdfFile file = TxtVdfFile();
     file.open(searchPath, FileMode.read);
-    Map<String, dynamic> obj = await file.read();
+    CanonicalizedMap<String,String, dynamic> obj = await file.read();
     file.close();
 
-    Map<String,dynamic> steamLoggedUsers = obj['users'];
+    CanonicalizedMap<String,String,dynamic> steamLoggedUsers = obj['users'];
 
     for(String key in steamLoggedUsers.keys) {
-      Map<String,dynamic> userMap = Map<String,String>.from(steamLoggedUsers[key]);
-      steamUsers.add(SteamUser(userMap['accountname']!, userMap['personaname']!,key));
+      CanonicalizedMap<String,String,dynamic> userMap = steamLoggedUsers[key];
+      steamUsers.add(SteamUser(userMap['accountname']! as String, userMap['personaname']! as String,key));
     }
 
 
@@ -81,7 +82,7 @@ class SteamConfigDataProvider {
     String homeFolder = FileTools.getHomeFolder();
     String path = "$homeFolder/.local/share/Steam/userdata/$userId/config/localconfig.vdf";
     await file.open(path, FileMode.read);
-    Map<String,dynamic> map = await file.read();
+    CanonicalizedMap<String,String,dynamic> map = await file.read();
 
     return map;
   }

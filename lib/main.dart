@@ -22,10 +22,11 @@ import 'package:game_miner/presentation/pages/splash_page.dart';
 import 'package:get_it/get_it.dart';
 import 'package:window_manager/window_manager.dart';
 
-
+import 'package:collection/collection.dart';
 import 'data/models/settings.dart';
 import 'data/models/steam_user.dart';
 import 'logic/Tools/service_locator.dart';
+import 'logic/io/text_vdf_file.dart';
 
 Stream<Settings> stream = GetIt.I<SettingsRepository>().settings.distinct((Settings previous, Settings next) {
   if(next.currentUserId.isEmpty) return false;

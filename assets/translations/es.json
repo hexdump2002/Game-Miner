@@ -93,6 +93,9 @@
   "config_not_saved_exit_caption": "Config no guardada",
   "config_not_saved_exit": "Existen cambios no guardados en la configuración. Si sales perderás los cambios. ¿Quieres salir ahora?",
   "data_not_saved_exit_caption": "Datos de juego no guardados",
-  "data_not_saved_exit": "Hay datos de juego no guardados. Si sales perderás los cambios. ¿Quieres salir ahora?"
+  "data_not_saved_exit": "Hay datos de juego no guardados. Si sales perderás los cambios. ¿Quieres salir ahora?",
+  "name": "Nombre",
+  "search": "Buscar",
+  "launch_options": "Parámetros"
 
 }

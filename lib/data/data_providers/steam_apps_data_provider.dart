@@ -40,7 +40,7 @@ class SteamAppsDataProvider {
       for (String steamAppPath in steamAppFiles) {
         TxtVdfFile file = TxtVdfFile();
         file.open(steamAppPath, FileMode.read);
-        Map<String, dynamic> obj = await file.read();
+        CanonicalizedMap<String,String,dynamic> obj = await file.read();
         file.close();
 
         int shaderCacheSize = -1;

@@ -65,7 +65,7 @@ class GamesRepository extends CacheRepository<Game> {
                 ge.name = foundGe.executableName;
                 ge.launchOptions = foundGe.executableOptions;
                 ge.added = true;
-                ge.appId=SteamTools.generateAppId(path.joinAll([ge.startDir,ge.relativeExePath])+ge.name);
+                ge.appId=SteamTools.generateAppId(path.joinAll([ge.startDir,ge.relativeExePath]));
                 ge.fillProtonMappingData(foundGe.compatToolCode, "", "250");
                 ge.dataFromConfigFile = true; //Mark as configured by config file
               }

@@ -1,12 +1,15 @@
 import 'dart:io';
 
+import 'package:game_miner/logic/io/text_vdf_file.dart';
+import 'package:collection/collection.dart';
+
 import '../../logic/Tools/file_tools.dart';
 import '../models/compat_tool_mapping.dart';
 
 class CompatToolsMappingDataProvider {
   final String _relativeConfigVdfPath = ".local/share/Steam/config/config.vdf";
-
-  Future<List<CompatToolMapping>>  loadCompatToolMappings() async {
+/*
+  Future<List<CompatToolMapping>>  _loadCompatToolMappings() async {
 
     String fullPath = "${FileTools.getHomeFolder()}/$_relativeConfigVdfPath";
     var file =  File(fullPath);
@@ -34,8 +37,61 @@ class CompatToolsMappingDataProvider {
 
     return Future.value(protonMappings);
   }
+*/
+  Future<List<CompatToolMapping>> loadCompatToolMappings() async {
+
+    String fullPath = "${FileTools.getHomeFolder()}/$_relativeConfigVdfPath";
+    if(! await FileTools.existsFile(fullPath)) {
+      return [];
+    }
+
+    List<CompatToolMapping> protonMappings = [];
+
+    TxtVdfFile file = TxtVdfFile();
+    file.open(fullPath, FileMode.read);
+    CanonicalizedMap<String,String,dynamic> data = await file.read();
+    CanonicalizedMap<String,String,dynamic>? compatToolMappings = data['InstallConfigStore']['software']['Valve']['Steam']['CompatToolMapping'];
+    if(compatToolMappings==null) return [];
+
+    for(String key in compatToolMappings.keys) {
+      CanonicalizedMap<String,String,dynamic> compaToolMapping = compatToolMappings[key];
+      protonMappings.add(CompatToolMapping(key, compaToolMapping['name'] as String, compaToolMapping['config'] as String, compaToolMapping['priority'] as String));
+    }
+
+    return protonMappings;
+  }
 
   Future<void> saveCompatToolMappings(String writePath, List<CompatToolMapping> compatToolMappings, Map<String, dynamic> extraParams ) async {
+    String fullPath = "${FileTools.getHomeFolder()}/$_relativeConfigVdfPath";
+
+    TxtVdfFile readFile = TxtVdfFile();
+    readFile.open(fullPath, FileMode.read);
+    var data = await readFile.read();
+    readFile.close();
+
+    TxtVdfFile writeFile = TxtVdfFile();
+    writeFile.open(writePath, FileMode.writeOnly);
+
+
+    CanonicalizedMap<String,String,dynamic>? compatToolMappingsMap = data['InstallConfigStore']['software']['Valve']['Steam']['CompatToolMapping'];
+    if(compatToolMappingsMap==null) {
+      compatToolMappingsMap = CanonicalizedMap<String,String,dynamic>((key)=>key.toLowerCase());
+      data['InstallConfigStore']['software']['Valve']['Steam']['CompatToolMapping']=compatToolMappingsMap;
+    }
+
+    for(CompatToolMapping ctm in compatToolMappings) {
+      var map = CanonicalizedMap<String,String,dynamic>((key) => key.toLowerCase());
+      map['name'] = ctm.name;
+      map['config'] = ctm.config;
+      map['priority'] = ctm.priority;
+      compatToolMappingsMap[ctm.id] = map;
+    }
+
+    await writeFile.write(data);
+    writeFile.close();
+  }
+/*
+  Future<void> _saveCompatToolMappings(String writePath, List<CompatToolMapping> compatToolMappings, Map<String, dynamic> extraParams ) async {
 
     //String fullPath = "${FileTools.getHomeFolder()}/$_relativeConfigVdfPath";
     String fullPath = extraParams.isEmpty ? writePath : extraParams['sourceFile'];
@@ -111,5 +167,5 @@ class CompatToolsMappingDataProvider {
     dstString+= "\n";
 
     return dstString;
-  }
+  }*/
 }

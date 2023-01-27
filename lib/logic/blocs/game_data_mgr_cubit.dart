@@ -122,6 +122,7 @@ class GameDataMgrCubit extends Cubit<GameDataMgrState> {
   }
 
   void deleteData(BuildContext context, AppDataStorageEntry e) {
+    Color textColor = GetIt.I<SettingsRepository>().getSettings().getCurrentUserSettings()!.darkTheme ? Colors.white : Colors.black;
     showPlatformDialog(
       context: context,
       builder: (context) => BasicDialogAlert(
@@ -139,9 +140,9 @@ class GameDataMgrCubit extends Cubit<GameDataMgrState> {
             Expanded(
                 child: RichText(
                     text: TextSpan(children: [
-              TextSpan(text: tr("going_to")),
+              TextSpan(text: tr("going_to"), style: TextStyle(color:textColor)),
               TextSpan(text: tr("delete_capitals"), style: TextStyle(color: Colors.redAccent)),
-              TextSpan(text: tr(e.appStorage.storageType == StorageType.CompatData ? "compat_data_deletion" : "shadercache_data_deletion", args: [e.appStorage.name])),
+              TextSpan(text: tr(e.appStorage.storageType == StorageType.CompatData ? "compat_data_deletion" : "shadercache_data_deletion", args: [e.appStorage.name]), style: TextStyle(color:textColor)),
               TextSpan(text: tr("warning_action_undone"), style: const TextStyle(color: Colors.red, fontSize: 18, height: 2))
             ]))),
           ],
@@ -328,8 +329,10 @@ class GameDataMgrCubit extends Cubit<GameDataMgrState> {
     var toDelete = _filteredDataStorageEntries.where((e) => e.selected == true).toList();
     if (toDelete.isEmpty) {
       EasyLoading.showToast(tr("shader_page_no_selected_items"), duration: Duration(seconds: 2));
+      return;
     }
 
+    Color textColor = GetIt.I<SettingsRepository>().getSettings().getCurrentUserSettings()!.darkTheme ? Colors.white : Colors.black;
     showPlatformDialog(
       context: context,
       builder: (context) => BasicDialogAlert(
@@ -347,9 +350,9 @@ class GameDataMgrCubit extends Cubit<GameDataMgrState> {
             Expanded(
                 child: RichText(
                     text: TextSpan(children: [
-              TextSpan(text: tr("going_to")),
+              TextSpan(text: tr("going_to"),style: TextStyle(color:textColor)),
               TextSpan(text: tr("delete_capitals"), style: TextStyle(color: Colors.redAccent)),
-              TextSpan(text: tr("delete_all_selected_text")),
+              TextSpan(text: tr("delete_all_selected_text"),style: TextStyle(color:textColor)),
               TextSpan(text: tr("warning_action_undone"), style: const TextStyle(color: Colors.red, fontSize: 18, height: 2))
             ]))),
           ],

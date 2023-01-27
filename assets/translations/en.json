@@ -93,6 +93,9 @@
   "config_not_saved_exit_caption": "Config not saved",
   "config_not_saved_exit": "The are configuration changes that have not been saved. If you exit you will loose them. Do you want to exit now?",
   "data_not_saved_exit_caption": "Game data not saved",
-  "data_not_saved_exit": "The is game data that has not been saved. Do you want to exit?"
+  "data_not_saved_exit": "The is game data that has not been saved. Do you want to exit?",
+  "name": "Name",
+  "search": "Search",
+  "launch_options": "Launch options"
 
 }

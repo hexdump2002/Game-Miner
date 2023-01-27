@@ -1,5 +1,5 @@
 import 'dart:io';
-
+import 'package:collection/collection.dart';
 import 'package:universal_disk_space/universal_disk_space.dart';
 
 class TxtVdfFile {
@@ -26,8 +26,8 @@ class TxtVdfFile {
     await _file.open(mode: mode);
   }
 
-  Future<Map<String,dynamic>> read() async {
-    var m = <String,dynamic>{};
+  Future<CanonicalizedMap<String,String,dynamic>> read() async {
+    var m = CanonicalizedMap<String,String,dynamic>((key) => key.toLowerCase());
     _text= await _file.readAsString();
 
     if(_text.isEmpty) throw Exception("File ${_file.path} has invalid format");
@@ -40,18 +40,18 @@ class TxtVdfFile {
   }
 
   //Expected the point to be on '{' char
-  Map<String, dynamic> _readObjectProperties() {
+  CanonicalizedMap<String,String, dynamic> _readObjectProperties() {
     consume(char: openBrace);
 
-    Map<String, dynamic> object= {};
+    CanonicalizedMap<String,String, dynamic> object= CanonicalizedMap((key) => key.toLowerCase());
 
     while(!_isEndOfObject()) {
       bool isObjectProperty = _isNextObjectProperty();
       int savedFilePos = _filePos;
-      String propName = _readString().toLowerCase();
+      String propName = _readString();
       if(isObjectProperty) {
         _filePos = savedFilePos;
-        Map<String, dynamic> o = _readObject(<String,dynamic>{});
+        Map<String, dynamic> o = _readObject(CanonicalizedMap((key) => key.toLowerCase()));
         object[propName] = o[propName];
       }
       else {
@@ -64,16 +64,16 @@ class TxtVdfFile {
   }
 
 
-  Map<String, dynamic> _readObject(Map<String, dynamic> outputMap) {
+  CanonicalizedMap<String,String, dynamic> _readObject(CanonicalizedMap<String,String, dynamic> outputMap) {
 
-    String key = _readString().toLowerCase();
+    String key = _readString();
 
     int savedPos = _filePos;
 
     _findNextNotEmptyChar();
     peek(char: openBrace);
 
-    Map<String, dynamic> objProperties = _readObjectProperties();
+    CanonicalizedMap<String,String, dynamic> objProperties = _readObjectProperties();
 
     outputMap[key] = objProperties;
 
@@ -176,4 +176,44 @@ class TxtVdfFile {
 
     return str;
   }
+
+  Future<void> write(CanonicalizedMap<String,String, dynamic> data) async {
+    StringBuffer buffer = StringBuffer();
+    _buildStringToWrite(data, 0, buffer);
+    String dataString = buffer.toString();
+    await _file.writeAsString(dataString);
+  }
+
+  StringBuffer _buildStringToWrite(CanonicalizedMap<String,String,dynamic> data, int indentation, StringBuffer buffer) {
+
+    for(String key in data.keys){
+      if(data[key] is! Map ){
+        buffer.write(getIndentationString(indentation));
+        buffer.write("\"$key\"");
+        buffer.write("\t\t");
+        buffer.write("\"${data[key]}\"\n");
+      }
+      else {
+        buffer.write(getIndentationString(indentation));
+        buffer.write("\"$key\"\n");
+        buffer.write(getIndentationString(indentation));
+        buffer.write("{\n");
+        buffer = _buildStringToWrite(data[key], indentation + 1, buffer);
+        buffer.write(getIndentationString(indentation));
+        buffer.write("}\n");
+      }
+    }
+    return buffer;
+
+  }
+
+  String getIndentationString(int indentation)
+  {
+    StringBuffer indentationString = StringBuffer();
+    for(int i=0; i<indentation; ++i) {
+      indentationString.write("\t");
+    }
+    return indentationString.toString();
+  }
+
 }

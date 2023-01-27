@@ -147,12 +147,23 @@ class _MainPageState extends State<MainPage> with WindowListener{
                 ),
               ),
             ),
-            /*trailing: IconButton(
-              onPressed: () {
-                // Add your onPressed code here!
-              },
-              icon: const Icon(Icons.more_horiz_rounded),
-            ),*/
+            trailing: Tooltip(
+              message: tr("open_steam"),
+              child: IconButton(
+                //splashRadius: 64,
+                  iconSize: 32,
+                  icon: Ink.image(
+                      image: const AssetImage("assets/images/steam.png")
+                  ),
+                  onPressed: () async {
+                    // do something when the button is pressed
+                    EasyLoading.show(status: tr("opening_steam"));
+                    SteamTools.openSteamClient(false);
+                    await Future.delayed(const Duration(seconds: 3));
+                    EasyLoading.dismiss();
+
+                  }),
+            ),
             destinations: const <NavigationRailDestination>[
               NavigationRailDestination(
                 icon: Icon(Icons.gamepad_outlined, size: 40),
@@ -193,23 +204,7 @@ class _MainPageState extends State<MainPage> with WindowListener{
             ],
           ),
         ),
-        Tooltip(
-          message: tr("open_steam"),
-          child: IconButton(
-            //splashRadius: 64,
-            iconSize: 64,
-            icon: Ink.image(
-              image: const AssetImage("assets/images/steam.png")
-            ),
-            onPressed: () async {
-              // do something when the button is pressed
-              EasyLoading.show(status: tr("opening_steam"));
-              SteamTools.openSteamClient(false);
-              await Future.delayed(const Duration(seconds: 3));
-              EasyLoading.dismiss();
 
-            }),
-        ),
       ],
 
     );

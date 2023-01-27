@@ -11,9 +11,11 @@ class SearchBar extends StatefulWidget {
   late final SearchFunction _searchFunction;
   final Debouncer _debouncer = Debouncer(milliseconds: 500);
   late final _initialTerm;
-  SearchBar( String initialTerm, SearchFunction searchFunction, {Key? key}) : super(key: key) {
+  late final _hintText;
+  SearchBar( String initialTerm, String hintText, SearchFunction searchFunction, {Key? key}) : super(key: key) {
     _searchFunction = searchFunction;
     _initialTerm = initialTerm;
+    _hintText = hintText;
   }
 
   @override
@@ -45,7 +47,7 @@ class _SearchBarState extends State<SearchBar> {
       onChanged: (value) => widget._debouncer.run(()=> widget._searchFunction(value)),
       cursorColor: Colors.white,
       decoration: InputDecoration(
-        hintText: "Search",
+        hintText: widget._hintText,
         hintStyle: TextStyle(color: Colors.white60),
         enabledBorder: OutlineInputBorder( borderSide: BorderSide(color:borderColor)),
         focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white)),

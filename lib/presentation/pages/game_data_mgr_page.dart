@@ -31,7 +31,7 @@ class _GameDataMgrPageState extends State<GameDataMgrPage> {
         appBar: AppBar(
           // Here we take the value from the MyHomePage object that was created by
           // the App.build method, and use it to set our appbar title.
-          title: Text(tr("Game data manager")),
+          title: const Text("Game data manager"),
           /*leading: GestureDetector(
               child: const Icon(Icons.arrow_back),
               onTap: () {
@@ -39,7 +39,7 @@ class _GameDataMgrPageState extends State<GameDataMgrPage> {
               }),*/
           actions: [
             Expanded(
-              child: Padding(padding: const EdgeInsets.fromLTRB(8, 8, 16, 8), child: SearchBar("", (term) => _bloc.filterByName(term))),
+              child: Padding(padding: const EdgeInsets.fromLTRB(8, 8, 16, 8), child: SearchBar("", tr("search"),(term) => _bloc.filterByName(term))),
             ),
             BlocBuilder<GameDataMgrCubit, GameDataMgrState>(builder: (context, state) {
               return Row(children: [

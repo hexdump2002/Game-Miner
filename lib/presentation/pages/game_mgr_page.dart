@@ -60,7 +60,7 @@ class _GameMgrPageState extends State<GameMgrPage>  {
           title: Text("Game Manager"),
           actions: [
             Expanded(
-              child: Padding(padding: const EdgeInsets.fromLTRB(8, 8, 16, 8), child: SearchBar( _nsCubit(context).searchText, (term) => _nsCubit(context).filterGamesByName(term))),
+              child: Padding(padding: const EdgeInsets.fromLTRB(8, 8, 16, 8), child: SearchBar( _nsCubit(context).searchText, tr("search"), (term) => _nsCubit(context).filterGamesByName(term))),
             ),
             BlocBuilder<GameMgrCubit, GameMgrBaseState>(
               builder: (context, state) {
@@ -401,7 +401,7 @@ class _GameMgrPageState extends State<GameMgrPage>  {
             TextFormField(
               key: Key(uge.appId.toString()),
               initialValue: uge.name,
-              decoration: const InputDecoration(labelText: "Name"),
+              decoration:  InputDecoration(labelText: tr("name")),
               autovalidateMode: AutovalidateMode.onUserInteraction,
               onChanged: (value)  {uge.name = value!; gv.modified = true; _nsCubit(context).notifyDataChanged();},
               /*onSaved: (value) => {
@@ -416,9 +416,9 @@ class _GameMgrPageState extends State<GameMgrPage>  {
             ),
             TextFormField(
               initialValue: uge.launchOptions,
-              decoration: const InputDecoration(labelText: "Launch Options"),
+              decoration: InputDecoration(labelText: tr("launch_options")),
               autovalidateMode: AutovalidateMode.onUserInteraction,
-              onChanged: (value) {uge.name = value!; gv.modified = true; _nsCubit(context).notifyDataChanged();},
+              onChanged: (value) {uge.launchOptions = value!; gv.modified = true; _nsCubit(context).notifyDataChanged();},
               /*onSaved: (value) => {
                 uge.name = value!
               },
