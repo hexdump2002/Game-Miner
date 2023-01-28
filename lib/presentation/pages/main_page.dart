@@ -147,23 +147,12 @@ class _MainPageState extends State<MainPage> with WindowListener{
                 ),
               ),
             ),
-            trailing: Tooltip(
-              message: tr("open_steam"),
-              child: IconButton(
-                //splashRadius: 64,
-                  iconSize: 32,
-                  icon: Ink.image(
-                      image: const AssetImage("assets/images/steam.png")
-                  ),
-                  onPressed: () async {
-                    // do something when the button is pressed
-                    EasyLoading.show(status: tr("opening_steam"));
-                    SteamTools.openSteamClient(false);
-                    await Future.delayed(const Duration(seconds: 3));
-                    EasyLoading.dismiss();
-
-                  }),
-            ),
+            /*trailing: IconButton(
+              onPressed: () {
+                // Add your onPressed code here!
+              },
+              icon: const Icon(Icons.more_horiz_rounded),
+            ),*/
             destinations: const <NavigationRailDestination>[
               NavigationRailDestination(
                 icon: Icon(Icons.gamepad_outlined, size: 40),
@@ -204,7 +193,23 @@ class _MainPageState extends State<MainPage> with WindowListener{
             ],
           ),
         ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(0,0,0,8),
+          child: Tooltip(
+            message: tr("open_steam"),
+            child: GestureDetector(
+              child: Image.asset('assets/images/steam.png',width: 64, height: 64,),
+              onTap: () async {
+                // do something when the button is pressed
+                EasyLoading.show(status: tr("opening_steam"));
+                SteamTools.openSteamClient(false);
+                await Future.delayed(const Duration(seconds: 3));
+                EasyLoading.dismiss();
 
+              }),
+          ),
+        ),
+        Text("Ver.Testing")
       ],
 
     );
@@ -220,7 +225,7 @@ class _MainPageState extends State<MainPage> with WindowListener{
         {
           var cubit = GameMgrCubit();
           _cubits[0] = cubit;
-          widget = BlocProvider.value(value: cubit,   child: const GameMgrPage());
+          widget = BlocProvider.value(value: cubit,   child: GameMgrPage());
           break;
         }
       case 1:

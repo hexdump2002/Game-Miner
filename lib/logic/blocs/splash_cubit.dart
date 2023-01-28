@@ -1,15 +1,12 @@
 import 'dart:async';
 import 'dart:async';
 
+
 import 'package:bloc/bloc.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:game_miner/data/repositories/compat_tools_repository.dart';
-import 'package:get_it/get_it.dart';
-import 'package:get_it/get_it.dart';
-import 'package:get_it/get_it.dart';
 import 'package:get_it/get_it.dart';
 import 'package:meta/meta.dart';
 import 'package:universal_disk_space/universal_disk_space.dart';
@@ -21,7 +18,6 @@ import '../../data/repositories/apps_storage_repository.dart';
 import '../../data/repositories/game_miner_data_repository.dart';
 import '../../data/repositories/settings_repository.dart';
 import '../../data/repositories/steam_config_repository.dart';
-import '../Tools/service_locator.dart';
 import '../Tools/steam_tools.dart';
 
 part 'splash_state.dart';
@@ -43,8 +39,6 @@ class SplashCubit extends Cubit<SplashState> {
     if (sc.steamUsers.isEmpty) throw const NotFoundException("No steam users logged found in the system. Aborting...");
     if (sc.libraryFolders.isEmpty) throw const NotFoundException("No steam  library folders found in the system. Aborting...");
 
-    //Be sure we wait for 3 secs at splash page
-    await Future.delayed( Duration(seconds: 0) - stopwatch.elapsed);
 
     SettingsRepository sr = GetIt.I<SettingsRepository>();
     Settings settings = sr.load();
@@ -55,7 +49,7 @@ class SplashCubit extends Cubit<SplashState> {
         emit(UserAutoLogged(sc.steamUsers[0]));
       }
       else {
-        emit(ShowSteamUsersDialog("Select user", sc.steamUsers));
+        emit(ShowSteamUsersDialog(tr('select_user'), sc.steamUsers));
       }
     }
     else
@@ -94,6 +88,9 @@ class SplashCubit extends Cubit<SplashState> {
     /*SchedulerBinding.instance.addPostFrameCallback((_) {
       Navigator.pushReplacementNamed(context, "/main");
     });*/
+
+    //Be sure we wait for 3 secs at splash page
+    await Future.delayed( Duration(seconds: 4) - stopwatch.elapsed);
 
     //Navigator.pushReplacementNamed(context, "/main");
     emit(SplashWorkDone());

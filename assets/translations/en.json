@@ -96,6 +96,9 @@
   "data_not_saved_exit": "The is game data that has not been saved. Do you want to exit?",
   "name": "Name",
   "search": "Search",
-  "launch_options": "Launch options"
+  "launch_options": "Launch options",
+  "no_changes_nothing_to_save": "No changes, nothing to save",
+  "opening_steam": "Opening Steam",
+  "select_user": "Select user"
 
 }

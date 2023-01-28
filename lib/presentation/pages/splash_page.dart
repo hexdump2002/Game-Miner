@@ -12,22 +12,45 @@ import 'package:game_miner/presentation/widgets/steam_user_selector_widget.dart'
 import '../../data/models/steam_config.dart';
 
 class SplashPage extends StatefulWidget {
-  const SplashPage({Key? key}) : super(key: key);
+  SplashPage({Key? key}) : super(key: key);
 
   @override
   State<SplashPage> createState() => _SplashPageState();
 }
 
-class _SplashPageState extends State<SplashPage> {
+class _SplashPageState extends State<SplashPage>  with SingleTickerProviderStateMixin{
   late SplashCubit _bloc;
+  late AnimationController opacityAnimController;
+  late Animation<double> opacityAnimation;
 
+  late AnimationController scaleAnimController;
+  late Animation<double> scaleAnimation;
+  late CurvedAnimation scaleCurveAnimation;
+  
   @override
   void initState() {
     _bloc=BlocProvider.of<SplashCubit>(context)..initDependencies();
+    opacityAnimController =AnimationController(vsync: this, duration: const Duration(seconds:3));
+    opacityAnimation = Tween<double>(begin: 0,end:1).animate(opacityAnimController)..addListener(() {setState(() {
+    });});
+    opacityAnimController.forward();
+    //Future.delayed(const Duration(seconds: 4), ()=> opacityAnimController.forward());
+
+    /*scaleAnimController =AnimationController(vsync: this, duration: const Duration(seconds:1));
+    scaleCurveAnimation = CurvedAnimation(parent: scaleAnimController, curve: Curves.bounceInOut);
+    scaleAnimation = Tween<double>(begin: 0,end:1).animate(
+      scaleCurveAnimation
+    )..addListener(() {setState(() {
+    });});
+
+    scaleAnimController.forward();*/
   }
 
   @override
   Widget build(BuildContext context) {
+    //widget._player.setSourceAsset("audio/game-miner.mp3");
+
+
     double height = MediaQuery.of(context).size.height;
     double width = MediaQuery.of(context).size.width;
     return Scaffold(
@@ -56,20 +79,23 @@ class _SplashPageState extends State<SplashPage> {
               child: Column(
                 children: [
                   Expanded(
-                    child: Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Image.asset('assets/images/logo.png'),
-                          const Padding(
-                            padding: EdgeInsets.all(16.0),
-                            child: Text(
-                              "Developed by HexDump",
-                              style: TextStyle(color: Colors.white, fontSize: 25),
+                    child: Opacity(
+                      opacity: opacityAnimation.value,
+                      child: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Image.asset('assets/images/logo.png'),
+                            const Padding(
+                              padding: EdgeInsets.all(16.0),
+                              child: Text(
+                                "Developed by HexDump",
+                                style: TextStyle(color: Colors.white, fontSize: 25),
+                              ),
                             ),
-                          ),
-                          Text("Main tester: excitecube", style: TextStyle(color: Colors.grey.shade400, fontSize: 20)),
-                        ],
+                            Text("Main tester: excitecube", style: TextStyle(color: Colors.grey.shade400, fontSize: 20)),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -82,13 +108,13 @@ class _SplashPageState extends State<SplashPage> {
                           decoration: BoxDecoration(color:Colors.blueGrey.shade800, borderRadius: BorderRadius.only(bottomLeft: Radius.circular(15), topLeft: Radius.circular(15))),
                           child: Padding(
                             padding: const EdgeInsets.all(16.0),
-                            child: Row(children: [
+                            child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [
                               Text(
                                 "Initializing...  ",
                                 style: TextStyle(fontSize: 20, color:Colors.blueGrey.shade300),
                               ),
-                              SizedBox(width: 20, height: 20, child: const CircularProgressIndicator(color:Colors.white70))
-                            ], mainAxisAlignment: MainAxisAlignment.end),
+                              const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color:Colors.white70))
+                            ]),
                           ),
                         ),
                       ],
@@ -111,6 +137,13 @@ class _SplashPageState extends State<SplashPage> {
         ),
 
       );
+  }
+
+  @override
+  void dispose() {
+    opacityAnimController.dispose();
+
+    super.dispose();
   }
 
 }

@@ -42,6 +42,7 @@ void main() async {
   await windowManager.ensureInitialized();
   await EasyLocalization.ensureInitialized();
 
+  windowManager.setMinimumSize(const Size(800,700));
   runApp(EasyLocalization(child: MyApp(), supportedLocales: [Locale('en'), Locale('es')], path: 'assets/translations', fallbackLocale: Locale('en')));
   EasyLoading.instance.userInteractions = false;
 }
@@ -130,7 +131,7 @@ _buildRoutes() {
   return {
     '/': (context) => BlocProvider(
           create: (context) => SplashCubit(),
-          child: const SplashPage(),
+          child: SplashPage(),
         ),
     '/main': (context) => BlocProvider(
           create: (context) => MainPageCubit(MainPageCubit.getSteamUser()),
