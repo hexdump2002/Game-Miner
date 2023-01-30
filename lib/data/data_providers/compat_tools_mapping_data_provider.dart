@@ -8,7 +8,7 @@ import '../../logic/Tools/steam_tools.dart';
 import '../models/compat_tool_mapping.dart';
 
 class CompatToolsMappingDataProvider {
-  final String _relativeConfigVdfPath = "${SteamTools.getSteamBaseFolder()}/config/config.vdf";
+  final String _absoluteConfigVdfPath = "${SteamTools.getSteamBaseFolder()}/config/config.vdf";
 /*
   Future<List<CompatToolMapping>>  _loadCompatToolMappings() async {
 
@@ -41,7 +41,7 @@ class CompatToolsMappingDataProvider {
 */
   Future<List<CompatToolMapping>> loadCompatToolMappings() async {
 
-    String fullPath = "${FileTools.getHomeFolder()}/$_relativeConfigVdfPath";
+    String fullPath = _absoluteConfigVdfPath;
     if(! await FileTools.existsFile(fullPath)) {
       return [];
     }
@@ -63,7 +63,7 @@ class CompatToolsMappingDataProvider {
   }
 
   Future<void> saveCompatToolMappings(String writePath, List<CompatToolMapping> compatToolMappings, Map<String, dynamic> extraParams ) async {
-    String fullPath = "${FileTools.getHomeFolder()}/$_relativeConfigVdfPath";
+    String fullPath = _absoluteConfigVdfPath;
 
     TxtVdfFile readFile = TxtVdfFile();
     readFile.open(fullPath, FileMode.read);

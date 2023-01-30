@@ -71,11 +71,14 @@ class Game {
   void addExeFile(String absoluteFilePath) {
     if (isExternal) throw Exception("Can't add an internal exe to an external game");
 
-    //Check if exe is broken or not
+    //WE WON'T DO THIS HERE. WE REMOVE QUOTES FOR EVERY INTERNAL GAME SO NO NEED TO SEPARATE HERE
+    /*//Check if exe is broken or not
     //Some shortcuts come with the params in the executable and this produces an error when trying to check if exe exists
     //So we try to get the real executable path
-    String exePath = _getExecutable(absoluteFilePath);
-    bool exists = FileTools.existsFileSync(exePath);
+    String exePath = _getExecutable(absoluteFilePath);*/
+
+
+    bool exists = FileTools.existsFileSync(absoluteFilePath);
     exeFileEntries.add(GameExecutable(path, absoluteFilePath,!exists));
   }
 

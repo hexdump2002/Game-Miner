@@ -178,7 +178,7 @@ class _MainPageState extends State<MainPage> with WindowListener{
                   child: Text('Settings'),
                 ),
               ),
-              NavigationRailDestination(
+              /*NavigationRailDestination(
                 icon: Icon(
                   Icons.info_outline,
                   size: 40,
@@ -188,7 +188,7 @@ class _MainPageState extends State<MainPage> with WindowListener{
                   padding: EdgeInsets.fromLTRB(0, 8, 0, 0),
                   child: Text('Information'),
                 ),
-              ),
+              ),*/
 
             ],
           ),
