@@ -7,7 +7,7 @@ import '../../logic/Tools/file_tools.dart';
 class SteamUsersDataProvider {
   Future<List<SteamUser>> loadUsers() async {
     String homeFolder = FileTools.getHomeFolder();
-    //String path = "$homeFolder/.local/Steam/steam/userdata";
+    //String path = "$homeFolder/ocal/Steam/steam/userdata";
     String path = "$homeFolder/.local/share/Steam/userdata"; //Changed because of flatpak
 
     //Todo, check for empty folder

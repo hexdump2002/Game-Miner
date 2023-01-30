@@ -19,6 +19,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../data/models/game_miner_data.dart';
 import '../../data/models/steam_app.dart';
+import '../Tools/steam_tools.dart';
 
 part 'game_data_mgr_state.dart';
 
@@ -58,7 +59,7 @@ class GameDataMgrCubit extends Cubit<GameDataMgrState> {
     _filteredDataStorageEntries.clear();
 
     String homeFolder = FileTools.getHomeFolder();
-    _searchPath = "$homeFolder/.local/share/Steam/steamapps";
+    _searchPath = "${SteamTools.getSteamBaseFolder()}/steamapps";
 
     var gmd = GetIt.I<GameMinerDataRepository>().getGameMinerData();
     var steamConfig = GetIt.I<SteamConfigRepository>().getConfig();

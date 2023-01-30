@@ -4,10 +4,11 @@ import 'package:game_miner/logic/io/text_vdf_file.dart';
 import 'package:collection/collection.dart';
 
 import '../../logic/Tools/file_tools.dart';
+import '../../logic/Tools/steam_tools.dart';
 import '../models/compat_tool_mapping.dart';
 
 class CompatToolsMappingDataProvider {
-  final String _relativeConfigVdfPath = ".local/share/Steam/config/config.vdf";
+  final String _relativeConfigVdfPath = "${SteamTools.getSteamBaseFolder()}/config/config.vdf";
 /*
   Future<List<CompatToolMapping>>  _loadCompatToolMappings() async {
 

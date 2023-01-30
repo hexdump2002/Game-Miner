@@ -6,6 +6,7 @@ import 'package:game_miner/logic/io/binary_vdf_file.dart';
 import 'package:universal_disk_space/universal_disk_space.dart';
 
 import '../../logic/Tools/file_tools.dart';
+import '../../logic/Tools/steam_tools.dart';
 import '../../logic/io/binary_vdf_buffer.dart';
 
 const int kEofMark = 0x0808;
@@ -17,7 +18,7 @@ class SteamShortcutDataProvider {
   Future<List<SteamShortcut>> loadShortcutGames(String userId) async {
 
     String homeFolder = FileTools.getHomeFolder();
-    String shortcutsPath = "$homeFolder/.local/share/Steam/userdata/$userId/config/shortcuts.vdf";
+    String shortcutsPath = "${SteamTools.getSteamBaseFolder()}/userdata/$userId/config/shortcuts.vdf";
 
     List<SteamShortcut> nonSteamGames = [];
 
@@ -69,8 +70,8 @@ class SteamShortcutDataProvider {
       await _writeBlockId(file, blockId++);
 
       await file.writeInt32BEProperty("appid", shortcut.appId);
-      await file.writeStringProperty("AppName", shortcut.appName, addQuotes:false);
-      await file.writeStringProperty( "Exe", shortcut.exePath);
+      await file.writeStringProperty("appname", shortcut.appName, addQuotes:false);
+      await file.writeStringProperty( "exe", shortcut.exePath);
       await file.writeStringProperty( "StartDir", shortcut.startDir);
       await file.writeStringProperty( "icon", shortcut.icon);
       await file.writeStringProperty( "ShortcutPath", shortcut.shortcutPath);

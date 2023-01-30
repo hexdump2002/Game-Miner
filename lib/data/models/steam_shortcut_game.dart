@@ -36,6 +36,7 @@ class SteamShortcut {
   }
 
 
+
   void _assignValue(String propertyName, dynamic propertyValue)
   {
     switch(propertyName)

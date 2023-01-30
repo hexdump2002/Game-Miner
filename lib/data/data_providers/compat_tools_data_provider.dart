@@ -4,6 +4,8 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:game_miner/data/models/compat_tool.dart';
+import 'package:game_miner/logic/Tools/steam_tools.dart';
+import 'package:game_miner/logic/io/text_vdf_file.dart';
 import 'package:tuple/tuple.dart';
 
 import '../../logic/Tools/file_tools.dart';
@@ -21,24 +23,23 @@ class CompatToolsDataProvider {
 
   Future<List<CompatTool>> loadExternalCompatTools() async {
 
-    String homeFolder = FileTools.getHomeFolder();
-    String path = "$homeFolder/.local/share/Steam/compatibilitytools.d";
-    var compatToolFolders =  await FileTools.getFolderFilesAsync(path, retrieveRelativePaths: true, recursive: false);
+    String path = "${SteamTools.getSteamBaseFolder()}/compatibilitytools.d";
+    var compatToolFolders =  await FileTools.getFolderFilesAsync(path, retrieveRelativePaths: true, recursive: false, onlyFolders: true);
 
     List<CompatTool> compatTools = [];
     //Read manifests
     for(int i=0; i<compatToolFolders.length; ++i) {
       var e = compatToolFolders[i];
       var fullPath = p.join(p.join(path, e),"compatibilitytool.vdf");
-      File f = File(fullPath);
-      String json = await f.readAsString();
+      TxtVdfFile file = TxtVdfFile();
+      await file.open(fullPath, FileMode.read);
+      Map<String, dynamic> data = await file.read();
+      String compatToolCode = data['compatibilitytools']['compat_tools'].keys.first;
+      String compatToolDisplayName= data['compatibilitytools']['compat_tools'][compatToolCode]['display_name'];
 
-      RegExp r = RegExp(r'"compatibilitytools"\n{\s+"compat_tools"\n\s+{\n\s+"(.*)".*\n\s+{[\S\s]*"display_name"\s+"([a-zA-Z0-9-_ ]+)"');
-      var match = r.firstMatch(json);
+      if(compatToolCode.isEmpty || compatToolDisplayName.isEmpty) throw Exception("Error reading compat tool manifest for $fullPath");
 
-      if(match==null) throw Exception("Error reading compat tool manifest for $fullPath");
-
-      compatTools.add(CompatTool(match.group(1)!, match.group(2)!,false));
+      compatTools.add(CompatTool(compatToolCode,compatToolDisplayName,false));
 
     };
 
@@ -46,8 +47,8 @@ class CompatToolsDataProvider {
   }
 
   Future<List<CompatTool>> loadInternalCompatTools() async {
-    String homeFolder = FileTools.getHomeFolder();
-    BinaryVdfBuffer buffer = BinaryVdfBuffer("$homeFolder/.local/share/Steam/appcache/appinfo.vdf");
+    String path = "${SteamTools.getSteamBaseFolder()}/appcache/appinfo.vdf";
+    BinaryVdfBuffer buffer = BinaryVdfBuffer(path);
 
     int pos = buffer.findStringInBuffer("compat_tools");
     if(pos==-1) return [];

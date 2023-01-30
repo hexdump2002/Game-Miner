@@ -15,10 +15,6 @@ class AppsStorageDataProvider {
   Future<List<AppStorage>> load(List<String> searchPaths) async {
     List<AppStorage> appsStorage = [];
 
-    /*String homeFolder = FileTools.getHomeFolder();
-
-    String searchPath = "$homeFolder/.local/share/Steam/steamapps"; //Changed because of flatpak*/
-
     for(String path in searchPaths) {
       var searchPath = path;
 

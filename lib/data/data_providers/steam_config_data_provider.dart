@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:collection/collection.dart';
 import 'package:game_miner/data/models/steam_user.dart';
+import 'package:game_miner/logic/Tools/steam_tools.dart';
 import 'package:game_miner/logic/io/text_vdf_file.dart';
 import 'package:universal_disk_space/universal_disk_space.dart';
 import 'package:path/path.dart' as p;
@@ -14,8 +15,8 @@ class SteamConfigDataProvider {
 
   Future<SteamConfig> load() async {
 
-    String homeFolder = FileTools.getHomeFolder();
-    String basePath = "$homeFolder/.local/share/Steam/config/"; //Changed because of flatpak
+    String basePath = "${SteamTools.getSteamBaseFolder()}/config/"; //Changed because of flatpak
+
 
     List<LibraryFolder> libraryFolders = await _loadLibraryFolders(p.join(basePath,'libraryfolders.vdf'));
     List<SteamUser> steamLoggedUsers = await _loadLoggedUsers(p.join(basePath,'loginusers.vdf'));
@@ -80,7 +81,7 @@ class SteamConfigDataProvider {
   Future<Map<String, dynamic>> _getLocalConfigForUser(String userId) async {
     TxtVdfFile file = TxtVdfFile();
     String homeFolder = FileTools.getHomeFolder();
-    String path = "$homeFolder/.local/share/Steam/userdata/$userId/config/localconfig.vdf";
+    String path = "${SteamTools.getSteamBaseFolder()}/userdata/$userId/config/localconfig.vdf";
     await file.open(path, FileMode.read);
     CanonicalizedMap<String,String,dynamic> map = await file.read();
 

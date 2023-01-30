@@ -12,6 +12,7 @@ import 'package:meta/meta.dart';
 import '../../data/models/compat_tool.dart';
 import '../../data/models/compat_tool_mapping.dart';
 import '../../data/models/settings.dart';
+import '../Tools/steam_tools.dart';
 
 part 'settings_state.dart';
 
@@ -89,8 +90,8 @@ class SettingsCubit extends Cubit<SettingsState> {
 
     int currentBackups = _currentUserSettings.backupsEnabled ? _currentUserSettings.maxBackupsCount : 0;
 
-    FileTools.clampBackupsToCount("$homeFolder/.local/share/Steam/userdata/${_currentUserId}/config/shortcuts.vdf", currentBackups);
-    FileTools.clampBackupsToCount("$homeFolder/.local/share/Steam/config/config.vdf", currentBackups);
+    FileTools.clampBackupsToCount("${SteamTools.getSteamBaseFolder()}/userdata/${_currentUserId}/config/shortcuts.vdf", currentBackups);
+    FileTools.clampBackupsToCount("${SteamTools.getSteamBaseFolder()}/config/config.vdf", currentBackups);
 
     //Force a reload for every other using getSettings() get the fresh data
     //repo.load(forceLoad: true);

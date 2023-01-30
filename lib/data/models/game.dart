@@ -72,16 +72,47 @@ class Game {
     if (isExternal) throw Exception("Can't add an internal exe to an external game");
 
     //Check if exe is broken or not
-    bool exists = FileTools.existsFileSync(absoluteFilePath);
+    //Some shortcuts come with the params in the executable and this produces an error when trying to check if exe exists
+    //So we try to get the real executable path
+    String exePath = _getExecutable(absoluteFilePath);
+    bool exists = FileTools.existsFileSync(exePath);
     exeFileEntries.add(GameExecutable(path, absoluteFilePath,!exists));
   }
 
   void addExternalExeFile(SteamShortcut steamShortcut, CompatToolMapping? pm) {
-    bool exists = FileTools.existsFileSync(StringTools.removeQuotes(steamShortcut.exePath));
+    //Check if exe is broken or not
+    //Some shortcuts come with the params in the executable and this produces an error when trying to check if exe exists
+    //So we try to get the real executable path
+    String exePath = _getExecutable(steamShortcut.exePath);
+    bool exists = FileTools.existsFileSync(StringTools.removeQuotes(exePath));
     var uge = GameExecutable.asExternal(steamShortcut, !exists, protonMapping: pm, );
     isExternal = true;
     exeFileEntries.add(uge);
   }
+
+  String _getExecutable(String exePath) {
+    String exe= exePath.trim();
+    if(exe.isEmpty) return exePath;
+
+    //Type "/usr/bin/flatpak" params
+    if(exe.startsWith("\"")) {
+      int index = exe.indexOf("\"",1);
+      if(index!=exe.length-1) {
+        return exe.substring(0, index+1).trim();
+      }
+    }
+    else{
+      int index = exe.indexOf(" ",1);
+      //If we didn't started with \" but we found a space it means the type is /usr/bin/flatpak params
+      if(index!=-1){
+        return exe.substring(0, index+1).trim();
+      }
+    }
+
+    return exePath;
+
+  }
+
 
   void addExeFiles(List<String> filePaths) {
     filePaths.forEach((filePath) {

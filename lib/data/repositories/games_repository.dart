@@ -166,9 +166,9 @@ class GamesRepository extends CacheRepository<Game> {
           s.entryId = ge.entryId;
           s.appId = ge.appId;
           s.appName = ge.name;
-          s.startDir = StringTools.addQuotesToPath(ge.startDir);
+          s.startDir = ge.startDir.isEmpty ? "" : StringTools.addQuotesToPath(ge.startDir);
           s.icon = ge.icon;
-          s.shortcutPath = StringTools.addQuotesToPath(ge.shortcutPath);
+          s.shortcutPath = ge.shortcutPath.isEmpty ? "" :StringTools.addQuotesToPath(ge.shortcutPath);
           s.launchOptions = ge.launchOptions;
           s.isHidden = ge.isHidden;
           s.allowDesktopConfig = ge.allowDdesktopConfig;
@@ -179,7 +179,7 @@ class GamesRepository extends CacheRepository<Game> {
           s.devkitOverrideAppId = ge.devkitOverrideAppId;
           s.lastPlayTime = ge.lastPlayTime;
           s.flatPackAppId = ge.flatPackAppId;
-          s.exePath = g.isExternal ? StringTools.addQuotesToPath(ge.relativeExePath) : StringTools.addQuotesToPath("${g.path}/${ge.relativeExePath}");
+          s.exePath = ge.relativeExePath.isEmpty? "" : g.isExternal ? StringTools.addQuotesToPath(ge.relativeExePath) : StringTools.addQuotesToPath("${g.path}/${ge.relativeExePath}");
           s.tags = ge.tags;
           shortcuts.add(s);
         }
@@ -258,7 +258,7 @@ class GamesRepository extends CacheRepository<Game> {
 
 
     String homeFolder = FileTools.getHomeFolder();
-    String configPath = "$homeFolder/.local/share/Steam/config/config.vdf";
+    String configPath = "${SteamTools.getSteamBaseFolder()}/config/config.vdf";
 
     if (backupsEnabled) {
       Map<String, dynamic> extraParams = {"sourceFile": configPath};

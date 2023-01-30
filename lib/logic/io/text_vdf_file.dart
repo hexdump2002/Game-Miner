@@ -4,10 +4,12 @@ import 'package:universal_disk_space/universal_disk_space.dart';
 
 class TxtVdfFile {
   late final File _file;
+  final int nextLineChar = "\n".codeUnitAt(0);
   final int doubleQuoteChar = "\"".codeUnitAt(0);
   final int scapedCharSymbol ="\\".codeUnitAt(0);
   final int openBrace = "{".codeUnitAt(0);
   final int closingBrace = "}".codeUnitAt(0);
+  final int slashChar = "/".codeUnitAt(0);
 
   final List<int> _emptyCodeUnits = [" ".codeUnitAt(0), "\t".codeUnitAt(0), "\n".codeUnitAt(0)];
 
@@ -70,14 +72,14 @@ class TxtVdfFile {
 
     int savedPos = _filePos;
 
-    _findNextNotEmptyChar();
+    _findNextData();
     peek(char: openBrace);
 
     CanonicalizedMap<String,String, dynamic> objProperties = _readObjectProperties();
 
     outputMap[key] = objProperties;
 
-    _findNextNotEmptyChar();
+    _findNextData();
 
     consume(char: closingBrace);
 
@@ -86,17 +88,17 @@ class TxtVdfFile {
 
   bool _isMoreDataToRead() {
     var savedPos = _filePos;
-    bool moreData=  _findNextNotEmptyChar();
+    bool moreData=  _findNextData();
     _filePos = savedPos;
     return moreData;
   }
 
   //Is next property and object property?
   bool _isNextObjectProperty() {
-    _findNextNotEmptyChar();
+    _findNextData();
     int savedFilePos = _filePos;
     _readString();
-    _findNextNotEmptyChar();
+    _findNextData();
     bool isObjProperty =  peek()==openBrace;
     _filePos = savedFilePos;
     return isObjProperty;
@@ -104,7 +106,7 @@ class TxtVdfFile {
 
   bool _isEndOfObject() {
     int savedFilePos = _filePos;
-    _findNextNotEmptyChar();
+    _findNextData();
     bool eoo = peek() == closingBrace;
     _filePos = savedFilePos;
     return eoo;
@@ -129,8 +131,9 @@ class TxtVdfFile {
     return  !_emptyCodeUnits.contains(char);
   }
 
+  //Search for next readable data (No empty chars and no comments)
   //Returns false if EOF, true if more data comes. If false returned the _filePos pointer is undefined
-  bool _findNextNotEmptyChar() {
+  bool _findNextData() {
     bool found = false;
     int char = 0;
 
@@ -139,7 +142,13 @@ class TxtVdfFile {
     do {
       ++_filePos;
       if(_filePos >= _text.length-1) return false;
+      if(_commentComesNext())
+      {
+        _skipToNextLine();
+      }
+
       char = peek();
+
     }while(!isCharEmpty(char));
 
     return true;
@@ -147,7 +156,7 @@ class TxtVdfFile {
 
 
   String _readString() {
-    _findNextNotEmptyChar();
+    _findNextData();
 
     String str = "";
     consume(char:doubleQuoteChar);
@@ -214,6 +223,29 @@ class TxtVdfFile {
       indentationString.write("\t");
     }
     return indentationString.toString();
+  }
+
+  bool _commentComesNext() {
+    bool retVal = false;
+    if(peek() ==slashChar) {
+      ++_filePos;
+      if(peek() ==slashChar) {
+        retVal = true;
+      }
+
+      --_filePos;
+    }
+
+    return retVal;
+  }
+
+  //returns false if EOF true otherwhise
+  bool _skipToNextLine() {
+    do {
+      if(_filePos >= _text.length-1) return false;
+    } while(consume()!=nextLineChar);
+
+    return true;
   }
 
 }
