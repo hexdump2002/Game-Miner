@@ -3,22 +3,24 @@ import 'dart:io';
 
 import 'package:collection/collection.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:game_miner/data/models/app_storage.dart';
 import 'package:game_miner/data/models/compat_tool_mapping.dart';
 import 'package:game_miner/data/models/game_executable.dart';
 import 'package:game_miner/data/models/game_export_data.dart';
 import 'package:game_miner/data/repositories/compat_tools_repository.dart';
+import 'package:game_miner/logic/Tools/steam_tools.dart';
 import 'package:get_it/get_it.dart';
 import 'package:path/path.dart' as p;
+import 'package:collection/collection.dart';
 
 import '../../data/models/compat_tool.dart';
 import '../../data/models/game.dart';
+import '../../data/repositories/apps_storage_repository.dart';
 import '../blocs/game_mgr_cubit.dart';
 
 enum GameStatus { NonAdded, Added, FullyAdded, AddedExternal }
 
-
 class GameTools {
-
   static void handleGameExecutableErrorsForGame(Game g) {
     for (GameExecutable ge in g.exeFileEntries) {
       ge.errors.clear();
@@ -43,9 +45,8 @@ class GameTools {
   }
 
   static bool doGamesHaveErrors(List<Game> games) {
-    return games.firstWhereOrNull((e) => e.hasErrors())!=null;
+    return games.firstWhereOrNull((e) => e.hasErrors()) != null;
   }
-
 
   static GameStatus getGameStatus(Game game) {
     if (game.isExternal) return GameStatus.AddedExternal;
@@ -64,20 +65,15 @@ class GameTools {
     return status;
   }
 
-
   static Map<String, List<Game>> categorizeGamesByStatus(List<Game> games) {
-    List<Game> notAdded = [],
-        added = [],
-        fullyAdded = [],
-        addedExternal = [];
+    List<Game> notAdded = [], added = [], fullyAdded = [], addedExternal = [];
 
     for (int i = 0; i < games.length; ++i) {
       Game ug = games[i];
       var status = getGameStatus(ug);
       if (status == GameStatus.AddedExternal) {
         addedExternal.add(ug);
-      }
-      else if (status == GameStatus.FullyAdded) {
+      } else if (status == GameStatus.FullyAdded) {
         fullyAdded.add(ug);
       } else if (status == GameStatus.Added) {
         added.add(ug);
@@ -132,9 +128,19 @@ class GameTools {
     List<Game> finalList = [];
 
     if (sortDirection == SortDirection.Desc) {
-      finalList..addAll(withErrors)..addAll(notAdded)..addAll(added)..addAll(fullyAdded)..addAll(addedExternal);
+      finalList
+        ..addAll(withErrors)
+        ..addAll(notAdded)
+        ..addAll(added)
+        ..addAll(fullyAdded)
+        ..addAll(addedExternal);
     } else {
-      finalList..addAll(addedExternal)..addAll(fullyAdded)..addAll(added)..addAll(notAdded)..addAll(withErrors);
+      finalList
+        ..addAll(addedExternal)
+        ..addAll(fullyAdded)
+        ..addAll(added)
+        ..addAll(notAdded)
+        ..addAll(withErrors);
     }
 
     assert(games.length == finalList.length);
@@ -174,15 +180,54 @@ class GameTools {
     var file = File(path);
     if (!await file.exists()) {
       return null;
-    }
-    else {
+    } else {
       await file.open();
       String json = await file.readAsString();
       var gmd = GameExportedData.fromJson(jsonDecode(json));
       return gmd;
     }
   }
+
+  static Future<void> deleteGameData(Game game,List<AppStorage> appsStorage, bool deleteCompatData, bool deleteShaderData) async {
+    if(deleteCompatData) {
+      await deleteCompatToolData(game, appsStorage);
+    }
+
+    if(deleteShaderData) {
+      await deleteShaderCacheData(game, appsStorage);
+    }
+  }
+
+  static Future<void> deleteCompatToolData(Game game, List<AppStorage> appsStorage) async {
+    String basePath = "${SteamTools.getSteamBaseFolder()}/steamapps";
+
+    for (GameExecutable ge in game.exeFileEntries) {
+      if(ge.added) {
+        AppStorage? as = appsStorage!.firstWhereOrNull(
+                (element) {
+              return element.appId == ge.appId.toString() && element.storageType == StorageType.CompatData;
+            });
+        if (as != null) {
+          print("BOrrando compatdata de exe ${as.appId}");
+          String pathToDelete = "$basePath/compatdata/${as.appId}";
+          await Directory(pathToDelete).delete(recursive: true);
+        }
+      }
+    }
+  }
+
+  static Future<void> deleteShaderCacheData(Game game, List<AppStorage> appsStorage) async {
+    String basePath = "${SteamTools.getSteamBaseFolder()}/steamapps";
+
+    for (GameExecutable ge in game.exeFileEntries) {
+      if(ge.added) {
+        AppStorage? as = appsStorage!.firstWhereOrNull((element) =>
+        element.appId == ge.appId.toString() && element.storageType == StorageType.ShaderCache);
+        if (as != null) {
+          String pathToDelete = "$basePath/shadercache/${as.appId}";
+          await Directory(pathToDelete).delete(recursive: true);
+        }
+      }
+    }
+  }
 }
-
-
-

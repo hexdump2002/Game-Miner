@@ -152,3 +152,18 @@ class SearchTermChanged extends BaseDataChanged {
       searchText);
 }
 
+class DeleteGameClicked extends GameMgrBaseState {
+  Game game;
+  DeleteGameClicked(this.game);
+}
+
+class RenameGameClicked extends GameMgrBaseState {
+  Game game;
+  RenameGameClicked(this.game);
+}
+
+
+class SteamDetected extends GameMgrBaseState {
+  VoidCallback okAction;
+  SteamDetected(this.okAction);
+}

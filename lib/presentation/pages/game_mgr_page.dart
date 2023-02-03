@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_dialogs/flutter_dialogs.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:expandable/expandable.dart';
 import 'package:flutter_popup_menu_button/menu_direction.dart';
@@ -22,7 +23,7 @@ import '../../data/models/game.dart';
 import '../../data/models/settings.dart';
 import '../../data/repositories/games_repository.dart';
 import '../../logic/Tools/game_tools.dart';
-
+import '../../logic/Tools/steam_tools.dart';
 
 //WARNING: THIS CLASS USES A LOT OF NON BEST PRACTICES. FOR EXAMPLE: A CUBIT SHOULD BE PORTABLE AND THIS ONE RECEIVES A LOT OF BUILDCONTEXT
 class GameMgrPage extends StatefulWidget {
@@ -32,8 +33,10 @@ class GameMgrPage extends StatefulWidget {
   State<GameMgrPage> createState() => _GameMgrPageState();
 }
 
-class _GameMgrPageState extends State<GameMgrPage>  {
+class _GameMgrPageState extends State<GameMgrPage> {
   final _formKey = GlobalKey<FormState>();
+
+  final TextEditingController _genericTextController = TextEditingController();
 
   @override
   void initState() {
@@ -60,7 +63,9 @@ class _GameMgrPageState extends State<GameMgrPage>  {
           title: Text("Game Manager"),
           actions: [
             Expanded(
-              child: Padding(padding: const EdgeInsets.fromLTRB(8, 8, 16, 8), child: SearchBar( _nsCubit(context).searchText, tr("search"), (term) => _nsCubit(context).filterGamesByName(term))),
+              child: Padding(
+                  padding: const EdgeInsets.fromLTRB(8, 8, 16, 8),
+                  child: SearchBar(_nsCubit(context).searchText, tr("search"), (term) => _nsCubit(context).filterGamesByName(term))),
             ),
             BlocBuilder<GameMgrCubit, GameMgrBaseState>(
               builder: (context, state) {
@@ -119,9 +124,9 @@ class _GameMgrPageState extends State<GameMgrPage>  {
                         ]),
                   ),
                   IconButton(
-                    onPressed: () async{
+                    onPressed: () async {
                       if (_formKey.currentState!.validate()) {
-                        await _nsCubit(context).trySave(context);
+                        await _nsCubit(context).trySave();
                       } else {
                         print("There are errors in the form. Fix them!");
                       }
@@ -148,28 +153,28 @@ class _GameMgrPageState extends State<GameMgrPage>  {
             )
           ]),
       body: ExpandableTheme(
-        data: const ExpandableThemeData(hasIcon: false),
-        child: Container(
-            alignment: Alignment.center,
-            child: /*BlocConsumer<SettingsCubit, SettingsState>(listener: (
-              context,
-              state,
-            ) {
-              if (state is SettingsSaved) {
-                BlocProvider.of<NonSteamGamesCubit>(context).refresh(BlocProvider.of<SettingsCubit>(context).getSettings());
-              }
-            }, builder: (context, settingsState) {
-              return */
-                BlocBuilder<GameMgrCubit, GameMgrBaseState>(builder: (context, nsgState) {
-              //print("[NonSteamGamesCubit Builder] State -> $nsgState");
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: _buildDataScreen(context, nsgState),
-              );
-            }) /*;
-            })*/
-            ),
-      ),
+          data: const ExpandableThemeData(hasIcon: false),
+          child: Container(
+              alignment: Alignment.center,
+              child: BlocConsumer<GameMgrCubit, GameMgrBaseState>(listener: (context, state) {
+                if (state is DeleteGameClicked) {
+                  _deleteGame(context, state.game);
+                }
+                else if (state is SteamDetected) {
+                  showSteamActiveWhenSaving(context, state.okAction);
+                }
+                else if (state is RenameGameClicked) {
+                  _renameGame(context, state.game);
+                }
+
+              }, buildWhen: (previous, current) {
+                return current is! DeleteGameClicked && current is! SteamDetected && current is! RenameGameClicked;
+              }, builder: (context, state) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: _buildDataScreen(context, state),
+                );
+              }))),
     );
 
     stopwatch.stop();
@@ -224,53 +229,55 @@ class _GameMgrPageState extends State<GameMgrPage>  {
   }
 
   Widget _buildMenu(GameView gameView) {
-    return !gameView.game.isExternal ?
-      FlutterPopupMenuButton(
-      direction: MenuDirection.left,
-      decoration: const BoxDecoration(borderRadius: BorderRadius.all(Radius.circular(20)), color: Colors.white),
-      popupMenuSize: const Size(200, 200),
-      child: FlutterPopupMenuIcon(
-        key: GlobalKey(),
-        child: Icon(Icons.more_vert),
-      ),
-      children: [
-        FlutterPopupMenuItem(
-            closeOnItemClick: true,
-            onTap: () => _nsCubit(context).openFolder(gameView.game),
-            child: ListTile(
-              leading: const Icon(Icons.folder,color:Colors.grey
-                  //disabledColor: _userSettings.darkTheme ? Colors.grey.shade800 : Colors.grey.shade300,
-                  ),
-              title: Text(tr("open_folder"), style: TextStyle(color:Colors.black),),
-            )),
-        FlutterPopupMenuItem(
-            closeOnItemClick: true,
-            onTap: () => _nsCubit(context).tryRenameGame(context, gameView.game),
-            child: ListTile(
-              leading: Icon(Icons.edit,color:Colors.grey
-                  //disabledColor: _userSettings.darkTheme ? Colors.grey.shade800 : Colors.grey.shade300,
-                  ),
-              title: Text(tr("rename_game"), style: TextStyle(color:Colors.black)),
-            )),
-
-        FlutterPopupMenuItem(
-            closeOnItemClick: true,
-            onTap: ()=> _nsCubit(context).tryDeleteGame(context, gameView.game),
-            child: ListTile(
-              leading: Icon(Icons.delete,color:Colors.grey),
-              title: Text(tr("delete"), style: TextStyle(color:Colors.black)),
-            )),
-
-        FlutterPopupMenuItem(
-            closeOnItemClick: true,
-            onTap: () => _nsCubit(context).exportGame(gameView.game),
-            child: ListTile(
-              hoverColor: Colors.grey,
-              leading: Icon(Icons.import_export,color:Colors.grey),
-              title: Text(tr("export_config"), style: TextStyle(color:Colors.black)),
-            )),
-      ],
-    ):  Icon(Icons.more_vert,color: _userSettings.darkTheme ? Colors.grey.shade700 : Colors.grey.shade300);
+    return !gameView.game.isExternal
+        ? FlutterPopupMenuButton(
+            direction: MenuDirection.left,
+            decoration: const BoxDecoration(borderRadius: BorderRadius.all(Radius.circular(20)), color: Colors.white),
+            popupMenuSize: const Size(200, 200),
+            child: FlutterPopupMenuIcon(
+              key: GlobalKey(),
+              child: Icon(Icons.more_vert),
+            ),
+            children: [
+              FlutterPopupMenuItem(
+                  closeOnItemClick: true,
+                  onTap: () => _nsCubit(context).openFolder(gameView.game),
+                  child: ListTile(
+                    leading: const Icon(Icons.folder, color: Colors.grey
+                        //disabledColor: _userSettings.darkTheme ? Colors.grey.shade800 : Colors.grey.shade300,
+                        ),
+                    title: Text(
+                      tr("open_folder"),
+                      style: TextStyle(color: Colors.black),
+                    ),
+                  )),
+              FlutterPopupMenuItem(
+                  closeOnItemClick: true,
+                  onTap: () => _nsCubit(context).tryRenameGame(context, gameView.game),
+                  child: ListTile(
+                    leading: Icon(Icons.edit, color: Colors.grey
+                        //disabledColor: _userSettings.darkTheme ? Colors.grey.shade800 : Colors.grey.shade300,
+                        ),
+                    title: Text(tr("rename_game"), style: TextStyle(color: Colors.black)),
+                  )),
+              FlutterPopupMenuItem(
+                  closeOnItemClick: true,
+                  onTap: () => _nsCubit(context).tryDeleteGame(gameView.game),
+                  child: ListTile(
+                    leading: Icon(Icons.delete, color: Colors.grey),
+                    title: Text(tr("delete_game"), style: TextStyle(color: Colors.black)),
+                  )),
+              FlutterPopupMenuItem(
+                  closeOnItemClick: true,
+                  onTap: () => _nsCubit(context).exportGame(gameView.game),
+                  child: ListTile(
+                    hoverColor: Colors.grey,
+                    leading: Icon(Icons.import_export, color: Colors.grey),
+                    title: Text(tr("export_config"), style: TextStyle(color: Colors.black)),
+                  )),
+            ],
+          )
+        : Icon(Icons.more_vert, color: _userSettings.darkTheme ? Colors.grey.shade700 : Colors.grey.shade300);
   }
 
   Widget _createGameCards(BuildContext context, BaseDataChanged state, CustomTheme themeExtension) {
@@ -300,7 +307,6 @@ class _GameMgrPageState extends State<GameMgrPage>  {
                             child: _getExeCurrentStateIcon(GameTools.getGameStatus(gameView.game)),
                           ),
                           _getErrorsOrModifiedIcon(gameView),
-
                           _buildMenu(gameView)
                         ],
                       ),
@@ -328,7 +334,6 @@ class _GameMgrPageState extends State<GameMgrPage>  {
 
     List<GameExecutable> gameExePaths = gv.game.exeFileEntries;
 
-
     if (gv.game.exeFileEntries.isEmpty) {
       return Padding(
         padding: const EdgeInsets.fromLTRB(0, 0, 0, 16),
@@ -340,7 +345,6 @@ class _GameMgrPageState extends State<GameMgrPage>  {
     }
 
     for (GameExecutable uge in gameExePaths) {
-
       bool added = uge.added;
       bool error = uge.errors.isNotEmpty;
       gameItems.add(Padding(
@@ -360,14 +364,14 @@ class _GameMgrPageState extends State<GameMgrPage>  {
                 Switch(
                     value: uge.added,
                     onChanged: (value) {
-                      _nsCubit(context).swapExeAdding(gv,uge);
+                      _nsCubit(context).swapExeAdding(gv, uge);
                     }),
                 //activeTrackColor: Colors.lightGreenAccent,
                 //activeColor: Colors.green,
                 //IconButton(onPressed: uge.added ? () => true: null, icon: Icon(Icons.settings))
               ])
             ]),
-            if (uge.added) _buildGameExeForm(gv,uge, themeExtension, availableProtons)
+            if (uge.added) _buildGameExeForm(gv, uge, themeExtension, availableProtons)
           ],
         ),
       ));
@@ -383,10 +387,9 @@ class _GameMgrPageState extends State<GameMgrPage>  {
   }
 
   Widget _buildGameExeForm(GameView gv, GameExecutable uge, CustomTheme themeExtension, List<String> availableProntons) {
-
     bool hasCompatToolError = uge.hasErrorType(GameExecutableErrorType.InvalidProton);
-    GameExecutableError? invalidProtonError =uge.errors.firstWhereOrNull((element) => element.type == GameExecutableErrorType.InvalidProton);
-    if(invalidProtonError!=null) {
+    GameExecutableError? invalidProtonError = uge.errors.firstWhereOrNull((element) => element.type == GameExecutableErrorType.InvalidProton);
+    if (invalidProtonError != null) {
       availableProntons = [invalidProtonError.data, ...availableProntons];
     }
 
@@ -401,9 +404,13 @@ class _GameMgrPageState extends State<GameMgrPage>  {
             TextFormField(
               key: Key(uge.appId.toString()),
               initialValue: uge.name,
-              decoration:  InputDecoration(labelText: tr("name")),
+              decoration: InputDecoration(labelText: tr("name")),
               autovalidateMode: AutovalidateMode.onUserInteraction,
-              onChanged: (value)  {uge.name = value!; gv.modified = true; _nsCubit(context).notifyDataChanged();},
+              onChanged: (value) {
+                uge.name = value!;
+                gv.modified = true;
+                _nsCubit(context).notifyDataChanged();
+              },
               /*onSaved: (value) => {
                 uge.name = value!
               },*/
@@ -418,7 +425,11 @@ class _GameMgrPageState extends State<GameMgrPage>  {
               initialValue: uge.launchOptions,
               decoration: InputDecoration(labelText: tr("launch_options")),
               autovalidateMode: AutovalidateMode.onUserInteraction,
-              onChanged: (value) {uge.launchOptions = value!; gv.modified = true; _nsCubit(context).notifyDataChanged();},
+              onChanged: (value) {
+                uge.launchOptions = value!;
+                gv.modified = true;
+                _nsCubit(context).notifyDataChanged();
+              },
               /*onSaved: (value) => {
                 uge.name = value!
               },
@@ -433,8 +444,8 @@ class _GameMgrPageState extends State<GameMgrPage>  {
                 items: availableProntons.map<DropdownMenuItem<String>>((String e) {
                   return DropdownMenuItem<String>(value: e, child: Text(e));
                 }).toList(),
-                value: invalidProtonError != null? invalidProtonError.data : nsgc.getCompatToolDisplayNameFromCode(uge.compatToolCode),
-                onChanged: (String? value) => nsgc.setCompatToolDataFor(gv,uge, value!),
+                value: invalidProtonError != null ? invalidProtonError.data : nsgc.getCompatToolDisplayNameFromCode(uge.compatToolCode),
+                onChanged: (String? value) => nsgc.setCompatToolDataFor(gv, uge, value!),
                 decoration: const InputDecoration(labelText: "Compat Tool"))
           ],
         ),
@@ -443,7 +454,6 @@ class _GameMgrPageState extends State<GameMgrPage>  {
   }
 
   Widget _getExeCurrentStateIcon(GameStatus gameAddedStatus) {
-
     Color color;
     if (gameAddedStatus == GameStatus.FullyAdded) {
       color = Colors.green;
@@ -547,12 +557,12 @@ class _GameMgrPageState extends State<GameMgrPage>  {
     String error = "";
 
     GameExecutableError? exeError = uge.errors.firstWhereOrNull((element) => element.type == GameExecutableErrorType.BrokenExecutable);
-    if (exeError!=null) {
+    if (exeError != null) {
       error += tr('broken_executable');
     }
 
     exeError = uge.errors.firstWhereOrNull((element) => element.type == GameExecutableErrorType.InvalidProton);
-    if (exeError!=null) {
+    if (exeError != null) {
       if (error.isNotEmpty) {
         error += "\n\n";
       }
@@ -564,29 +574,193 @@ class _GameMgrPageState extends State<GameMgrPage>  {
 
   _getErrorsOrModifiedIcon(GameView gv) {
     Icon icon;
-    String msg="";
+    String msg = "";
     bool hasErrors = gv.game.hasErrors();
     bool modified = gv.modified;
 
-    if(hasErrors && modified) {
-      icon = const Icon(Icons.save, color:  Colors.red);
+    if (hasErrors && modified) {
+      icon = const Icon(Icons.save, color: Colors.red);
       msg = tr("game_modified");
-    }
-    else if(hasErrors) {
-      icon = const Icon(Icons.warning, color:  Colors.red);
+    } else if (hasErrors) {
+      icon = const Icon(Icons.warning, color: Colors.red);
       msg = tr("game_has_config_errors");
-    }
-    else if(modified) {
-      icon = const Icon(Icons.save, color:  Colors.orange);
+    } else if (modified) {
+      icon = const Icon(Icons.save, color: Colors.orange);
       msg = tr("game_modified");
-    }
-    else {
+    } else {
       icon = const Icon(Icons.save, color: Color(0x00000000));
     }
 
     return Tooltip(
       message: msg,
       child: icon,
+    );
+  }
+
+  void _deleteGame(BuildContext context, Game game) {
+    var nsCubit = _nsCubit(context);
+    showPlatformDialog(
+      context: context,
+      builder: (context) {
+        bool deleteGame = false, deleteImages = false, deleteCompatData = false, deleteShaderData = false;
+        return BasicDialogAlert(
+          title: Row(children: [
+            const Padding(
+              padding: EdgeInsets.fromLTRB(0, 0, 8.0, 0),
+              child: Icon(Icons.warning, color: Colors.red),
+            ),
+            Text(tr('warning'))
+          ]),
+          content: StatefulBuilder(builder: (BuildContext context, StateSetter setState) {
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                RichText(
+                    text: TextSpan(children: [
+                  TextSpan(text: tr("going_to"), style: TextStyle(color: Colors.black)),
+                  TextSpan(text: tr("delete_capitals"), style: TextStyle(color: Colors.redAccent)),
+                  TextSpan(text: tr("delete_game_dialog_text", args: ['${game.name}']), style: TextStyle(color: Colors.black)),
+                  TextSpan(text: tr("warning_action_undone"), style: TextStyle(color: Colors.red, fontSize: 18, height: 2))
+                ])),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(0, 16, 0, 0),
+                  child: Column(children: [
+                    Row(
+                      children: [
+                        Expanded(
+                            child:
+                                CheckboxListTile(title: Text("Game"), value: deleteGame, onChanged: (value) => setState(() => deleteGame = value!))),
+                        Expanded(
+                            child: CheckboxListTile(
+                                title: Text("Images"), value: deleteImages, onChanged: (value) => setState(() => deleteImages = value!))),
+                      ],
+                    ),
+                    Row(children: [
+                      Expanded(
+                          child: CheckboxListTile(
+                              title: Text("CompatData"), value: deleteCompatData, onChanged: (value) => setState(() => deleteCompatData = value!))),
+                      Expanded(
+                          child: CheckboxListTile(
+                              title: Text("ShaderData"), value: deleteShaderData, onChanged: (value) => setState(() => deleteShaderData = value!))),
+                    ])
+                  ]),
+                )
+              ],
+            );
+          }),
+          actions: <Widget>[
+            BasicDialogAction(
+              title: Text("OK"),
+              onPressed: () async {
+                nsCubit.deleteGame(game, deleteGame, deleteImages, deleteCompatData, deleteShaderData);
+                Navigator.pop(context);
+              },
+            ),
+            BasicDialogAction(
+              title: Text(tr("cancel")),
+              onPressed: () {
+                Navigator.pop(context);
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _renameGame(BuildContext context, Game game) {
+    GameMgrCubit cubit = _nsCubit(context);
+    _genericTextController.text = game.name;
+
+    showPlatformDialog(
+      context: context,
+      builder: (context) =>
+          BasicDialogAlert(
+            title: Text(tr("rename_game")),
+            content: Padding(
+              padding: EdgeInsets.all(8),
+              child: TextField(
+                controller: _genericTextController,
+              ),
+            ),
+            actions: <Widget>[
+              BasicDialogAction(
+                  title: Text("OK"),
+                  onPressed: () async {
+                    var text = _genericTextController.text;
+                    RegExp r = RegExp(r'^[\w\-. ]+$');
+
+                    if (!r.hasMatch(text)) {
+                      showPlatformDialog(
+                          context: context,
+                          builder: (context) =>
+                              BasicDialogAlert(
+                                  title: Text(tr('invalid_game_name')),
+                                  content: const Padding(
+                                      padding: EdgeInsets.all(8),
+                                      child: Text("The name is not valid. You can use numbers, letters,  and '-','_','.' characters.")),
+                                  actions: [
+                                    BasicDialogAction(
+                                        title: Text("OK"),
+                                        onPressed: () {
+                                          Navigator.pop(context);
+                                        })
+                                  ]));
+                      return;
+                    }
+                    cubit.renameGame(game, _genericTextController.text);
+                    Navigator.pop(context);
+                  }),
+              BasicDialogAction(
+                title: Text(tr("cancel")),
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+              ),
+            ],
+          ),
+    );
+  }
+  void showSteamActiveWhenSaving(BuildContext context, VoidCallback actionFunction) {
+    showPlatformDialog(
+      context: context,
+      builder: (context) => BasicDialogAlert(
+        title: Text(tr('warning')),
+        content: Row(
+          children: [
+            const Padding(
+              padding: EdgeInsets.all(16.0),
+              child: Icon(
+                Icons.warning,
+                color: Colors.red,
+                size: 100,
+              ),
+            ),
+            Expanded(child: Text(tr("steam_is_running_cant_action")))
+          ],
+        ),
+        actions: <Widget>[
+          BasicDialogAction(
+            title: Text("OK"),
+            onPressed: () async {
+              Navigator.pop(context);
+              EasyLoading.show(status: tr("closing_steam"));
+              await SteamTools.closeSteamClient();
+              while (await SteamTools.isSteamRunning() == true) {
+                await Future.delayed(const Duration(seconds: 1));
+              }
+              EasyLoading.dismiss();
+              actionFunction();
+            },
+          ),
+          BasicDialogAction(
+            title: Text(tr("cancel")),
+            onPressed: () {
+              Navigator.pop(context);
+            },
+          ),
+        ],
+      ),
     );
   }
 }
