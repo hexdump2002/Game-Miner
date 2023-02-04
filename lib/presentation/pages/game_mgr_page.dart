@@ -159,14 +159,11 @@ class _GameMgrPageState extends State<GameMgrPage> {
               child: BlocConsumer<GameMgrCubit, GameMgrBaseState>(listener: (context, state) {
                 if (state is DeleteGameClicked) {
                   _deleteGame(context, state.game);
-                }
-                else if (state is SteamDetected) {
+                } else if (state is SteamDetected) {
                   showSteamActiveWhenSaving(context, state.okAction);
-                }
-                else if (state is RenameGameClicked) {
+                } else if (state is RenameGameClicked) {
                   _renameGame(context, state.game);
                 }
-
               }, buildWhen: (previous, current) {
                 return current is! DeleteGameClicked && current is! SteamDetected && current is! RenameGameClicked;
               }, builder: (context, state) {
@@ -233,7 +230,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
         ? FlutterPopupMenuButton(
             direction: MenuDirection.left,
             decoration: const BoxDecoration(borderRadius: BorderRadius.all(Radius.circular(20)), color: Colors.white),
-            popupMenuSize: const Size(200, 200),
+            popupMenuSize: const Size(200, 240),
             child: FlutterPopupMenuIcon(
               key: GlobalKey(),
               child: Icon(Icons.more_vert),
@@ -274,6 +271,14 @@ class _GameMgrPageState extends State<GameMgrPage> {
                     hoverColor: Colors.grey,
                     leading: Icon(Icons.import_export, color: Colors.grey),
                     title: Text(tr("export_config"), style: TextStyle(color: Colors.black)),
+                  )),
+              FlutterPopupMenuItem(
+                  closeOnItemClick: true,
+                  onTap: () => _resetGameToConfigFile(gameView),
+                  child: ListTile(
+                    hoverColor: Colors.grey,
+                    leading: Icon(Icons.import_export, color: Colors.grey),
+                    title: Text(tr("reset_to_config"), style: TextStyle(color: Colors.black)),
                   )),
             ],
           )
@@ -402,7 +407,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
         child: Column(
           children: [
             TextFormField(
-              key: Key(uge.appId.toString()),
+              key: GlobalKey(), //TODO: fix This should be reusable not created one eachtime
               initialValue: uge.name,
               decoration: InputDecoration(labelText: tr("name")),
               autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -602,7 +607,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
     showPlatformDialog(
       context: context,
       builder: (context) {
-        bool deleteGame = false, deleteImages = false, deleteCompatData = false, deleteShaderData = false;
+        bool deleteImages = true, deleteCompatData = true, deleteShaderData = true;
         return BasicDialogAlert(
           title: Row(children: [
             const Padding(
@@ -625,24 +630,34 @@ class _GameMgrPageState extends State<GameMgrPage> {
                 Padding(
                   padding: const EdgeInsets.fromLTRB(0, 16, 0, 0),
                   child: Column(children: [
-                    Row(
-                      children: [
-                        Expanded(
-                            child:
-                                CheckboxListTile(title: Text("Game"), value: deleteGame, onChanged: (value) => setState(() => deleteGame = value!))),
-                        Expanded(
-                            child: CheckboxListTile(
-                                title: Text("Images"), value: deleteImages, onChanged: (value) => setState(() => deleteImages = value!))),
-                      ],
-                    ),
                     Row(children: [
                       Expanded(
                           child: CheckboxListTile(
-                              title: Text("CompatData"), value: deleteCompatData, onChanged: (value) => setState(() => deleteCompatData = value!))),
+                              dense: true,
+                              title: Text(
+                                "CompatData",
+                                style: TextStyle(fontSize: 14),
+                              ),
+                              value: deleteCompatData,
+                              onChanged: (value) => setState(() => deleteCompatData = value!))),
                       Expanded(
                           child: CheckboxListTile(
-                              title: Text("ShaderData"), value: deleteShaderData, onChanged: (value) => setState(() => deleteShaderData = value!))),
-                    ])
+                              dense: true,
+                              title: Text("ShaderData", style: TextStyle(fontSize: 14)),
+                              value: deleteShaderData,
+                              onChanged: (value) => setState(() => deleteShaderData = value!))),
+                    ]),
+                    Row(
+                      children: [
+                        Expanded(
+                            child: CheckboxListTile(
+                                dense: true,
+                                title: Text("Images", style: TextStyle(fontSize: 14)),
+                                value: deleteImages,
+                                onChanged: (value) => setState(() => deleteImages = value!))),
+                        Expanded(child: Container())
+                      ],
+                    )
                   ]),
                 )
               ],
@@ -652,7 +667,46 @@ class _GameMgrPageState extends State<GameMgrPage> {
             BasicDialogAction(
               title: Text("OK"),
               onPressed: () async {
-                nsCubit.deleteGame(game, deleteGame, deleteImages, deleteCompatData, deleteShaderData);
+                nsCubit.deleteGame(game, deleteImages, deleteCompatData, deleteShaderData);
+                Navigator.pop(context);
+              },
+            ),
+            BasicDialogAction(
+              title: Text(tr("cancel")),
+              onPressed: () {
+                Navigator.pop(context);
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _resetGameToConfigFile(GameView gv) async {
+    var nsCubit = _nsCubit(context);
+    showPlatformDialog(
+      context: context,
+      builder: (context) {
+        return BasicDialogAlert(
+          title: Row(children: [
+            const Padding(
+              padding: EdgeInsets.fromLTRB(0, 0, 8.0, 0),
+              child: Icon(Icons.warning, color: Colors.red),
+            ),
+            Text(tr('warning'))
+          ]),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(tr("reset_to_config_dialog_text")),
+              ]),
+
+          actions: <Widget>[
+            BasicDialogAction(
+              title: Text("OK"),
+              onPressed: ()  {
+                nsCubit.resetConfig(gv);
                 Navigator.pop(context);
               },
             ),
@@ -674,53 +728,52 @@ class _GameMgrPageState extends State<GameMgrPage> {
 
     showPlatformDialog(
       context: context,
-      builder: (context) =>
-          BasicDialogAlert(
-            title: Text(tr("rename_game")),
-            content: Padding(
-              padding: EdgeInsets.all(8),
-              child: TextField(
-                controller: _genericTextController,
-              ),
-            ),
-            actions: <Widget>[
-              BasicDialogAction(
-                  title: Text("OK"),
-                  onPressed: () async {
-                    var text = _genericTextController.text;
-                    RegExp r = RegExp(r'^[\w\-. ]+$');
-
-                    if (!r.hasMatch(text)) {
-                      showPlatformDialog(
-                          context: context,
-                          builder: (context) =>
-                              BasicDialogAlert(
-                                  title: Text(tr('invalid_game_name')),
-                                  content: const Padding(
-                                      padding: EdgeInsets.all(8),
-                                      child: Text("The name is not valid. You can use numbers, letters,  and '-','_','.' characters.")),
-                                  actions: [
-                                    BasicDialogAction(
-                                        title: Text("OK"),
-                                        onPressed: () {
-                                          Navigator.pop(context);
-                                        })
-                                  ]));
-                      return;
-                    }
-                    cubit.renameGame(game, _genericTextController.text);
-                    Navigator.pop(context);
-                  }),
-              BasicDialogAction(
-                title: Text(tr("cancel")),
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-              ),
-            ],
+      builder: (context) => BasicDialogAlert(
+        title: Text(tr("rename_game")),
+        content: Padding(
+          padding: EdgeInsets.all(8),
+          child: TextField(
+            controller: _genericTextController,
           ),
+        ),
+        actions: <Widget>[
+          BasicDialogAction(
+              title: Text("OK"),
+              onPressed: () async {
+                var text = _genericTextController.text;
+                RegExp r = RegExp(r'^[\w\-. ]+$');
+
+                if (!r.hasMatch(text)) {
+                  showPlatformDialog(
+                      context: context,
+                      builder: (context) => BasicDialogAlert(
+                              title: Text(tr('invalid_game_name')),
+                              content: const Padding(
+                                  padding: EdgeInsets.all(8),
+                                  child: Text("The name is not valid. You can use numbers, letters,  and '-','_','.' characters.")),
+                              actions: [
+                                BasicDialogAction(
+                                    title: Text("OK"),
+                                    onPressed: () {
+                                      Navigator.pop(context);
+                                    })
+                              ]));
+                  return;
+                }
+                cubit.renameGame(game, _genericTextController.text);
+                Navigator.pop(context);
+              }),
+          BasicDialogAction(
+            title: Text(tr("cancel")),
+            onPressed: () {
+              Navigator.pop(context);
+            },
+          ),
+        ],
+      ),
     );
   }
+
   void showSteamActiveWhenSaving(BuildContext context, VoidCallback actionFunction) {
     showPlatformDialog(
       context: context,

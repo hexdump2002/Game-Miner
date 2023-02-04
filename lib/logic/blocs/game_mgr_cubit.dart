@@ -5,6 +5,7 @@ import 'package:flutter_dialogs/flutter_dialogs.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:collection/collection.dart';
 import 'package:game_miner/data/models/compat_tool.dart';
+import 'package:game_miner/data/models/game_export_data.dart';
 import 'package:game_miner/data/repositories/apps_storage_repository.dart';
 
 import 'package:game_miner/data/repositories/compat_tools_repository.dart';
@@ -61,8 +62,6 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
   String _searchText = "";
 
   String get searchText => _searchText;
-
-  bool _modified = false;
 
   bool get modified => _gameViews.firstWhereOrNull((element) => element.modified == true) != null;
 
@@ -306,7 +305,17 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
     String homeFolder = FileTools.getHomeFolder();
     String shortcutsPath = "$homeFolder/.steam/steam/userdata/${_settings.currentUserId}/config/shortcuts.vdf";
 
+    //Save shortcuts
     await _gameRepository.saveGames(shortcutsPath, games, _currentUserSettings.backupsEnabled, _currentUserSettings.maxBackupsCount);
+
+    //Copy art if this game was just imported
+    for(Game g in games) {
+      for(GameExecutable ge in g.exeFileEntries)  {
+        if(ge.dataFromConfigFile) {
+          GameTools.importShortcutArt(g.path, ge, _settings.currentUserId);
+        }
+      }
+    }
 
     if (showInfo) {
       EasyLoading.showSuccess(tr("data_saved"));
@@ -353,21 +362,20 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
     }
   }
 
-  void deleteGame(Game game, bool deleteGame, bool deleteImages, bool deleteCompatData, bool deleteShaderData) async {
+  void deleteGame(Game game, bool deleteImages, bool deleteCompatData, bool deleteShaderData) async {
     try {
-      if(deleteGame) {
-        await Directory(game.path).delete(recursive: true);
+      await Directory(game.path).delete(recursive: true);
 
-        _baseGames.removeWhere((element) => element.path == game.path);
-        _gameViews.removeWhere((element) => element.game.path == game.path);
-        _filteredGames.removeWhere((element) => element.game.path == game.path);
-        _sortedFilteredGames.removeWhere((element) => element.game.path == game.path);
+      _baseGames.removeWhere((element) => element.path == game.path);
+      _gameViews.removeWhere((element) => element.game.path == game.path);
+      _filteredGames.removeWhere((element) => element.game.path == game.path);
+      _sortedFilteredGames.removeWhere((element) => element.game.path == game.path);
 
-        //Persist new shortcuts file (TODO: split data saved to just save what is needed instead of everything everytime)
-        await _saveData(_baseGames, showInfo: false);
-      }
+      //Persist new shortcuts file (TODO: split data saved to just save what is needed instead of everything everytime)
+      await _saveData(_baseGames, showInfo: false);
+
       if(deleteImages) {
-
+        GameTools.deleteGameImages(game, _settings.currentUserId);
       }
       if(deleteCompatData || deleteShaderData) {
         SteamConfigRepository scr = GetIt.I<SteamConfigRepository>();
@@ -465,6 +473,48 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
       EasyLoading.showError(tr("game_couldnt_be_renamed", args: [game.name]));
       print(e);
     }
+  }
+
+  //Returns true if modification was made
+  Future<void> resetConfig(GameView gv) async{
+    GameExportedData? ged = await GameTools.importGame(gv.game);
+    if(ged==null) {
+      EasyLoading.showInfo(tr("config_does_not_exists"));
+    }
+
+    EasyLoading.showInfo(tr("reseting_game_config"));
+    bool modified = false;
+    for(GameExecutable ge in gv.game.exeFileEntries) {
+      GameExecutableExportedData? foundGe=ged!.executables.firstWhereOrNull((element) => element.executableRelativePath == ge.relativeExePath);
+      if(foundGe!=null) {
+        ge.name = foundGe.executableName;
+        ge.launchOptions = foundGe.executableOptions;
+        ge.added = true;
+        //ge.appId=SteamTools.generateAppId(p.joinAll([ge.startDir,ge.relativeExePath])); //Se generara el mismo?
+        ge.fillProtonMappingData(foundGe.compatToolCode, "", "250");
+        ge.dataFromConfigFile = true; //Mark as configured by config file
+        modified = true;
+      }
+    }
+
+    gv.modified = modified;
+
+    emit(GamesDataChanged(
+        _sortedFilteredGames,
+        getAvailableCompatToolDisplayNames(),
+        _nonAddedGamesCount,
+        _addedGamesCount,
+        _fullyAddedGamesCount,
+        _addedExternalCount,
+        _ssdFreeSizeInBytes,
+        _sdCardFreeInBytes,
+        _ssdTotalSizeInBytes,
+        _sdCardTotalInBytes,
+        _sortStates,
+        _sortDirectionStates,
+        searchText));
+
+    EasyLoading.showInfo(tr("game_was_reset"));
   }
 
   void foldAll() {
@@ -867,7 +917,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
   void exportGame(Game game) async {
     String exportPath = "${game.path}/gameminer_config.json";
     EasyLoading.show(status: tr("exporting_game_config", args: [exportPath]));
-    GameTools.exportGame(game);
+    GameTools.exportGame(game, _settings.currentUserId);
     EasyLoading.showSuccess(tr("game_config_exported", args: [exportPath]));
   }
 
@@ -887,4 +937,6 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
         _sortDirectionStates,
         searchText));
   }
+
+
 }

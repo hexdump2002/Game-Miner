@@ -8,6 +8,7 @@ import 'package:game_miner/data/models/compat_tool_mapping.dart';
 import 'package:game_miner/data/models/game_executable.dart';
 import 'package:game_miner/data/models/game_export_data.dart';
 import 'package:game_miner/data/repositories/compat_tools_repository.dart';
+import 'package:game_miner/logic/Tools/file_tools.dart';
 import 'package:game_miner/logic/Tools/steam_tools.dart';
 import 'package:get_it/get_it.dart';
 import 'package:path/path.dart' as p;
@@ -159,20 +160,71 @@ class GameTools {
     return games;
   }
 
-  static void exportGame(Game game) {
+  static Future<void> exportShortcutArt(String outputFolder, GameExecutable exe, String userId) async {
+    String sourcePath = "${SteamTools.getSteamBaseFolder()}/userdata/$userId/config/grid";
+    String destPath = outputFolder+"/game_miner_data";
+
+    try {
+      //Check if we must create the needed folder to hold the images
+      if (!await FileTools.existsFolder(destPath)) {
+        await Directory(destPath).create();
+      }
+
+      List<String> imageFiles = await FileTools.getFolderFilesAsync(sourcePath, recursive: false, regExFilter: "${exe.appId}_*");
+      for (String imageFile in imageFiles) {
+        String fileName = p.basename(imageFile);
+        String fullPath = p.join(destPath, fileName);
+        await File(imageFile).copy(fullPath);
+      }
+    }
+    catch(ex){
+      print("Error: $ex");
+    }
+  }
+
+  static Future<void> exportGame(Game game, String userId) async {
     List<GameExecutableExportedData> geed = [];
     for (GameExecutable ge in game.exeFileEntries) {
       if (ge.added) {
         geed.add(GameExecutableExportedData(ge.compatToolCode, ge.relativeExePath, ge.name, ge.launchOptions));
+        await exportShortcutArt(game.path, ge, userId);
       }
     }
     GameExportedData ged = GameExportedData(geed);
 
     String json = jsonEncode(ged);
     String fullPath = "${game.path}/gameminer_config.json";
-    File(fullPath)
-      ..createSync(recursive: true)
-      ..writeAsStringSync(json);
+    var file = File(fullPath);
+    await file.create(recursive: true);
+    await file.writeAsString(json);
+  }
+
+  static Future<void> importShortcutArt(String outputFolder, GameExecutable exe, String userId) async {
+
+    String destPath = "${SteamTools.getSteamBaseFolder()}/userdata/$userId/config/grid";
+    String sourcePath = outputFolder+"/game_miner_data";
+
+    try {
+      //Check if we have art to import
+      if (!await FileTools.existsFolder(sourcePath)) {
+        return;
+      }
+
+      //Check if grid folders exist if not create it
+      if (!await FileTools.existsFolder(destPath)) {
+        await Directory(destPath).create();
+      }
+
+      List<String> imageFiles = await FileTools.getFolderFilesAsync(sourcePath, recursive: false, regExFilter: "${exe.appId}_*");
+      for (String imageFile in imageFiles) {
+        String fileName = p.basename(imageFile);
+        String fullPath = p.join(destPath, fileName);
+        await File(imageFile).copy(fullPath);
+      }
+    }
+    catch(ex){
+      print("Error: $ex");
+    }
   }
 
   static Future<GameExportedData?> importGame(Game game) async {
@@ -188,12 +240,12 @@ class GameTools {
     }
   }
 
-  static Future<void> deleteGameData(Game game,List<AppStorage> appsStorage, bool deleteCompatData, bool deleteShaderData) async {
-    if(deleteCompatData) {
+  static Future<void> deleteGameData(Game game, List<AppStorage> appsStorage, bool deleteCompatData, bool deleteShaderData) async {
+    if (deleteCompatData) {
       await deleteCompatToolData(game, appsStorage);
     }
 
-    if(deleteShaderData) {
+    if (deleteShaderData) {
       await deleteShaderCacheData(game, appsStorage);
     }
   }
@@ -202,11 +254,10 @@ class GameTools {
     String basePath = "${SteamTools.getSteamBaseFolder()}/steamapps";
 
     for (GameExecutable ge in game.exeFileEntries) {
-      if(ge.added) {
-        AppStorage? as = appsStorage!.firstWhereOrNull(
-                (element) {
-              return element.appId == ge.appId.toString() && element.storageType == StorageType.CompatData;
-            });
+      if (ge.added) {
+        AppStorage? as = appsStorage!.firstWhereOrNull((element) {
+          return element.appId == ge.appId.toString() && element.storageType == StorageType.CompatData;
+        });
         if (as != null) {
           print("BOrrando compatdata de exe ${as.appId}");
           String pathToDelete = "$basePath/compatdata/${as.appId}";
@@ -220,13 +271,24 @@ class GameTools {
     String basePath = "${SteamTools.getSteamBaseFolder()}/steamapps";
 
     for (GameExecutable ge in game.exeFileEntries) {
-      if(ge.added) {
-        AppStorage? as = appsStorage!.firstWhereOrNull((element) =>
-        element.appId == ge.appId.toString() && element.storageType == StorageType.ShaderCache);
+      if (ge.added) {
+        AppStorage? as =
+            appsStorage!.firstWhereOrNull((element) => element.appId == ge.appId.toString() && element.storageType == StorageType.ShaderCache);
         if (as != null) {
           String pathToDelete = "$basePath/shadercache/${as.appId}";
           await Directory(pathToDelete).delete(recursive: true);
         }
+      }
+    }
+  }
+
+  static Future<void> deleteGameImages(Game game, String currentUserId) async {
+    String basePath = "${SteamTools.getSteamBaseFolder()}/userdata/$currentUserId/config/grid";
+
+    for (GameExecutable ge in game.exeFileEntries) {
+      List<String> imageFiles = await FileTools.getFolderFilesAsync(basePath, recursive: false, regExFilter: "${ge.appId}_*");
+      for (String imageFile in imageFiles) {
+        await File(imageFile).delete();
       }
     }
   }

@@ -13,7 +13,7 @@
   "fold_all": "Plegar todo",
   "refresh": "Refrescar",
   "settings": "Ajustes",
-  "discovered_games": "juegos en libreria",
+  "discovered_games": "juegos",
   "search_paths": "Rutas de busqueda",
   "general_options": "Opciones generales",
   "default_proton": "Proton por defecto",
@@ -101,6 +101,11 @@
   "launch_options": "Parámetros",
   "no_changes_nothing_to_save": "Sin cambios, nada que salvar",
   "opening_steam": "Abriendo Steam",
-  "select_user": "Cambiar usuario"
+  "select_user": "Cambiar usuario",
+  "reset_to_config_dialog_text":"Se va a resetear este juego a la configuración que fue exportada previamente. Si tienes cambios pendientes estos se perderán y si descargastes imagenes como banners, iconos, etc. estos serán sobre escritos con los que estaban activos al exportar la configuración.\n\n¿Quieres continuar?",
+  "reseting_game_config": "Reseteando juego",
+  "game_was_reset": "El juego fue reseteado. Ahora puedes grabar para mantener los cambios.",
+  "reset_to_config": "Cargar config",
+  "config_does_not_exist": "No existe fichero de configuración"
 
 }

@@ -13,7 +13,7 @@
   "fold_all": "Fold all",
   "refresh": "Refresh",
   "settings": "Settings",
-  "discovered_games": "games in library",
+  "discovered_games": "games",
   "search_paths": "Search paths",
   "general_options": "General options",
   "default_proton": "Default proton",
@@ -101,6 +101,12 @@
   "launch_options": "Launch options",
   "no_changes_nothing_to_save": "No changes, nothing to save",
   "opening_steam": "Opening Steam",
-  "select_user": "Select user"
+  "select_user": "Select user",
+  "reset_to_config_dialog_text":"You are going to reset this game to the exported configuration. If you have pending changes they will be lost and if you downloaded new images for this game like banners, icons, etc. they will be overwritten by the ones active when you exported the configuration.\n\nDo you want to continue?",
+  "reseting_game_config": "Reseting game",
+  "game_was_reset": "Game was reset, just save to keep the changes",
+  "reset_to_config": "Load config",
+  "config_does_not_exist": "Config file does not exist"
+
 
 }
