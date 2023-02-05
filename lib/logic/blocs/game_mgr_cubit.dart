@@ -684,9 +684,9 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
   }
 
   List<GameView> sortBySize(List<GameView> gvs, {SortDirection? direction}) {
-    for (GameView gv in _gameViews) {
+    /*for (GameView gv in _gameViews) {
       print("${gv.game.name}   ${StringTools.bytesToStorageUnity(gv.game.gameSize)}");
-    }
+    }*/
     SortDirection sortDirection = _sortDirectionStates[0] ? SortDirection.Desc : SortDirection.Asc;
 
     if (sortDirection == SortDirection.Asc) {

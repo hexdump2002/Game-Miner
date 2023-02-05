@@ -25,6 +25,8 @@ import '../../data/repositories/games_repository.dart';
 import '../../logic/Tools/game_tools.dart';
 import '../../logic/Tools/steam_tools.dart';
 
+enum GameSteamImageType {None, Icon, CoverSmall, CoverMedium, CoverBig, Banner}
+
 //WARNING: THIS CLASS USES A LOT OF NON BEST PRACTICES. FOR EXAMPLE: A CUBIT SHOULD BE PORTABLE AND THIS ONE RECEIVES A LOT OF BUILDCONTEXT
 class GameMgrPage extends StatefulWidget {
   const GameMgrPage({Key? key}) : super(key: key);
@@ -293,16 +295,114 @@ class _GameMgrPageState extends State<GameMgrPage> {
             itemCount: gamesView.length,
             itemBuilder: (BuildContext context, int index) {
               var gameView = gamesView[index];
-              return ExpandablePanel(
-                controller: ExpandableController(initialExpanded: gameView.isExpanded)
-                  ..addListener(() => _nsCubit(context).swapExpansionStateForItem(index)),
-                header: ListTile(
-                  title: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+              return Padding(
+                  padding: const EdgeInsets.fromLTRB(8.0, 8.0, 8.0, 8.0),
+                  child: _createGameCardImage(context, gameView, index, themeExtension, state));
+            }));
+  }
+
+  Widget _createGameCardImage(BuildContext context,GameView gameView, int index, CustomTheme themeExtension, BaseDataChanged state) {
+    //50 x 100 (Pequeño) 0 padding
+    //75 x 125 (Medio)    "
+    //100x150 (Grande)    "
+    //48x48     padding 4 (arriba y abajo)
+
+    /*Widget picture = index % 2 == 0
+        ? Image.file(File('/home/deck/.local/share/Steam/userdata/1281772390/config/grid/3602488509_icon.ico'),
+            width: 48, height: 48, fit: BoxFit.cover)
+        : Image.file(File('/home/deck/.local/share/Steam/userdata/1281772390/config/grid/2275651219_icon.png'),
+            width: 48, height: 48, fit: BoxFit.cover);*/
+    /*Widget picture = index%2 == 0 ? Image.file(File('/home/deck/.local/share/Steam/userdata/1281772390/config/grid/3602488509p.jpg'),width:75, height: 125, filterQuality: FilterQuality.medium,) :
+    Image.file(File('/home/deck/.local/share/Steam/userdata/1281772390/config/grid/2275651219p.png'),width:75, height:125,  filterQuality: FilterQuality.medium);*/
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(0, 4, 0, 4),
+      child: ExpandablePanel(
+        controller: ExpandableController(initialExpanded: gameView.isExpanded)..addListener(() => _nsCubit(context).swapExpansionStateForItem(index)),
+        header: Row(
+          children: [
+            _getGameSteamImage(context, gameView.game, GameSteamImageType.None),
+            Expanded(
+              child: ListTile(
+                title: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(child: Text(gameView.game.name, style: Theme.of(context).textTheme.headline5, textAlign: TextAlign.left)),
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(0, 0, 24, 0),
+                          child: gameView.game.isExternal ? null : Text(StringTools.bytesToStorageUnity(gameView.game.gameSize)),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(0, 0, 16, 0),
+                          child: _getExeCurrentStateIcon(GameTools.getGameStatus(gameView.game)),
+                        ),
+                        _getErrorsOrModifiedIcon(gameView),
+                        _buildMenu(gameView)
+                      ],
+                    ),
+                    if (gameView.isExpanded)
+                      Text(
+                        "${gameView.game.path}",
+                        textAlign: TextAlign.left,
+                        style: TextStyle(color: themeExtension.gameCardHeaderPath, fontSize: 13),
+                      )
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+        expanded: Container(
+            padding: EdgeInsets.fromLTRB(0, 16, 0, 16),
+            margin: EdgeInsets.fromLTRB(16, 16, 16, 16),
+            decoration: BoxDecoration(borderRadius: BorderRadius.circular(20), color: Colors.black12),
+            child: _buildGameTile(context, themeExtension, gameView, state.availableProntonNames)),
+        collapsed: Container(),
+      ),
+    );
+  }
+
+  Widget _createGameCardFullBannerSize(GameView gameView, int index, CustomTheme themeExtension, BaseDataChanged state) {
+    /*Widget? widget;
+    if (index % 4 == 0) {
+      widget = Image.file(File('/home/hexdump/.local/share/Steam/userdata/255842936/config/grid/3602488509_hero.jpg'),
+          height: 200, width: 1200, fit: BoxFit.cover);
+    } else if (index % 4 == 1) {
+      widget = Image.file(File('/home/hexdump/.local/share/Steam/userdata/255842936/config/grid/2275651219_hero.jpg'),
+          height: 200, width: 1200, fit: BoxFit.cover);
+    } else if (index % 4 == 2) {
+      widget = Image.file(File('/home/hexdump/.local/share/Steam/userdata/255842936/config/grid/2798179095_hero.jpg'),
+          height: 200, width: 1200, fit: BoxFit.cover);
+    } else {
+      widget = Image.file(File('/home/hexdump/.local/share/Steam/userdata/255842936/config/grid/2807371142_hero.png'),
+          height: 200, width: 1200, fit: BoxFit.cover);
+    }*/
+
+    return Stack(
+      children: [
+        InkWell(child: _getGameSteamImage(context, gameView.game,GameSteamImageType.Banner), onTap: ()=> _nsCubit(context).swapExpansionStateForItem(index)),
+        Container(
+          alignment: Alignment.center,
+          child: ExpandablePanel(
+            controller: ExpandableController(initialExpanded: gameView.isExpanded)
+              ..addListener(() => _nsCubit(context).swapExpansionStateForItem(index)),
+            header: ListTile(
+              title: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
                     children: [
-                      Row(
-                        children: [
-                          Expanded(child: Text(gameView.game.name, style: Theme.of(context).textTheme.headline5, textAlign: TextAlign.left)),
+                      Container(
+                          padding: EdgeInsets.fromLTRB(8, 4, 8, 4),
+                          decoration: BoxDecoration(borderRadius: BorderRadius.circular(20), color: Colors.black.withAlpha(180)),
+                          child: Text(gameView.game.name, style: Theme.of(context).textTheme.headline5, textAlign: TextAlign.left)),
+                      Expanded(child: Container()),
+                      Container(
+                        padding: EdgeInsets.all(4.0),
+                        decoration: BoxDecoration(borderRadius: BorderRadius.circular(20), color: Colors.black.withAlpha(180)),
+                        child: Row(children: [
                           Padding(
                             padding: const EdgeInsets.fromLTRB(0, 0, 24, 0),
                             child: gameView.game.isExternal ? null : Text(StringTools.bytesToStorageUnity(gameView.game.gameSize)),
@@ -313,26 +413,107 @@ class _GameMgrPageState extends State<GameMgrPage> {
                           ),
                           _getErrorsOrModifiedIcon(gameView),
                           _buildMenu(gameView)
-                        ],
-                      ),
-                      if (gameView.isExpanded)
-                        Text(
-                          "${gameView.game.path}",
-                          textAlign: TextAlign.left,
-                          style: TextStyle(color: themeExtension.gameCardHeaderPath, fontSize: 13),
-                        )
+                        ]),
+                      )
                     ],
                   ),
-                ),
-                expanded: Container(
-                    padding: EdgeInsets.fromLTRB(0, 16, 0, 16),
-                    margin: EdgeInsets.fromLTRB(16, 16, 16, 16),
-                    decoration: BoxDecoration(borderRadius: BorderRadius.circular(20), color: Colors.black12),
-                    child: _buildGameTile(context, themeExtension, gameView, state.availableProntonNames)),
-                collapsed: Container(),
-              );
-            }));
+                  if (gameView.isExpanded)
+
+                    Column(
+                      children: [
+                        SizedBox(height: 4,),
+                        Container(
+                          padding: EdgeInsets.all(4),
+                          color:Colors.black.withAlpha(180),
+                          child: Text(
+                            "${gameView.game.path}",
+                            textAlign: TextAlign.left,
+                            style: TextStyle(color: themeExtension.gameCardHeaderPath, fontSize: 13),
+                          ),
+                        ),
+                      ],
+                    )
+                ],
+              ),
+            ),
+            expanded: Container(
+                padding: EdgeInsets.fromLTRB(0, 16, 0, 16),
+                margin: EdgeInsets.fromLTRB(16, 16, 16, 16),
+                decoration: BoxDecoration(borderRadius: BorderRadius.circular(20), color: Colors.black.withAlpha(100)),
+                child: _buildGameTile(context, themeExtension, gameView, state.availableProntonNames)),
+            collapsed: Container(),
+          ),
+        ),
+      ],
+    );
   }
+
+  /*Widget _createGameCardFullBannerSize(GameView gameView, int index, CustomTheme themeExtension, BaseDataChanged state) {
+    Widget? widget;
+    if(index%4==0) {
+      widget = Image.file(File('/home/deck/.local/share/Steam/userdata/1281772390/config/grid/3602488509_hero.jpg'),height: 200,width:1200,fit:BoxFit.cover);
+    }
+    else if(index%4==1) {
+      widget = Image.file(File('/home/deck/.local/share/Steam/userdata/1281772390/config/grid/2275651219_hero.jpg'),height: 200,width:1200,fit:BoxFit.cover);
+    }
+    else if(index%4==2) {
+      widget = Image.file(File('/home/deck/.local/share/Steam/userdata/1281772390/config/grid/2798179095_hero.jpg'),height: 200,width:1200,fit:BoxFit.cover);
+    }
+    else {
+      widget = Image.file(File('/home/deck/.local/share/Steam/userdata/1281772390/config/grid/2807371142_hero.png'),height: 200,width:1200,fit:BoxFit.cover);
+    }
+
+
+    return Stack(
+      children: [
+        widget,
+        Container(
+          alignment: Alignment.center,
+          child: ExpandablePanel(
+            controller: ExpandableController(initialExpanded: gameView.isExpanded)
+              ..addListener(() => _nsCubit(context).swapExpansionStateForItem(index)),
+            header: Container(
+              color: Colors.black.withAlpha(180),
+              child: ListTile(
+                title: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(child: Text(gameView.game.name, style: Theme.of(context).textTheme.headline5, textAlign: TextAlign.left)),
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(0, 0, 24, 0),
+                          child: gameView.game.isExternal ? null : Text(StringTools.bytesToStorageUnity(gameView.game.gameSize)),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(0, 0, 16, 0),
+                          child: _getExeCurrentStateIcon(GameTools.getGameStatus(gameView.game)),
+                        ),
+                        _getErrorsOrModifiedIcon(gameView),
+                        _buildMenu(gameView)
+                      ],
+                    ),
+                    if (gameView.isExpanded)
+                      Text(
+                        "${gameView.game.path}",
+                        textAlign: TextAlign.left,
+                        style: TextStyle(color: themeExtension.gameCardHeaderPath, fontSize: 13),
+                      )
+                  ],
+                ),
+              ),
+            ),
+            expanded: Container(
+                padding: EdgeInsets.fromLTRB(0, 16, 0, 16),
+                margin: EdgeInsets.fromLTRB(16, 16, 16, 16),
+                decoration: BoxDecoration(borderRadius: BorderRadius.circular(20), color: Colors.black12),
+                child: _buildGameTile(context, themeExtension, gameView, state.availableProntonNames)),
+            collapsed: Container(),
+          ),
+        ),
+      ],
+    );
+  }*/
 
   Widget _buildGameTile(BuildContext context, CustomTheme themeExtension, GameView gv, List<String> availableProtons) {
     List<Widget> gameItems = [];
@@ -407,7 +588,8 @@ class _GameMgrPageState extends State<GameMgrPage> {
         child: Column(
           children: [
             TextFormField(
-              key: GlobalKey(), //TODO: fix This should be reusable not created one eachtime
+              key: GlobalKey(),
+              //TODO: fix This should be reusable not created one eachtime
               initialValue: uge.name,
               decoration: InputDecoration(labelText: tr("name")),
               autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -696,16 +878,13 @@ class _GameMgrPageState extends State<GameMgrPage> {
             ),
             Text(tr('warning'))
           ]),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(tr("reset_to_config_dialog_text")),
-              ]),
-
+          content: Column(mainAxisSize: MainAxisSize.min, children: [
+            Text(tr("reset_to_config_dialog_text")),
+          ]),
           actions: <Widget>[
             BasicDialogAction(
               title: Text("OK"),
-              onPressed: ()  {
+              onPressed: () {
                 nsCubit.resetConfig(gv);
                 Navigator.pop(context);
               },
@@ -816,4 +995,37 @@ class _GameMgrPageState extends State<GameMgrPage> {
       ),
     );
   }
+
+
+
+  Widget _getGameSteamImage(BuildContext context, Game game,GameSteamImageType imageType ) {
+    //50 x 100 (Pequeño) 0 padding
+    //75 x 125 (Medio)    "
+    //100x150 (Grande)    "
+    //48x48     padding 4 (arriba y abajo)
+
+    if(imageType == GameSteamImageType.None) {
+      return Container();
+    }
+    else if(imageType==GameSteamImageType.Icon) {
+      return Container(color: Colors.grey.shade800,width: 48, height: 48, child: Icon(Icons.question_mark));
+    }
+    else if(imageType==GameSteamImageType.CoverSmall) {
+      return Container(color: Colors.grey.shade800,width: 50, height: 100, child: Icon(Icons.question_mark));
+    }
+    else if(imageType==GameSteamImageType.CoverMedium) {
+      return Container(color: Colors.grey.shade800,width: 75, height: 125, child: Icon(Icons.question_mark));
+    }
+    else if(imageType==GameSteamImageType.CoverBig) {
+      return Container(color: Colors.grey.shade800,width: 100, height: 150, child: Icon(Icons.question_mark));
+    }
+    else {
+      return Row(
+        children: [
+          Expanded(child: Container(color: Colors.grey.shade800, height: 150, child: Icon(Icons.question_mark,size: 80,))),
+        ],
+      );
+    }
+  }
+
 }
