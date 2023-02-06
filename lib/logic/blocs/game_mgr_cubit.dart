@@ -127,6 +127,12 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
       _baseGames = games!;
 
       _gameViews = _generateGameViews(_baseGames);
+
+      for(Game g in _baseGames) {
+        for(GameExecutable ge in g.exeFileEntries) {
+          print("${ge.appId} ${g.path}/${ge.relativeExePath}");
+        }
+      }
     }
 
     _filteredGames = [];
@@ -316,6 +322,32 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
     ));
   }
 
+  /*void saveData(Settings settings, {showInfo = true}) async {
+    if (showInfo) {
+      EasyLoading.show(status: tr("saving_games"));
+    }
+
+    String homeFolder = FileTools.getHomeFolder();
+    String shortcutsPath = "$homeFolder/.steam/steam/userdata/${_settings.currentUserId}/config/shortcuts.vdf";
+
+    if(settings.backupsEnabled) {
+      await FileTools.saveFileSecure<List<Game>>(shortcutsPath, _baseGames, <String,dynamic>{}, (String path, List<Game> games, Map<String,dynamic> extraParams) async {
+        return _gameRepository.saveGames(path, games);
+      }, settings.maxBackupsCount);
+    }
+    else
+    {
+      await _gameRepository.saveGames(shortcutsPath,_baseGames);
+    }
+
+    saveGameMinerDataAppidMappings(_baseGames);
+    await saveCompatToolMappings(settings);
+
+    if (showInfo) {
+      EasyLoading.showSuccess(tr("data_saved"));
+    }
+  }*/
+
   Future<void> _saveData(List<Game> games, {showInfo = true}) async {
     if (showInfo) {
       EasyLoading.show(status: tr("saving_games"));
@@ -327,11 +359,13 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
     //Save shortcuts
     await _gameRepository.saveGames(shortcutsPath, games, _currentUserSettings.backupsEnabled, _currentUserSettings.maxBackupsCount);
 
+    saveGameMinerDataAppidMappings(_baseGames);
+
     //Copy art if this game was just imported
     for (Game g in games) {
       for (GameExecutable ge in g.exeFileEntries) {
         if (ge.dataFromConfigFile) {
-          GameTools.importShortcutArt(g.path, ge, _settings.currentUserId);
+          await GameTools.importShortcutArt(g.path, ge, _settings.currentUserId);
         }
       }
     }

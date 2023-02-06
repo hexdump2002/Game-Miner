@@ -19,6 +19,8 @@ import '../../data/models/compat_tool.dart';
 import '../../data/models/game.dart';
 import '../../data/repositories/apps_storage_repository.dart';
 import '../blocs/game_mgr_cubit.dart';
+import 'dart:convert';
+import 'package:crypto/crypto.dart';
 
 enum GameStatus { NonAdded, Added, FullyAdded, AddedExternal }
 
@@ -166,15 +168,21 @@ class GameTools {
     String destPath = outputFolder + "/game_miner_data";
 
     try {
+
+      String hash= md5.convert(utf8.encode(exe.relativeExePath)).toString();
+
       //Check if we must create the needed folder to hold the images
       if (!await FileTools.existsFolder(destPath)) {
         await Directory(destPath).create();
       }
 
-      List<String> imageFiles = await FileTools.getFolderFilesAsync(sourcePath, recursive: false, regExFilter: "${exe.appId}_*");
+      String regEx = "^${exe.appId}.*";
+      List<String> imageFiles = await FileTools.getFolderFilesAsync(sourcePath, recursive: false, regExFilter: regEx);
       for (String imageFile in imageFiles) {
         String fileName = p.basename(imageFile);
-        String fullPath = p.join(destPath, fileName);
+        String postFix = _getShortcutArtPostFixWithExtension(fileName);
+        String destName = "$hash$postFix";
+        String fullPath = p.join(destPath, destName);
         await File(imageFile).copy(fullPath);
       }
     } catch (ex) {
@@ -182,12 +190,33 @@ class GameTools {
     }
   }
 
+  static String _getShortcutArtPostFixWithExtension(String fileName) {
+    //Cover
+    int index = fileName.indexOf("p.");
+    if(index!=-1) {
+      return fileName.substring(index);
+    }
+
+    //ico, logo, etc.
+    index = fileName.indexOf(r'_');
+    if(index!=-1) {
+      return fileName.substring(index);
+    }
+
+    //Home image
+    index = fileName.indexOf(".");
+    return fileName.substring(index);
+
+  }
+
   static Future<void> exportGame(Game game, String userId) async {
     List<GameExecutableExportedData> geed = [];
-    for (GameExecutable ge in game.exeFileEntries) {
+
+    for (int i=0; i<game.exeFileEntries.length;++i) {
+      GameExecutable ge = game.exeFileEntries[i];
       if (ge.added) {
         geed.add(GameExecutableExportedData(ge.compatToolCode, ge.relativeExePath, ge.name, ge.launchOptions));
-        await exportShortcutArt(game.path, ge, userId);
+        await exportShortcutArt(game.path,ge, userId);
       }
     }
     GameExportedData ged = GameExportedData(geed);
@@ -233,19 +262,22 @@ class GameTools {
     String sourcePath = outputFolder + "/game_miner_data";
 
     try {
-//Check if we have art to import
+      //Check if we have art to import
       if (!await FileTools.existsFolder(sourcePath)) {
         return;
       }
 
-//Check if grid folders exist if not create it
+      //Check if grid folders exist if not create it
       if (!await FileTools.existsFolder(destPath)) {
         await Directory(destPath).create();
       }
 
-      List<String> imageFiles = await FileTools.getFolderFilesAsync(sourcePath, recursive: false, regExFilter: "${exe.appId}_*");
+      String hash = md5.convert(utf8.encode(exe.relativeExePath)).toString();
+      String regEx = "^$hash.*";
+      List<String> imageFiles = await FileTools.getFolderFilesAsync(sourcePath, recursive: false, regExFilter: regEx);
       for (String imageFile in imageFiles) {
         String fileName = p.basename(imageFile);
+        fileName = fileName.replaceFirst(hash, exe.appId.toString());
         String fullPath = p.join(destPath, fileName);
         await File(imageFile).copy(fullPath);
       }
