@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:data_table_2/data_table_2.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -39,11 +41,11 @@ class _GameDataMgrPageState extends State<GameDataMgrPage> {
               }),*/
           actions: [
             Expanded(
-              child: Padding(padding: const EdgeInsets.fromLTRB(8, 8, 16, 8), child: SearchBar("", tr("search"),(term) => _bloc.filterByName(term))),
+              child: Padding(padding: const EdgeInsets.fromLTRB(8, 8, 16, 8), child: SearchBar("", tr("search"), (term) => _bloc.filterByName(term))),
             ),
             BlocBuilder<GameDataMgrCubit, GameDataMgrState>(builder: (context, state) {
               return Row(children: [
-               IconButton(
+                IconButton(
                   onPressed: () {
                     _bloc.deleteAll(context);
                   },
@@ -95,6 +97,7 @@ class _GameDataMgrPageState extends State<GameDataMgrPage> {
       columns: [
         //const DataColumn(label: Text('', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold))),
         const DataColumn(label: Text('Id', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold))),
+        const DataColumn(label: Text('Icon', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold))),
         DataColumn(
           label: Text(tr('name_header'), style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           onSort: (columnIndex, ascending) => _bloc.sort(columnIndex, ascending),
@@ -115,6 +118,7 @@ class _GameDataMgrPageState extends State<GameDataMgrPage> {
         //print("Cache size: ${e.shaderCacheSize} ${e.compatDataSize}");
         return DataRow(onSelectChanged: (value) => _bloc.setSelectedState(e, value!), selected: e.selected, cells: [
           DataCell(Text(e.appStorage.appId)),
+          DataCell(SizedBox(width: 30, height: 30, child: _getEntryImage(e))),
           DataCell(Text(e.appStorage.name)),
           DataCell(Text(StringTools.bytesToStorageUnity(e.appStorage.size))),
           DataCell(_getStorageType(e)),
@@ -141,42 +145,6 @@ class _GameDataMgrPageState extends State<GameDataMgrPage> {
       }).toList(),
     );
   }
-
-  /*Widget _buildPage(List<AppDataStorageEntry> appsStorage) {
-    return Container(
-      child: DataTable(
-        columnSpacing: 0,
-        columns:  [
-          const DataColumn(label: Text('', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold))),
-          const DataColumn(label: Text('Id', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold))),
-          DataColumn(label: Text(tr('name_header'), style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold))),
-          DataColumn(label: Text(tr('size_header'), style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold))),
-          DataColumn(label: Text(tr('type_header'), style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold))),
-          const DataColumn(label: Text('Steam', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold))),
-          DataColumn(label: Text(tr('actions_header'), style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold))),
-        ],
-        rows: appsStorage.map((e) {
-          //print("Appid:${e.appId}");
-          //print("Cache size: ${e.shaderCacheSize} ${e.compatDataSize}");
-          return DataRow(cells: [
-            DataCell(Checkbox(value: e.selected, onChanged: (bool? value) => _bloc.setSelectedState(e, value!))),
-            DataCell(Text(e.appStorage.appId)),
-            DataCell(Text(e.appStorage.name)),
-            DataCell(Text(StringTools.bytesToStorageUnity(e.appStorage.size))),
-            DataCell(_getStorageType(e)),
-            DataCell(_getGameType(e)),
-            DataCell(IconButton(
-              onPressed: () {
-                _bloc.deleteData(context, e);
-              },
-              icon: Icon(Icons.delete),
-              tooltip: tr("delete"),
-            )),
-          ]);
-        }).toList(),
-      ),
-    );
-  }*/
 
   Widget _getGameType(AppDataStorageEntry as) {
     Color color = as.appStorage.gameType == GameType.Steam ? Colors.blue : Colors.red;
@@ -247,5 +215,17 @@ class _GameDataMgrPageState extends State<GameDataMgrPage> {
             ),
           ],
         ));
+  }
+
+  Widget _getEntryImage(AppDataStorageEntry e) {
+    return e.iconImagePath == null
+        ? Container(color: Colors.grey.shade800, width: 30, height: 30, child: Icon(Icons.question_mark))
+        : Image.file(
+            File(e.iconImagePath!),
+            width: 30,
+            height: 30,
+            fit: BoxFit.fill,
+            filterQuality: FilterQuality.medium,
+          );
   }
 }

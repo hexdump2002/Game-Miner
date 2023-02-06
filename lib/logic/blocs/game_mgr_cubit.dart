@@ -78,7 +78,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
   late UserSettings _currentUserSettings;
   late final Settings _settings;
 
-  GameExecutableImageType _currentImageType = GameExecutableImageType.CoverMedium;
+  GameExecutableImageType?  _currentImageType;
 
   @override
   bool get wantKeepAlive => true;
@@ -104,6 +104,8 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
 
   Future<void> _loadData(UserSettings settings) async {
     final stopwatch = Stopwatch()..start();
+
+    _currentImageType ??= GameExecutableImageType.values[_currentUserSettings.defaultGameManagerView];
 
     List<Game>? games = _gameRepository.getGames();
 
@@ -134,6 +136,8 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
     filterGamesByName(_searchText);
     _sortedFilteredGames = sortFilteredByCurrent();
 
+
+
     _refreshGameCount();
     await _refreshStorageSize();
 
@@ -151,7 +155,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
         _sortStates,
         _sortDirectionStates,
         searchText,
-        _currentImageType));
+        _currentImageType!));
 
     stopwatch.stop();
     print('[Logic] Time taken to execute method: ${stopwatch.elapsed}');
@@ -159,7 +163,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
 
   void refreshGameViewImages(List<GameView> gameViews) {
     for (GameView g in gameViews) {
-      String? gameImage = GameTools.getGameImagePath(g.game, _currentImageType);
+      String? gameImage = GameTools.getGameImagePath(g.game, _currentImageType!);
       g.gameImagePath = gameImage;
     }
   }
@@ -169,7 +173,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
     for (Game g in games) {
       GameTools.handleGameExecutableErrorsForGame(g);
       bool modified = g.dataCameFromConfigFile();
-      String? gameImage = GameTools.getGameImagePath(g, _currentImageType);
+      String? gameImage = GameTools.getGameImagePath(g, _currentImageType!);
       gameViews.add(GameView(g, gameImage, false, modified));
     }
     return gameViews;
@@ -241,7 +245,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
         _sortStates,
         _sortDirectionStates,
         searchText,
-        _currentImageType));
+        _currentImageType!));
   }
 
   void swapExpansionStateForItem(int index) {
@@ -260,7 +264,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
         _sortStates,
         _sortDirectionStates,
         searchText,
-        _currentImageType));
+        _currentImageType!));
   }
 
   Future<void> trySave() async {
@@ -308,7 +312,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
         _sortStates,
         _sortDirectionStates,
         searchText,
-        _currentImageType
+        _currentImageType!
     ));
   }
 
@@ -365,7 +369,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
         _sortStates,
         _sortDirectionStates,
         searchText,
-        _currentImageType));
+        _currentImageType!));
   }
 
   void tryDeleteGame(Game game) async {
@@ -423,7 +427,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
           _sortStates,
           _sortDirectionStates,
           searchText,
-          _currentImageType));
+          _currentImageType!));
     } catch (e) {
       EasyLoading.showError(tr('game_couldnt_be_deleted', args: [game.name]));
       print(e.toString());
@@ -482,7 +486,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
           _sortStates,
           _sortDirectionStates,
           searchText,
-          _currentImageType));
+          _currentImageType!));
 
       EasyLoading.showSuccess(tr("game_renamed"));
     } catch (e) {
@@ -529,7 +533,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
         _sortStates,
         _sortDirectionStates,
         searchText,
-        _currentImageType));
+        _currentImageType!));
 
     EasyLoading.showInfo(tr("game_was_reset"));
   }
@@ -553,7 +557,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
         _sortStates,
         _sortDirectionStates,
         searchText,
-        _currentImageType));
+        _currentImageType!));
   }
 
   List<GameView> sortByName(List<GameView> gvs, {SortDirection? direction}) {
@@ -587,7 +591,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
         _sortStates,
         _sortDirectionStates,
         searchText,
-        _currentImageType));
+        _currentImageType!));
   }
 
   List<GameView> sortByWithErrors(List<GameView> gvs, {SortDirection? direction}) {
@@ -645,7 +649,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
         _sortStates,
         _sortDirectionStates,
         searchText,
-        _currentImageType));
+        _currentImageType!));
   }
 
   List<GameView> sortByStatus(List<GameView> gvs, {SortDirection? direction}) {
@@ -701,7 +705,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
         _sortStates,
         _sortDirectionStates,
         searchText,
-        _currentImageType));
+        _currentImageType!));
   }
 
   List<GameView> sortBySize(List<GameView> gvs, {SortDirection? direction}) {
@@ -738,7 +742,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
         _sortStates,
         _sortDirectionStates,
         searchText,
-        _currentImageType));
+        _currentImageType!));
   }
 
   Map<String, List<GameView>> categorizeGamesByStatus(List<GameView> games) {
@@ -812,7 +816,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
         _sortStates,
         _sortDirectionStates,
         searchText,
-        _currentImageType));
+        _currentImageType!));
   }
 
   List<GameView> sortByCurrent(List<GameView> gvs) {
@@ -855,7 +859,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
         _sortStates,
         _sortDirectionStates,
         searchText,
-        _currentImageType));
+        _currentImageType!));
   }
 
   void openFolder(Game game) async {
@@ -960,7 +964,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
         _sortStates,
         _sortDirectionStates,
         searchText,
-        _currentImageType));
+        _currentImageType!));
   }
 
   void setViewType(GameExecutableImageType geit) {
@@ -970,11 +974,11 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
   }
 
   GameExecutableImageType getCurrentImageType() {
-    return _currentImageType;
+    return _currentImageType!;
   }
 
   void cycleViewType() {
-    var enumIndex = _currentImageType.index;
+    var enumIndex = _currentImageType!.index;
     setViewType(GameExecutableImageType.values[(enumIndex+1)%GameExecutableImageType.values.length]);
   }
 }

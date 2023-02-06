@@ -6,11 +6,13 @@ import 'package:game_miner/data/repositories/compat_tools_repository.dart';
 import 'package:game_miner/data/repositories/games_repository.dart';
 import 'package:game_miner/data/repositories/settings_repository.dart';
 import 'package:game_miner/logic/Tools/file_tools.dart';
+import 'package:game_miner/presentation/pages/view_image_type_common.dart';
 import 'package:get_it/get_it.dart';
 import 'package:meta/meta.dart';
 
 import '../../data/models/compat_tool.dart';
 import '../../data/models/compat_tool_mapping.dart';
+import '../../data/models/game_executable.dart';
 import '../../data/models/settings.dart';
 import '../Tools/steam_tools.dart';
 
@@ -161,6 +163,13 @@ class SettingsCubit extends Cubit<SettingsState> {
 
   void setCloseSteamAtStartUp(bool value) {
     _currentUserSettings.closeSteamAtStartUp = value;
+    _modified = true;
+    emit(GeneralOptionsChanged(_currentUserSettings));
+  }
+
+  setDefaultGameManagerView(String viewTypeString) {
+    int index = viewTypesStr.indexWhere((element) => element == viewTypeString);
+    _currentUserSettings.defaultGameManagerView = index;
     _modified = true;
     emit(GeneralOptionsChanged(_currentUserSettings));
   }

@@ -40,9 +40,11 @@ class UserSettings {
   List<String> searchPaths = [];
 
   String defaultCompatTool = "None";
-  bool darkTheme = false;
+  bool darkTheme = true;
   bool backupsEnabled = true;
   int maxBackupsCount = 5;
+
+  int defaultGameManagerView = 3; //Mid sized covers
 
   bool closeSteamAtStartUp = true;
 
@@ -57,6 +59,7 @@ class UserSettings {
     closeSteamAtStartUp = json['closeSteamAtStartUp'];
     backupsEnabled = json['backupsEnabled'];
     maxBackupsCount = json['maxBackupsCount'];
+    defaultGameManagerView = json['defaultGameManagerView'];
   }
 
   Map<String, dynamic> toJson() {
@@ -66,7 +69,8 @@ class UserSettings {
       'darkTheme': darkTheme,
       'closeSteamAtStartUp': closeSteamAtStartUp,
       'backupsEnabled': backupsEnabled,
-      'maxBackupsCount': maxBackupsCount
+      'maxBackupsCount': maxBackupsCount,
+      'defaultGameManagerView': defaultGameManagerView
     };
   }
 

@@ -106,6 +106,8 @@
   "reseting_game_config": "Reseteando juego",
   "game_was_reset": "El juego fue reseteado. Ahora puedes grabar para mantener los cambios.",
   "reset_to_config": "Cargar config",
-  "config_does_not_exist": "No existe fichero de configuración"
+  "config_does_not_exist": "No existe fichero de configuración",
+  "game_mgr_options": "Gestor de juegos",
+  "default_image_view": "Tipo de vista"
 
 }

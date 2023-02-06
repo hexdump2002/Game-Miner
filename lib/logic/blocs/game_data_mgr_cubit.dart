@@ -16,6 +16,7 @@ import 'package:game_miner/logic/Tools/string_tools.dart';
 import 'package:get_it/get_it.dart';
 import 'package:meta/meta.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:path/path.dart' as path;
 
 import '../../data/models/game_miner_data.dart';
 import '../../data/models/steam_app.dart';
@@ -26,7 +27,8 @@ part 'game_data_mgr_state.dart';
 class AppDataStorageEntry {
   AppStorage appStorage;
   bool selected;
-  AppDataStorageEntry(this.appStorage, this.selected);
+  String? iconImagePath;
+  AppDataStorageEntry(this.appStorage, this.selected, this.iconImagePath);
 }
 
 class StorageStats {
@@ -58,13 +60,18 @@ class GameDataMgrCubit extends Cubit<GameDataMgrState> {
     _appDataStorageEntries.clear();
     _filteredDataStorageEntries.clear();
 
-    String homeFolder = FileTools.getHomeFolder();
     _searchPath = "${SteamTools.getSteamBaseFolder()}/steamapps";
+
+    var currentUserId = GetIt.I<SettingsRepository>().getSettings().currentUserId;
 
     var gmd = GetIt.I<GameMinerDataRepository>().getGameMinerData();
     var steamConfig = GetIt.I<SteamConfigRepository>().getConfig();
     List<String> paths = steamConfig.libraryFolders.map((e) => e.path).toList();
-    var appsStorage = await GetIt.I<AppsStorageRepository>().load(GetIt.I<SettingsRepository>().getSettings().currentUserId, paths);
+    var appsStorage = await GetIt.I<AppsStorageRepository>().load(currentUserId, paths);
+
+    String steamBaserFolder = SteamTools.getSteamBaseFolder();
+    String nonSteamGamesiconFolder = path.join(steamBaserFolder,"userdata/$currentUserId/config/grid");
+    String steamGamesIconFolder = path.join(steamBaserFolder,"appcache/librarycache");
 
     //TODO: Update through repository
     for (AppStorage as in appsStorage) {
@@ -78,8 +85,18 @@ class GameDataMgrCubit extends Cubit<GameDataMgrState> {
           as.name = "Unknown";
         }
       }
-      _appDataStorageEntries.add(AppDataStorageEntry(as,false));
 
+      if(as.appId =="0") {
+        print("YHA");
+      }
+
+      //Get Image. We can't use games repository because there can be data left for deleted games
+      var icons = await FileTools.getFolderFilesAsync(nonSteamGamesiconFolder, recursive: false, regExFilter: "\^${as.appId}_icon.*");
+      if(icons.isEmpty) {
+        icons = await FileTools.getFolderFilesAsync(steamGamesIconFolder, recursive: false, regExFilter: "\^${as.appId}_icon.*");
+      }
+
+      _appDataStorageEntries.add(AppDataStorageEntry(as, false, icons.isNotEmpty ? icons.first : null));
     }
 
     _filteredDataStorageEntries.addAll(_appDataStorageEntries);
@@ -89,6 +106,7 @@ class GameDataMgrCubit extends Cubit<GameDataMgrState> {
 
     EasyLoading.dismiss();
   }
+
 
   void setSelectedState(AppDataStorageEntry adse, bool value) {
     adse.selected = value;
@@ -214,55 +232,20 @@ class GameDataMgrCubit extends Cubit<GameDataMgrState> {
     GetIt.I<AppsStorageRepository>().invalidateCache();
     _loadData();
   }
-/*
-  List<bool> getSortStates() {
-    return _sortStates;
-  }
 
-  List<bool> getSortDirectionStates() {
-    return _sortDirectionStates;
-  }
-
-  void setSortDirection(SortDirection sd) {
-    _sortDirectionStates = sd == SortDirection.Asc ? [true, false] : [false, true];
-
-    if (_sortStates[0]) {
-      sortByName();
-    } else if (_sortStates[1]) {
-      sortByStorageType();
-    } else {
-      sortBySize();
-    }
-
-    var ss = _getStorageStats();
-    emit(AppDataStorageLoaded(_filteredDataStorageEntries, ss.compatFolderCount, ss.shaderDataFolderCount, ss.compatSize, ss.shaderDataSize,_sortingColumnIndex));
-  }
-*/
-  /*void sortFilteredGames() {
-    if (_sortingColumnIndex == 2) {
-      sortByName(_sortingColumnIndex, _sortAscending);
-    } else if (_sortingColumnIndex == 3) {
-      sortByStorageType(_sortingColumnIndex, _sortAscending);
-    }  else if (_sortingColumnIndex == 4)  {
-      sortBySize(_sortingColumnIndex, _sortAscending);
-    }
-
-    var ss = _getStorageStats();
-    emit(AppDataStorageLoaded(_filteredDataStorageEntries, ss.compatFolderCount, ss.shaderDataFolderCount, ss.compatSize, ss.shaderDataSize,_sortingColumnIndex,_sortAscending));
-  }*/
 
   void sort(int columnIndex, bool ascending, {bool emitEvent:true}) {
     _sortingColumnIndex = columnIndex;
     _sortAscending = ascending;
 
-    if (_sortingColumnIndex==1) {
+    if (_sortingColumnIndex==2) {
       sortByName(_sortingColumnIndex, _sortAscending,emitEvent);
-    } else if (_sortingColumnIndex==2) {
+    } else if (_sortingColumnIndex==3) {
       sortBySize (_sortingColumnIndex, _sortAscending,emitEvent);
-    } else if(_sortingColumnIndex==3){
+    } else if(_sortingColumnIndex==4){
       sortByStorageType(_sortingColumnIndex, _sortAscending,emitEvent);
     }
-    else if(_sortingColumnIndex==4){
+    else if(_sortingColumnIndex==5){
       sortBySteam(_sortingColumnIndex, _sortAscending,emitEvent);
     }
   }

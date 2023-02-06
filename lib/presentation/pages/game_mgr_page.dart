@@ -14,6 +14,7 @@ import 'package:game_miner/data/repositories/settings_repository.dart';
 import 'package:game_miner/logic/Tools/string_tools.dart';
 import 'package:game_miner/logic/blocs/game_mgr_cubit.dart';
 import 'package:game_miner/main.dart';
+import 'package:game_miner/presentation/pages/view_image_type_common.dart';
 import 'package:game_miner/presentation/widgets/searchbar/searchbar_widget.dart';
 import 'package:get_it/get_it.dart';
 import 'package:collection/collection.dart';
@@ -36,8 +37,7 @@ class GameMgrPage extends StatefulWidget {
 class _GameMgrPageState extends State<GameMgrPage> {
   final _formKey = GlobalKey<FormState>();
 
-  //This must be in the same order as the GameExecutableImageViewType enum
-  List<String> _viewTypesStr = ["Dense", "Icons", "Cover S", "Cover M", "Cover L", "Banner"];
+
 
   final TextEditingController _genericTextController = TextEditingController();
 
@@ -662,13 +662,8 @@ class _GameMgrPageState extends State<GameMgrPage> {
             ),
             Padding(
               padding: EdgeInsets.fromLTRB(0,0,16,0),
-              child: TextButton(onPressed: ()=> _nsCubit(context).cycleViewType(), child: Container(padding: EdgeInsets.all(5),color: Colors.black38,child: Text(_viewTypesStr[state.gameExecutableImageType.index], style: TextStyle(color:Colors.white),))),
+              child: TextButton(onPressed: ()=> _nsCubit(context).cycleViewType(), child: Container(padding: EdgeInsets.all(5),color: Colors.black38,child: Text(viewTypesStr[state.gameExecutableImageType.index], style: TextStyle(color:Colors.white),))),
             ),
-            /*ElevatedButton(onPressed: ()=> _nsCubit(context).setViewType(GameExecutableImageType.Icon ), child: Text("I")),
-            ElevatedButton(onPressed: ()=> _nsCubit(context).setViewType(GameExecutableImageType.CoverSmall ), child: Text("S")),
-            ElevatedButton(onPressed: ()=> _nsCubit(context).setViewType(GameExecutableImageType.CoverMedium ), child: Text("M")),
-            ElevatedButton(onPressed: ()=> _nsCubit(context).setViewType(GameExecutableImageType.CoverBig ), child: Text("L")),
-            ElevatedButton(onPressed: ()=> _nsCubit(context).setViewType(GameExecutableImageType.Banner ), child: Text("B")),*/
             Container(height: 15, width: 15, color: Colors.red),
             Padding(
               padding: EdgeInsets.fromLTRB(8, 0, 8, 0),

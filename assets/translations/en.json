@@ -106,7 +106,9 @@
   "reseting_game_config": "Reseting game",
   "game_was_reset": "Game was reset, just save to keep the changes",
   "reset_to_config": "Load config",
-  "config_does_not_exist": "Config file does not exist"
+  "config_does_not_exist": "Config file does not exist",
+  "game_mgr_options": "Game Manager",
+  "default_image_view": "Default Image Style"
 
 
 }
