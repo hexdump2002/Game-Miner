@@ -7,6 +7,16 @@ import '../../logic/Tools/string_tools.dart';
 
 enum GameExecutableErrorType {InvalidProton, BrokenExecutable}
 
+enum GameExecutableImageType {None, Icon, CoverSmall, CoverMedium, CoverBig, Banner}
+
+class GameExecutableImages {
+  final String? iconImage;
+  final String? heroImage;
+  final String? coverImage;
+  final String? logoImage;
+  GameExecutableImages({this.iconImage, this.heroImage, this.coverImage, this.logoImage});
+}
+
 class GameExecutableError {
   GameExecutableErrorType type;
   String data;
@@ -14,6 +24,7 @@ class GameExecutableError {
 }
 
 class GameExecutable {
+  GameExecutableImages images = GameExecutableImages();
   List<GameExecutableError> errors = [];
   late bool brokenLink;
   late String relativeExePath;
@@ -46,11 +57,10 @@ class GameExecutable {
 
   List <String> tags = [];
 
-  GameExecutable(String enclosingFolderPath, String absoluteExePath, this.brokenLink) {
+  GameExecutable(String enclosingFolderPath, String absoluteExePath, this.appId, this.brokenLink) {
     relativeExePath = absoluteExePath.substring(enclosingFolderPath.length + 1);
 
     name = p.split(relativeExePath).last;
-    appId = 0;
     startDir = p.dirname(absoluteExePath);
 
     clearCompatToolMappingData();
@@ -125,6 +135,6 @@ class GameExecutable {
   }
 
   /*String getAbsolutePath() {
-    return p.join(StringTools.removeQuotes(startDir), relativeExePath);
+    return p.join(startDir, relativeExePath);
   }*/
 }

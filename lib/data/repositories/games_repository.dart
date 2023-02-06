@@ -114,7 +114,7 @@ class GamesRepository extends CacheRepository<Game> {
           //We couldn't find an exe file in our games matching this shortcut but perhaps it still belongs to our game folders and it is a broken link.
           Game? game = games.firstWhereOrNull((element) => shortcutBaseName.startsWith(element.path));
           if(game != null)  {
-            GameExecutable gameExecutable = GameExecutable(game.path, shortcut.exePath, true);
+            GameExecutable gameExecutable = GameExecutable(game.path, shortcut.exePath, shortcut.appId, true);
             gameExecutable.fillFromNonSteamGame(shortcut, game.path);
             gameExecutable.added = true;
 
@@ -137,6 +137,11 @@ class GamesRepository extends CacheRepository<Game> {
       }
 
       games.addAll(externalGames);
+
+      for(Game g in games) {
+        await g.resolveGameImages(userId);
+      }
+
       setCacheKey(cacheKey, games);
     }
 

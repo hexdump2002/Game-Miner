@@ -19,7 +19,7 @@ class SteamTools {
     //return 0;
 
     var crc = CRC32.compute(exePath) | 0x80000000;
-    print(crc);
+
     return crc;
   }
 

@@ -8,8 +8,11 @@ import 'package:game_miner/data/models/compat_tool_mapping.dart';
 import 'package:game_miner/data/models/steam_shortcut_game.dart';
 import 'package:game_miner/data/models/game_executable.dart';
 import 'package:game_miner/logic/Tools/file_tools.dart';
+import 'package:game_miner/logic/Tools/game_tools.dart';
 import 'package:game_miner/logic/Tools/string_tools.dart';
 import 'package:path/path.dart' as pathLib;
+
+import '../../logic/Tools/steam_tools.dart';
 
 
 class Game {
@@ -79,7 +82,15 @@ class Game {
 
 
     bool exists = FileTools.existsFileSync(absoluteFilePath);
-    exeFileEntries.add(GameExecutable(path, absoluteFilePath,!exists));
+    exeFileEntries.add(GameExecutable(path, absoluteFilePath, SteamTools.generateAppId(absoluteFilePath), !exists));
+  }
+
+  Future<void> resolveGameImages(String userId) async{
+
+    for(GameExecutable ge in exeFileEntries) {
+      GameExecutableImages images = await GameTools.getGameExecutableImages(ge.appId, userId);
+      ge.images = images;
+    }
   }
 
   void addExternalExeFile(SteamShortcut steamShortcut, CompatToolMapping? pm) {

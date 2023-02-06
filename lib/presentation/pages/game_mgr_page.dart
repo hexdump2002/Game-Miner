@@ -25,8 +25,6 @@ import '../../data/repositories/games_repository.dart';
 import '../../logic/Tools/game_tools.dart';
 import '../../logic/Tools/steam_tools.dart';
 
-enum GameSteamImageType {None, Icon, CoverSmall, CoverMedium, CoverBig, Banner}
-
 //WARNING: THIS CLASS USES A LOT OF NON BEST PRACTICES. FOR EXAMPLE: A CUBIT SHOULD BE PORTABLE AND THIS ONE RECEIVES A LOT OF BUILDCONTEXT
 class GameMgrPage extends StatefulWidget {
   const GameMgrPage({Key? key}) : super(key: key);
@@ -37,6 +35,9 @@ class GameMgrPage extends StatefulWidget {
 
 class _GameMgrPageState extends State<GameMgrPage> {
   final _formKey = GlobalKey<FormState>();
+
+  //This must be in the same order as the GameExecutableImageViewType enum
+  List<String> _viewTypesStr = ["Dense", "Icons", "Cover S", "Cover M", "Cover L", "Banner"];
 
   final TextEditingController _genericTextController = TextEditingController();
 
@@ -296,12 +297,12 @@ class _GameMgrPageState extends State<GameMgrPage> {
             itemBuilder: (BuildContext context, int index) {
               var gameView = gamesView[index];
               return Padding(
-                  padding: const EdgeInsets.fromLTRB(8.0, 8.0, 8.0, 8.0),
-                  child: _createGameCardImage(context, gameView, index, themeExtension, state));
+                  padding: const EdgeInsets.fromLTRB(8.0, 8.0, 8.0,0),
+                  child: getGamesView(context,gameView,index, state, themeExtension));
             }));
   }
 
-  Widget _createGameCardImage(BuildContext context,GameView gameView, int index, CustomTheme themeExtension, BaseDataChanged state) {
+  Widget _createGameCardImage(BuildContext context, GameView gameView, int index, CustomTheme themeExtension, BaseDataChanged state) {
     //50 x 100 (Pequeño) 0 padding
     //75 x 125 (Medio)    "
     //100x150 (Grande)    "
@@ -321,7 +322,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
         controller: ExpandableController(initialExpanded: gameView.isExpanded)..addListener(() => _nsCubit(context).swapExpansionStateForItem(index)),
         header: Row(
           children: [
-            _getGameSteamImage(context, gameView.game, GameSteamImageType.None),
+            _getGameSteamImage(context, gameView, state.gameExecutableImageType),
             Expanded(
               child: ListTile(
                 title: Column(
@@ -365,24 +366,12 @@ class _GameMgrPageState extends State<GameMgrPage> {
   }
 
   Widget _createGameCardFullBannerSize(GameView gameView, int index, CustomTheme themeExtension, BaseDataChanged state) {
-    /*Widget? widget;
-    if (index % 4 == 0) {
-      widget = Image.file(File('/home/hexdump/.local/share/Steam/userdata/255842936/config/grid/3602488509_hero.jpg'),
-          height: 200, width: 1200, fit: BoxFit.cover);
-    } else if (index % 4 == 1) {
-      widget = Image.file(File('/home/hexdump/.local/share/Steam/userdata/255842936/config/grid/2275651219_hero.jpg'),
-          height: 200, width: 1200, fit: BoxFit.cover);
-    } else if (index % 4 == 2) {
-      widget = Image.file(File('/home/hexdump/.local/share/Steam/userdata/255842936/config/grid/2798179095_hero.jpg'),
-          height: 200, width: 1200, fit: BoxFit.cover);
-    } else {
-      widget = Image.file(File('/home/hexdump/.local/share/Steam/userdata/255842936/config/grid/2807371142_hero.png'),
-          height: 200, width: 1200, fit: BoxFit.cover);
-    }*/
 
     return Stack(
       children: [
-        InkWell(child: _getGameSteamImage(context, gameView.game,GameSteamImageType.Banner), onTap: ()=> _nsCubit(context).swapExpansionStateForItem(index)),
+        InkWell(
+            child: _getGameSteamImage(context, gameView, GameExecutableImageType.Banner),
+            onTap: () => _nsCubit(context).swapExpansionStateForItem(index)),
         Container(
           alignment: Alignment.center,
           child: ExpandablePanel(
@@ -395,12 +384,12 @@ class _GameMgrPageState extends State<GameMgrPage> {
                   Row(
                     children: [
                       Container(
-                          padding: EdgeInsets.fromLTRB(8, 4, 8, 4),
+                          padding: EdgeInsets.fromLTRB(16, 4, 16, 4),
                           decoration: BoxDecoration(borderRadius: BorderRadius.circular(20), color: Colors.black.withAlpha(180)),
                           child: Text(gameView.game.name, style: Theme.of(context).textTheme.headline5, textAlign: TextAlign.left)),
                       Expanded(child: Container()),
                       Container(
-                        padding: EdgeInsets.all(4.0),
+                        padding: EdgeInsets.fromLTRB(16,8,18,8),
                         decoration: BoxDecoration(borderRadius: BorderRadius.circular(20), color: Colors.black.withAlpha(180)),
                         child: Row(children: [
                           Padding(
@@ -418,13 +407,14 @@ class _GameMgrPageState extends State<GameMgrPage> {
                     ],
                   ),
                   if (gameView.isExpanded)
-
                     Column(
                       children: [
-                        SizedBox(height: 4,),
+                        SizedBox(
+                          height: 4,
+                        ),
                         Container(
                           padding: EdgeInsets.all(4),
-                          color:Colors.black.withAlpha(180),
+                          color: Colors.black.withAlpha(180),
                           child: Text(
                             "${gameView.game.path}",
                             textAlign: TextAlign.left,
@@ -658,6 +648,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
   }
 
   Widget _buildInfoBar(BuildContext context, BaseDataChanged state, CustomTheme themeExtension) {
+
     return Container(
         color: themeExtension.infoBarBgColor,
         padding: EdgeInsets.all(8),
@@ -669,6 +660,15 @@ class _GameMgrPageState extends State<GameMgrPage> {
                 style: const TextStyle(color: Colors.white),
               ),
             ),
+            Padding(
+              padding: EdgeInsets.fromLTRB(0,0,16,0),
+              child: TextButton(onPressed: ()=> _nsCubit(context).cycleViewType(), child: Container(padding: EdgeInsets.all(5),color: Colors.black38,child: Text(_viewTypesStr[state.gameExecutableImageType.index], style: TextStyle(color:Colors.white),))),
+            ),
+            /*ElevatedButton(onPressed: ()=> _nsCubit(context).setViewType(GameExecutableImageType.Icon ), child: Text("I")),
+            ElevatedButton(onPressed: ()=> _nsCubit(context).setViewType(GameExecutableImageType.CoverSmall ), child: Text("S")),
+            ElevatedButton(onPressed: ()=> _nsCubit(context).setViewType(GameExecutableImageType.CoverMedium ), child: Text("M")),
+            ElevatedButton(onPressed: ()=> _nsCubit(context).setViewType(GameExecutableImageType.CoverBig ), child: Text("L")),
+            ElevatedButton(onPressed: ()=> _nsCubit(context).setViewType(GameExecutableImageType.Banner ), child: Text("B")),*/
             Container(height: 15, width: 15, color: Colors.red),
             Padding(
               padding: EdgeInsets.fromLTRB(8, 0, 8, 0),
@@ -996,36 +996,49 @@ class _GameMgrPageState extends State<GameMgrPage> {
     );
   }
 
-
-
-  Widget _getGameSteamImage(BuildContext context, Game game,GameSteamImageType imageType ) {
+  Widget _getGameSteamImage(BuildContext context, GameView gv, GameExecutableImageType imageType) {
     //50 x 100 (Pequeño) 0 padding
     //75 x 125 (Medio)    "
     //100x150 (Grande)    "
     //48x48     padding 4 (arriba y abajo)
 
-    if(imageType == GameSteamImageType.None) {
+
+
+    if (imageType == GameExecutableImageType.None) {
       return Container();
-    }
-    else if(imageType==GameSteamImageType.Icon) {
-      return Container(color: Colors.grey.shade800,width: 48, height: 48, child: Icon(Icons.question_mark));
-    }
-    else if(imageType==GameSteamImageType.CoverSmall) {
-      return Container(color: Colors.grey.shade800,width: 50, height: 100, child: Icon(Icons.question_mark));
-    }
-    else if(imageType==GameSteamImageType.CoverMedium) {
-      return Container(color: Colors.grey.shade800,width: 75, height: 125, child: Icon(Icons.question_mark));
-    }
-    else if(imageType==GameSteamImageType.CoverBig) {
-      return Container(color: Colors.grey.shade800,width: 100, height: 150, child: Icon(Icons.question_mark));
-    }
-    else {
-      return Row(
+    } else if (imageType == GameExecutableImageType.Icon) {
+      return gv.gameImagePath==null ? Container(color: Colors.grey.shade800, width: 48, height: 48, child: Icon(Icons.question_mark)) : Image.file(File(gv.gameImagePath!),width: 48, height: 48,fit:BoxFit.fill, filterQuality: FilterQuality.medium,);
+    } else if (imageType == GameExecutableImageType.CoverSmall) {
+      return gv.gameImagePath==null ? Container(color: Colors.grey.shade800, width: 50, height: 75, child: Icon(Icons.question_mark)): Image.file(File(gv.gameImagePath!),width: 50, height: 75,fit:BoxFit.fill, filterQuality: FilterQuality.medium);
+    } else if (imageType == GameExecutableImageType.CoverMedium) {
+      return gv.gameImagePath==null ? Container(color: Colors.grey.shade800, width: 75, height: 125, child: Icon(Icons.question_mark)): Image.file(File(gv.gameImagePath!),width: 75, height: 125,fit:BoxFit.fill, filterQuality: FilterQuality.medium);
+    } else if (imageType == GameExecutableImageType.CoverBig) {
+      return gv.gameImagePath==null ? Container(color: Colors.grey.shade800, width: 100, height: 150, child: Icon(Icons.question_mark)): Image.file(File(gv.gameImagePath!),width: 100, height: 150,fit:BoxFit.fill, filterQuality: FilterQuality.medium);
+    } else {
+      double width = MediaQuery.of(context).size.width;
+      return gv.gameImagePath==null ? Row(
         children: [
-          Expanded(child: Container(color: Colors.grey.shade800, height: 150, child: Icon(Icons.question_mark,size: 80,))),
+          Expanded(
+              child: Container(
+                  color: Colors.grey.shade800,
+                  height: 150,
+                  child: Icon(
+                    Icons.question_mark,
+                    size: 80,
+                  ))),
         ],
-      );
+      ): Image.file(File(gv.gameImagePath!),width: width, height: 150,fit:BoxFit.fitWidth, filterQuality: FilterQuality.medium);
     }
   }
 
+
+
+  Widget getGamesView(BuildContext context, GameView gameView, int index, BaseDataChanged state, CustomTheme themeExtension) {
+    if(state.gameExecutableImageType == GameExecutableImageType.Banner) {
+      return _createGameCardFullBannerSize(gameView, index, themeExtension, state);
+    }
+    else {
+      return _createGameCardImage(context, gameView, index, themeExtension, state);
+    }
+  }
 }

@@ -50,8 +50,9 @@ class GameView {
   Game game;
   bool isExpanded;
   bool modified;
+  String? gameImagePath;
 
-  GameView(this.game, this.isExpanded, this.modified);
+  GameView(this.game, this.gameImagePath, this.isExpanded, this.modified);
 }
 
 class GameMgrCubit extends Cubit<GameMgrBaseState> {
@@ -76,6 +77,8 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
 
   late UserSettings _currentUserSettings;
   late final Settings _settings;
+
+  GameExecutableImageType _currentImageType = GameExecutableImageType.CoverMedium;
 
   @override
   bool get wantKeepAlive => true;
@@ -147,10 +150,18 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
         _sdCardTotalInBytes,
         _sortStates,
         _sortDirectionStates,
-        searchText));
+        searchText,
+        _currentImageType));
 
     stopwatch.stop();
     print('[Logic] Time taken to execute method: ${stopwatch.elapsed}');
+  }
+
+  void refreshGameViewImages(List<GameView> gameViews) {
+    for (GameView g in gameViews) {
+      String? gameImage = GameTools.getGameImagePath(g.game, _currentImageType);
+      g.gameImagePath = gameImage;
+    }
   }
 
   List<GameView> _generateGameViews(List<Game> games) {
@@ -158,8 +169,8 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
     for (Game g in games) {
       GameTools.handleGameExecutableErrorsForGame(g);
       bool modified = g.dataCameFromConfigFile();
-
-      gameViews.add(GameView(g, false, modified));
+      String? gameImage = GameTools.getGameImagePath(g, _currentImageType);
+      gameViews.add(GameView(g, gameImage, false, modified));
     }
     return gameViews;
   }
@@ -203,11 +214,11 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
     gv.modified = true;
 
     if (ge.added) {
-      ge.appId = SteamTools.generateAppId("${ge.startDir}/${ge.relativeExePath}");
+      //ge.appId = SteamTools.generateAppId("${ge.startDir}/${ge.relativeExePath}");
       ge.fillProtonMappingData(_currentUserSettings.defaultCompatTool, "", "250");
       //_globalStats.MoveGameByStatus(uge, VMGameAddedStatus.Added);
     } else {
-      ge.appId = 0;
+      //ge.appId = 0;
       ge.clearCompatToolMappingData();
       //_globalStats.MoveGameByStatus(uge, VMGameAddedStatus.NonAdded);
     }
@@ -229,7 +240,8 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
         _sdCardTotalInBytes,
         _sortStates,
         _sortDirectionStates,
-        searchText));
+        searchText,
+        _currentImageType));
   }
 
   void swapExpansionStateForItem(int index) {
@@ -247,7 +259,8 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
         _sdCardTotalInBytes,
         _sortStates,
         _sortDirectionStates,
-        searchText));
+        searchText,
+        _currentImageType));
   }
 
   Future<void> trySave() async {
@@ -294,10 +307,12 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
         _sdCardTotalInBytes,
         _sortStates,
         _sortDirectionStates,
-        searchText));
+        searchText,
+        _currentImageType
+    ));
   }
 
-  Future<void>_saveData(List<Game> games, {showInfo = true}) async {
+  Future<void> _saveData(List<Game> games, {showInfo = true}) async {
     if (showInfo) {
       EasyLoading.show(status: tr("saving_games"));
     }
@@ -309,9 +324,9 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
     await _gameRepository.saveGames(shortcutsPath, games, _currentUserSettings.backupsEnabled, _currentUserSettings.maxBackupsCount);
 
     //Copy art if this game was just imported
-    for(Game g in games) {
-      for(GameExecutable ge in g.exeFileEntries)  {
-        if(ge.dataFromConfigFile) {
+    for (Game g in games) {
+      for (GameExecutable ge in g.exeFileEntries) {
+        if (ge.dataFromConfigFile) {
           GameTools.importShortcutArt(g.path, ge, _settings.currentUserId);
         }
       }
@@ -349,7 +364,8 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
         _sdCardTotalInBytes,
         _sortStates,
         _sortDirectionStates,
-        searchText));
+        searchText,
+        _currentImageType));
   }
 
   void tryDeleteGame(Game game) async {
@@ -374,10 +390,10 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
       //Persist new shortcuts file (TODO: split data saved to just save what is needed instead of everything everytime)
       await _saveData(_baseGames, showInfo: false);
 
-      if(deleteImages) {
+      if (deleteImages) {
         GameTools.deleteGameImages(game, _settings.currentUserId);
       }
-      if(deleteCompatData || deleteShaderData) {
+      if (deleteCompatData || deleteShaderData) {
         SteamConfigRepository scr = GetIt.I<SteamConfigRepository>();
         List<String> paths = scr.getConfig().libraryFolders.map((e) => e.path).toList();
         AppsStorageRepository asr = GetIt.I<AppsStorageRepository>();
@@ -406,13 +422,13 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
           _sdCardTotalInBytes,
           _sortStates,
           _sortDirectionStates,
-          searchText));
+          searchText,
+          _currentImageType));
     } catch (e) {
       EasyLoading.showError(tr('game_couldnt_be_deleted', args: [game.name]));
       print(e.toString());
     }
   }
-
 
   Future<void> tryRenameGame(BuildContext context, Game game) async {
     if (game.hasErrors()) {
@@ -427,10 +443,9 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
     } else {
       emit(RenameGameClicked(game));
     }
- }
+  }
 
   Future<void> renameGame(Game game, String newName) async {
-
     try {
       var oldPath = game.path;
       var containerFolder = p.dirname(game.path);
@@ -439,14 +454,14 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
       game.path = p.join(containerFolder, game.name);
 
       //When a game is renamed we must rename the shortcuts too
-      String baseSteamFolder =   SteamTools.getSteamBaseFolder();
+      String baseSteamFolder = SteamTools.getSteamBaseFolder();
       String shortcutsPath = "$baseSteamFolder/userdata/${_settings.currentUserId}/config/shortcuts.vdf";
 
       if (_currentUserSettings.backupsEnabled) {
         await FileTools.saveFileSecure<List<Game>>(shortcutsPath, [game], <String, dynamic>{'userId': _settings.currentUserId},
-                (String path, List<Game> games, Map<String, dynamic> extraParams) async {
-              return await _gameRepository.saveGame(path, extraParams['userId'], games[0]);
-            }, _currentUserSettings.maxBackupsCount);
+            (String path, List<Game> games, Map<String, dynamic> extraParams) async {
+          return await _gameRepository.saveGame(path, extraParams['userId'], games[0]);
+        }, _currentUserSettings.maxBackupsCount);
       } else {
         await _gameRepository.saveGame(shortcutsPath, _settings.currentUserId, game);
       }
@@ -466,7 +481,8 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
           _sdCardTotalInBytes,
           _sortStates,
           _sortDirectionStates,
-          searchText));
+          searchText,
+          _currentImageType));
 
       EasyLoading.showSuccess(tr("game_renamed"));
     } catch (e) {
@@ -476,17 +492,17 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
   }
 
   //Returns true if modification was made
-  Future<void> resetConfig(GameView gv) async{
+  Future<void> resetConfig(GameView gv) async {
     GameExportedData? ged = await GameTools.importGame(gv.game);
-    if(ged==null) {
+    if (ged == null) {
       EasyLoading.showInfo(tr("config_does_not_exists"));
     }
 
     EasyLoading.showInfo(tr("reseting_game_config"));
     bool modified = false;
-    for(GameExecutable ge in gv.game.exeFileEntries) {
-      GameExecutableExportedData? foundGe=ged!.executables.firstWhereOrNull((element) => element.executableRelativePath == ge.relativeExePath);
-      if(foundGe!=null) {
+    for (GameExecutable ge in gv.game.exeFileEntries) {
+      GameExecutableExportedData? foundGe = ged!.executables.firstWhereOrNull((element) => element.executableRelativePath == ge.relativeExePath);
+      if (foundGe != null) {
         ge.name = foundGe.executableName;
         ge.launchOptions = foundGe.executableOptions;
         ge.added = true;
@@ -512,7 +528,8 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
         _sdCardTotalInBytes,
         _sortStates,
         _sortDirectionStates,
-        searchText));
+        searchText,
+        _currentImageType));
 
     EasyLoading.showInfo(tr("game_was_reset"));
   }
@@ -535,7 +552,8 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
         _sdCardTotalInBytes,
         _sortStates,
         _sortDirectionStates,
-        searchText));
+        searchText,
+        _currentImageType));
   }
 
   List<GameView> sortByName(List<GameView> gvs, {SortDirection? direction}) {
@@ -568,7 +586,8 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
         _sdCardTotalInBytes,
         _sortStates,
         _sortDirectionStates,
-        searchText));
+        searchText,
+        _currentImageType));
   }
 
   List<GameView> sortByWithErrors(List<GameView> gvs, {SortDirection? direction}) {
@@ -625,7 +644,8 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
         _sdCardTotalInBytes,
         _sortStates,
         _sortDirectionStates,
-        searchText));
+        searchText,
+        _currentImageType));
   }
 
   List<GameView> sortByStatus(List<GameView> gvs, {SortDirection? direction}) {
@@ -680,7 +700,8 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
         _sdCardTotalInBytes,
         _sortStates,
         _sortDirectionStates,
-        searchText));
+        searchText,
+        _currentImageType));
   }
 
   List<GameView> sortBySize(List<GameView> gvs, {SortDirection? direction}) {
@@ -716,7 +737,8 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
         _sdCardTotalInBytes,
         _sortStates,
         _sortDirectionStates,
-        searchText));
+        searchText,
+        _currentImageType));
   }
 
   Map<String, List<GameView>> categorizeGamesByStatus(List<GameView> games) {
@@ -789,7 +811,8 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
         _sdCardTotalInBytes,
         _sortStates,
         _sortDirectionStates,
-        searchText));
+        searchText,
+        _currentImageType));
   }
 
   List<GameView> sortByCurrent(List<GameView> gvs) {
@@ -831,7 +854,8 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
         _sdCardTotalInBytes,
         _sortStates,
         _sortDirectionStates,
-        searchText));
+        searchText,
+        _currentImageType));
   }
 
   void openFolder(Game game) async {
@@ -935,8 +959,22 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
         _sdCardTotalInBytes,
         _sortStates,
         _sortDirectionStates,
-        searchText));
+        searchText,
+        _currentImageType));
   }
 
+  void setViewType(GameExecutableImageType geit) {
+    _currentImageType = geit;
+    refreshGameViewImages(_gameViews);
+    notifyDataChanged();
+  }
 
+  GameExecutableImageType getCurrentImageType() {
+    return _currentImageType;
+  }
+
+  void cycleViewType() {
+    var enumIndex = _currentImageType.index;
+    setViewType(GameExecutableImageType.values[(enumIndex+1)%GameExecutableImageType.values.length]);
+  }
 }

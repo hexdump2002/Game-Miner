@@ -22,10 +22,11 @@ class BaseDataChanged extends GameMgrBaseState {
   final List<bool> sortStates;
   final List<bool> sortDirectionStates;
   final String searchText;
+  final GameExecutableImageType gameExecutableImageType;
 
 
   BaseDataChanged(this.games, this.availableProntonNames, this.notAddedGamesCount, this.addedGamesCount, this.fullyAddedGamesCount, this.addedExternal,this.freeSSDSpace,
-      this.freeSDCardSpace, this.totalSSDSpace, this.totalSDCardSpace, this.sortStates, this.sortDirectionStates, this.searchText);
+      this.freeSDCardSpace, this.totalSSDSpace, this.totalSDCardSpace, this.sortStates, this.sortDirectionStates, this.searchText, this.gameExecutableImageType);
 }
 
 class GamesDataRetrieved extends BaseDataChanged {
@@ -42,7 +43,8 @@ class GamesDataRetrieved extends BaseDataChanged {
       int totalSDCardSpace,
       List<bool> sortStates,
       List<bool> sortDirectionStates,
-      String searchText)
+      String searchText,
+      GameExecutableImageType gameExecutableImageType)
       : super(
       games,
       availableProntonNames,
@@ -56,7 +58,8 @@ class GamesDataRetrieved extends BaseDataChanged {
       totalSDCardSpace,
       sortStates,
       sortDirectionStates,
-      searchText);
+      searchText,
+      gameExecutableImageType);
 }
 
 class GamesDataChanged extends BaseDataChanged {
@@ -73,7 +76,8 @@ class GamesDataChanged extends BaseDataChanged {
       int totalSDCardSpace,
       List<bool> sortStates,
       List<bool> sortDirectionStates,
-      String searchText)
+      String searchText,
+      GameExecutableImageType gameExecutableImageType)
       : super(
       games,
       availableProntonNames,
@@ -87,7 +91,8 @@ class GamesDataChanged extends BaseDataChanged {
       totalSDCardSpace,
       sortStates,
       sortDirectionStates,
-      searchText);
+      searchText,
+      gameExecutableImageType);
 }
 
 class GamesFoldingDataChanged extends BaseDataChanged {
@@ -104,7 +109,8 @@ class GamesFoldingDataChanged extends BaseDataChanged {
       int totalSDCardSpace,
       List<bool> sortStates,
       List<bool> sortDirectionStates,
-      String searchText)
+      String searchText,
+      GameExecutableImageType gameExecutableImageType)
       : super(
       games,
       availableProntonNames,
@@ -118,7 +124,8 @@ class GamesFoldingDataChanged extends BaseDataChanged {
       totalSDCardSpace,
       sortStates,
       sortDirectionStates,
-      searchText);
+      searchText,
+      gameExecutableImageType);
 }
 
 class SearchTermChanged extends BaseDataChanged {
@@ -135,7 +142,8 @@ class SearchTermChanged extends BaseDataChanged {
       int totalSDCardSpace,
       List<bool> sortStates,
       List<bool> sortDirectionStates,
-      String searchText)
+      String searchText,
+      GameExecutableImageType gameExecutableImageType)
       : super(
       games,
       availableProntonNames,
@@ -149,7 +157,8 @@ class SearchTermChanged extends BaseDataChanged {
       totalSDCardSpace,
       sortStates,
       sortDirectionStates,
-      searchText);
+      searchText,
+      gameExecutableImageType);
 }
 
 class DeleteGameClicked extends GameMgrBaseState {

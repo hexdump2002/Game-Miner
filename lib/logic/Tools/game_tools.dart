@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:collection/collection.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -162,7 +163,7 @@ class GameTools {
 
   static Future<void> exportShortcutArt(String outputFolder, GameExecutable exe, String userId) async {
     String sourcePath = "${SteamTools.getSteamBaseFolder()}/userdata/$userId/config/grid";
-    String destPath = outputFolder+"/game_miner_data";
+    String destPath = outputFolder + "/game_miner_data";
 
     try {
       //Check if we must create the needed folder to hold the images
@@ -176,8 +177,7 @@ class GameTools {
         String fullPath = p.join(destPath, fileName);
         await File(imageFile).copy(fullPath);
       }
-    }
-    catch(ex){
+    } catch (ex) {
       print("Error: $ex");
     }
   }
@@ -199,18 +199,46 @@ class GameTools {
     await file.writeAsString(json);
   }
 
-  static Future<void> importShortcutArt(String outputFolder, GameExecutable exe, String userId) async {
-
-    String destPath = "${SteamTools.getSteamBaseFolder()}/userdata/$userId/config/grid";
-    String sourcePath = outputFolder+"/game_miner_data";
+  static Future<GameExecutableImages> getGameExecutableImages(int appId, String userId) async {
+    String imagesPath = "${SteamTools.getSteamBaseFolder()}/userdata/$userId/config/grid";
 
     try {
       //Check if we have art to import
+      if (!await FileTools.existsFolder(imagesPath)) {
+        return GameExecutableImages();
+      }
+
+      String? heroImage, coverImage, iconImage, logoImage;
+      List<String> imageFiles = await FileTools.getFolderFilesAsync(imagesPath, recursive: false, regExFilter: "${appId}_*");
+      for (String imageFile in imageFiles) {
+        String fileName = p.basenameWithoutExtension(imageFile);
+        if (fileName == "${appId}p")
+          coverImage = imageFile;
+        else if (fileName == "${appId}_hero")
+          heroImage = imageFile;
+        else if (fileName == "${appId}_icon")
+          iconImage = imageFile;
+        else if (fileName == "${appId}_logo") logoImage = imageFile;
+      }
+
+      return GameExecutableImages(iconImage: iconImage, heroImage: heroImage, coverImage: coverImage, logoImage: logoImage);
+    } catch (ex) {
+      print("Error reading images: $ex");
+      return GameExecutableImages();
+    }
+  }
+
+  static Future<void> importShortcutArt(String outputFolder, GameExecutable exe, String userId) async {
+    String destPath = "${SteamTools.getSteamBaseFolder()}/userdata/$userId/config/grid";
+    String sourcePath = outputFolder + "/game_miner_data";
+
+    try {
+//Check if we have art to import
       if (!await FileTools.existsFolder(sourcePath)) {
         return;
       }
 
-      //Check if grid folders exist if not create it
+//Check if grid folders exist if not create it
       if (!await FileTools.existsFolder(destPath)) {
         await Directory(destPath).create();
       }
@@ -221,8 +249,7 @@ class GameTools {
         String fullPath = p.join(destPath, fileName);
         await File(imageFile).copy(fullPath);
       }
-    }
-    catch(ex){
+    } catch (ex) {
       print("Error: $ex");
     }
   }
@@ -291,5 +318,34 @@ class GameTools {
         await File(imageFile).delete();
       }
     }
+  }
+
+  static String? getGameImagePath(Game game, GameExecutableImageType imageType) {
+    String? path;
+
+    int index = 0;
+    while (path == null && index < game.exeFileEntries.length) {
+      GameExecutable ge = game.exeFileEntries[index];
+
+      switch (imageType) {
+        case GameExecutableImageType.Icon:
+          path = ge.images.iconImage;
+          break;
+        case GameExecutableImageType.CoverSmall:
+        case GameExecutableImageType.CoverMedium:
+        case GameExecutableImageType.CoverBig:
+          path = ge.images.coverImage;
+          break;
+        case GameExecutableImageType.Banner:
+          path = ge.images.heroImage;
+          break;
+        default:
+          path = null;
+      }
+
+      ++index;
+    }
+
+    return path;
   }
 }
