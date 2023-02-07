@@ -118,7 +118,7 @@ class _GameDataMgrPageState extends State<GameDataMgrPage> {
         //print("Cache size: ${e.shaderCacheSize} ${e.compatDataSize}");
         return DataRow(onSelectChanged: (value) => _bloc.setSelectedState(e, value!), selected: e.selected, cells: [
           DataCell(Text(e.appStorage.appId)),
-          DataCell(SizedBox(width: 30, height: 30, child: _getEntryImage(e))),
+          DataCell(_getEntryImage(e)),
           DataCell(Text(e.appStorage.name)),
           DataCell(Text(StringTools.bytesToStorageUnity(e.appStorage.size))),
           DataCell(_getStorageType(e)),
@@ -218,12 +218,13 @@ class _GameDataMgrPageState extends State<GameDataMgrPage> {
   }
 
   Widget _getEntryImage(AppDataStorageEntry e) {
+    double imageSize = 40;
     return e.iconImagePath == null
-        ? Container(color: Colors.grey.shade800, width: 30, height: 30, child: Icon(Icons.question_mark))
+        ? Container(color: Colors.grey.shade800, width: imageSize, height: imageSize, child: Icon(Icons.question_mark))
         : Image.file(
             File(e.iconImagePath!),
-            width: 30,
-            height: 30,
+            width: imageSize,
+            height: imageSize,
             fit: BoxFit.fill,
             filterQuality: FilterQuality.medium,
           );

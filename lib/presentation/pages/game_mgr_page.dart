@@ -28,7 +28,7 @@ import '../../logic/Tools/steam_tools.dart';
 
 //WARNING: THIS CLASS USES A LOT OF NON BEST PRACTICES. FOR EXAMPLE: A CUBIT SHOULD BE PORTABLE AND THIS ONE RECEIVES A LOT OF BUILDCONTEXT
 class GameMgrPage extends StatefulWidget {
-  const GameMgrPage({Key? key}) : super(key: key);
+  GameMgrPage({Key? key}) : super(key: key);
 
   @override
   State<GameMgrPage> createState() => _GameMgrPageState();
@@ -37,9 +37,18 @@ class GameMgrPage extends StatefulWidget {
 class _GameMgrPageState extends State<GameMgrPage> {
   final _formKey = GlobalKey<FormState>();
 
-
-
   final TextEditingController _genericTextController = TextEditingController();
+
+/*  final Map<String, ObjectKey> _textInputFieldKeys = {};
+  ObjectKey _getObjectKey(String id) {
+    ObjectKey? ok = _textInputFieldKeys[id];
+    if(ok == null) {
+      ok = ObjectKey(id);
+      _textInputFieldKeys[id] =ok;
+    }
+
+    return ok;
+  }*/
 
   @override
   void initState() {
@@ -569,6 +578,11 @@ class _GameMgrPageState extends State<GameMgrPage> {
       availableProntons = [invalidProtonError.data, ...availableProntons];
     }
 
+    if(gv.game.name=="Brotato") {
+        print("id -> ${uge.appId.toString()}");
+    }
+
+    String baseKey= uge.appId.toString();
     GameMgrCubit nsgc = _nsCubit(context);
     return Container(
       color: themeExtension.gameCardExeOptionsBg,
@@ -578,15 +592,14 @@ class _GameMgrPageState extends State<GameMgrPage> {
         child: Column(
           children: [
             TextFormField(
-              key: GlobalKey(),
-              //TODO: fix This should be reusable not created one eachtime
+              key: UniqueKey(),
               initialValue: uge.name,
               decoration: InputDecoration(labelText: tr("name")),
               autovalidateMode: AutovalidateMode.onUserInteraction,
               onChanged: (value) {
                 uge.name = value!;
                 gv.modified = true;
-                _nsCubit(context).notifyDataChanged();
+                //_nsCubit(context).notifyDataChanged();
               },
               /*onSaved: (value) => {
                 uge.name = value!
@@ -599,13 +612,14 @@ class _GameMgrPageState extends State<GameMgrPage> {
               },
             ),
             TextFormField(
+              key:UniqueKey(),
               initialValue: uge.launchOptions,
               decoration: InputDecoration(labelText: tr("launch_options")),
               autovalidateMode: AutovalidateMode.onUserInteraction,
               onChanged: (value) {
                 uge.launchOptions = value!;
                 gv.modified = true;
-                _nsCubit(context).notifyDataChanged();
+                //_nsCubit(context).notifyDataChanged();
               },
               /*onSaved: (value) => {
                 uge.name = value!
@@ -618,6 +632,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
               },*/
             ),
             DropdownButtonFormField<String>(
+                //key: ObjectKey("${baseKey}_2"),
                 items: availableProntons.map<DropdownMenuItem<String>>((String e) {
                   return DropdownMenuItem<String>(value: e, child: Text(e));
                 }).toList(),
@@ -630,8 +645,25 @@ class _GameMgrPageState extends State<GameMgrPage> {
     );
   }
 
+  String _getTooltipStringForCurrentStateIcon(GameStatus gameAddedStatus) {
+    Color color;
+    String tooltip = "";
+
+    if (gameAddedStatus == GameStatus.FullyAdded) {
+      return tr("game_status_green_tooltip");
+    } else if (gameAddedStatus == GameStatus.Added) {
+      return tr("game_status_orange_tooltip");
+    } else if (gameAddedStatus == GameStatus.NonAdded) {
+      return tr("game_status_red_tooltip");
+    } else {
+      return tr("game_status_blue_tooltip");
+    }
+  }
+
   Widget _getExeCurrentStateIcon(GameStatus gameAddedStatus) {
     Color color;
+    String tooltip = "";
+
     if (gameAddedStatus == GameStatus.FullyAdded) {
       color = Colors.green;
     } else if (gameAddedStatus == GameStatus.Added) {
@@ -664,37 +696,69 @@ class _GameMgrPageState extends State<GameMgrPage> {
               padding: EdgeInsets.fromLTRB(0,0,16,0),
               child: TextButton(onPressed: ()=> _nsCubit(context).cycleViewType(), child: Container(padding: EdgeInsets.all(5),color: Colors.black38,child: Text(viewTypesStr[state.gameExecutableImageType.index], style: TextStyle(color:Colors.white),))),
             ),
-            Container(height: 15, width: 15, color: Colors.red),
-            Padding(
-              padding: EdgeInsets.fromLTRB(8, 0, 8, 0),
-              child: Text(
-                state.notAddedGamesCount.toString(),
-                style: TextStyle(color: Colors.white),
+            Tooltip(
+              message: tr("game_status_red_tooltip"),
+              child: Row(
+                children: [
+                  Container(height: 15, width: 15, color: Colors.red),
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(8, 0, 8, 0),
+                    child: Text(
+                      state.notAddedGamesCount.toString(),
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
+                ],
               ),
             ),
-            Container(height: 15, width: 15, color: Colors.orange),
-            Padding(
-              padding: EdgeInsets.fromLTRB(8, 0, 8, 0),
-              child: Text(
-                state.addedGamesCount.toString(),
-                style: TextStyle(color: Colors.white),
+
+            Tooltip(
+              message: tr("game_status_orange_tooltip"),
+              child: Row(
+                children: [
+                  Container(height: 15, width: 15, color: Colors.orange),
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(8, 0, 8, 0),
+                    child: Text(
+                      state.addedGamesCount.toString(),
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
+                ],
               ),
             ),
-            Container(height: 15, width: 15, color: Colors.green),
-            Padding(
-              padding: EdgeInsets.fromLTRB(8, 0, 8, 0),
-              child: Text(
-                state.fullyAddedGamesCount.toString(),
-                style: TextStyle(color: Colors.white),
+
+            Tooltip(
+              message: tr("game_status_green_tooltip"),
+              child: Row(
+                children: [
+                  Container(height: 15, width: 15, color: Colors.green),
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(8, 0, 8, 0),
+                    child: Text(
+                      state.fullyAddedGamesCount.toString(),
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
+                ],
               ),
             ),
-            Container(height: 15, width: 15, color: Colors.blue.shade200),
-            Padding(
-                padding: EdgeInsets.fromLTRB(8, 0, 8, 0),
-                child: Text(
-                  state.addedExternal.toString(),
-                  style: TextStyle(color: Colors.white),
-                )),
+
+            Tooltip(
+              message: tr("game_status_blue_tooltip"),
+              child: Row(
+                children: [
+                  Container(height: 15, width: 15, color: Colors.blue.shade200),
+                  Padding(
+                      padding: EdgeInsets.fromLTRB(8, 0, 8, 0),
+                      child: Text(
+                        state.addedExternal.toString(),
+                        style: TextStyle(color: Colors.white),
+                      )),
+                ],
+              ),
+            ),
+
             Tooltip(
               message: tr("free_sd_card_space"),
               child: Padding(

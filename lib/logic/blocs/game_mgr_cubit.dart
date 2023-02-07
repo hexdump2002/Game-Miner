@@ -932,50 +932,6 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
     repo.save();
   }
 
-/*
-  void showSteamActiveWhenSaving(BuildContext context, VoidCallback actionFunction) {
-    showPlatformDialog(
-      context: context,
-      builder: (context) => BasicDialogAlert(
-        title: Text(tr('warning')),
-        content: Row(
-          children: [
-            const Padding(
-              padding: EdgeInsets.all(16.0),
-              child: Icon(
-                Icons.warning,
-                color: Colors.red,
-                size: 100,
-              ),
-            ),
-            Expanded(child: Text(tr("steam_is_running_cant_action")))
-          ],
-        ),
-        actions: <Widget>[
-          BasicDialogAction(
-            title: Text("OK"),
-            onPressed: () async {
-              Navigator.pop(context);
-              EasyLoading.show(status: tr("closing_steam"));
-              await SteamTools.closeSteamClient();
-              while (await SteamTools.isSteamRunning() == true) {
-                await Future.delayed(const Duration(seconds: 1));
-              }
-              EasyLoading.dismiss();
-              actionFunction();
-            },
-          ),
-          BasicDialogAction(
-            title: Text(tr("cancel")),
-            onPressed: () {
-              Navigator.pop(context);
-            },
-          ),
-        ],
-      ),
-    );
-  }*/
-
   void exportGame(Game game) async {
     String exportPath = "${game.path}/gameminer_config.json";
     EasyLoading.show(status: tr("exporting_game_config", args: [exportPath]));

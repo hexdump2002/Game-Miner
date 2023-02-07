@@ -176,3 +176,10 @@ class SteamDetected extends GameMgrBaseState {
   VoidCallback okAction;
   SteamDetected(this.okAction);
 }
+
+class GameExecutableDataSet extends GameMgrBaseState {
+  String name;
+  String arguments;
+  String compatToolDisplayName;
+  GameExecutableDataSet(this.name, this.arguments,this.compatToolDisplayName);
+}
