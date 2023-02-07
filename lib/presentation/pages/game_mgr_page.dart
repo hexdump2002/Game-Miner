@@ -645,21 +645,6 @@ class _GameMgrPageState extends State<GameMgrPage> {
     );
   }
 
-  String _getTooltipStringForCurrentStateIcon(GameStatus gameAddedStatus) {
-    Color color;
-    String tooltip = "";
-
-    if (gameAddedStatus == GameStatus.FullyAdded) {
-      return tr("game_status_green_tooltip");
-    } else if (gameAddedStatus == GameStatus.Added) {
-      return tr("game_status_orange_tooltip");
-    } else if (gameAddedStatus == GameStatus.NonAdded) {
-      return tr("game_status_red_tooltip");
-    } else {
-      return tr("game_status_blue_tooltip");
-    }
-  }
-
   Widget _getExeCurrentStateIcon(GameStatus gameAddedStatus) {
     Color color;
     String tooltip = "";

@@ -128,11 +128,11 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
 
       _gameViews = _generateGameViews(_baseGames);
 
-      for(Game g in _baseGames) {
+      /*for(Game g in _baseGames) {
         for(GameExecutable ge in g.exeFileEntries) {
           print("${ge.appId} ${g.path}/${ge.relativeExePath}");
         }
-      }
+      }*/
     }
 
     _filteredGames = [];

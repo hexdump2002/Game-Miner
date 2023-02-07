@@ -64,7 +64,15 @@ class FileTools {
       return finalPath;
     });
 
-    return fileNamesStream.toList();
+
+    try {
+      return await fileNamesStream.toList();
+    }
+    on FileSystemException catch (_, ex) {
+      print("Folder couldn't be read: $ex");
+    }
+
+    return [];
   }
 
   static String getHomeFolder() {
