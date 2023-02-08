@@ -23,9 +23,8 @@
   "settings_saved": "Ajustes guardados",
   "going_to": "Vas a ",
   "delete_capitals": "ELIMINAR",
-  "delete_game_dialog_text": " el juego {} de tu dispositivo.",
-  "delete_game_and_data_dialog_text": " '{}' Juego y dataos (CompatTool y ShaderCache) de tu dispositivo.\n\nEsto destruira todo tu progreso en este juego a menos que soporte partidas en la nube.",
-  "delete_game_and_data_dialog": "Borrar juego y datos",
+  "delete_selected_game_dialog_text": " todos los juegos seleccionados de tu dispositivo.\n\nSi quieres eliminar los datos relacionados con estos juegos, selecciona las opciones que necesites.\n\nRecuerda que al borrar el compatdata esto destruirá el progreso en tus juegos si no soportan salvado en la nube",
+  "delete_game_dialog_text": " el juego {} de tu dispositivo.\n\nSi quieres eliminar los datos relacionados con el juego, selecciona las opciones que necesites.\n\nRecuerda que al borrar el compatdata se destruirá el progreso en el juego si no soporta salvado en la nube",
   "delete_selected": "Borrar seleccionados",
   "warning_action_undone": "\nAtención: Esta acción no se puede deshacer",
   "cancel":"Cancelar",
@@ -40,7 +39,9 @@
   "invalid_game_name": "Nombre de juego invalido",
   "game_renamed": "El juego fue renombrado!",
   "game_couldnt_be_renamed": "El juego '{}' no pudo ser renombrado",
-  "selected_data_was_deleted": "Los datos seleccionados para e el juego '{}' fueron borrados",
+  "selected_data_games_was_deleted": "Los juegos seleccionados y sus datos fueron borrados",
+  "all_games_couldnt_be_deleted": "Algunos juegos no pudieron ser borrados",
+  "selected_data_was_deleted": "El juego '{}' y sus datos fueron borrados",
   "game_couldnt_be_deleted": "El juego '{}' no pudo ser borrado",
   "dark_theme": "Tema oscuro",
   "clean": "Limpiar",
@@ -71,6 +72,7 @@
   "select_none": "Seleccionar ninguno",
   "select_all": "Seleccionar todos",
   "delete_selected": "Eliminar seleccionados",
+  "deleting_games": "Elminando juegos",
   "broken_executable": "* El ejecutable no existe",
   "invalid_compat_tool": "* La herramienta de compatiblidad '{}' No existe.",
   "sort_by_info": "Ordenar por notificación",
@@ -83,6 +85,9 @@
   "closing_steam": "Cerrando Steam",
   "exporting_game_config": "Exportando configuración de juego em {}",
   "game_config_exported": "La configuración de juego fue exportada en {}",
+  "selected_games_were_exported": "Los juegos seleccionados fueron exportados",
+  "all_games_couldnt_be_exported": "Algunos juegos no pudieron ser exportados",
+  "export_selected_games_dialog_text": "Se van a exportar las configuraciones de todos los juegos seleccionados.\n\nSi previamente exportaste una configuración (Incluidas las imagenes del juego) estas serán sobre escritas con la nueva configuración.\n\nQuieres hacerlo ahora?",
   "export_config": "Exportar config",
   "data_not_saved_refresh_caption": "Aviso",
   "data_not_saved_refresh": "Existen datos que no han sido grabados. Si recargas se perderan. ¿Quieres recargar?",
@@ -109,5 +114,6 @@
   "config_does_not_exist": "No existe fichero de configuración",
   "game_mgr_options": "Gestor de juegos",
   "default_image_view": "Tipo de vista"
+
 
 }

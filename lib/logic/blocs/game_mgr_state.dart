@@ -19,14 +19,28 @@ class BaseDataChanged extends GameMgrBaseState {
   final int freeSDCardSpace;
   final int totalSSDSpace;
   final int totalSDCardSpace;
-  final List<bool> sortStates;
-  final List<bool> sortDirectionStates;
+  final int sortIndex;
+  final int sortDirectionIndex;
   final String searchText;
   final GameExecutableImageType gameExecutableImageType;
+  final batchMode;
 
-
-  BaseDataChanged(this.games, this.availableProntonNames, this.notAddedGamesCount, this.addedGamesCount, this.fullyAddedGamesCount, this.addedExternal,this.freeSSDSpace,
-      this.freeSDCardSpace, this.totalSSDSpace, this.totalSDCardSpace, this.sortStates, this.sortDirectionStates, this.searchText, this.gameExecutableImageType);
+  BaseDataChanged(
+      this.games,
+      this.availableProntonNames,
+      this.notAddedGamesCount,
+      this.addedGamesCount,
+      this.fullyAddedGamesCount,
+      this.addedExternal,
+      this.freeSSDSpace,
+      this.freeSDCardSpace,
+      this.totalSSDSpace,
+      this.totalSDCardSpace,
+      this.sortIndex,
+      this.sortDirectionIndex,
+      this.searchText,
+      this.gameExecutableImageType,
+      this.batchMode);
 }
 
 class GamesDataRetrieved extends BaseDataChanged {
@@ -41,25 +55,13 @@ class GamesDataRetrieved extends BaseDataChanged {
       int freeSDCardSpace,
       int totalSSDSpace,
       int totalSDCardSpace,
-      List<bool> sortStates,
-      List<bool> sortDirectionStates,
+      int sortIndex,
+      int sortDirectionIndex,
       String searchText,
-      GameExecutableImageType gameExecutableImageType)
-      : super(
-      games,
-      availableProntonNames,
-      nonAddedGamesCount,
-      addedGamesCount,
-      fullyAddedGamesCount,
-      addedExternal,
-      freeSSDSpace,
-      freeSDCardSpace,
-      totalSSDSpace,
-      totalSDCardSpace,
-      sortStates,
-      sortDirectionStates,
-      searchText,
-      gameExecutableImageType);
+      GameExecutableImageType gameExecutableImageType,
+      bool batchMode)
+      : super(games, availableProntonNames, nonAddedGamesCount, addedGamesCount, fullyAddedGamesCount, addedExternal, freeSSDSpace, freeSDCardSpace,
+            totalSSDSpace, totalSDCardSpace, sortIndex, sortDirectionIndex, searchText, gameExecutableImageType, batchMode);
 }
 
 class GamesDataChanged extends BaseDataChanged {
@@ -74,25 +76,13 @@ class GamesDataChanged extends BaseDataChanged {
       int freeSDCardSpace,
       int totalSSDSpace,
       int totalSDCardSpace,
-      List<bool> sortStates,
-      List<bool> sortDirectionStates,
+      int sortIndex,
+      int sortDirectionIndex,
       String searchText,
-      GameExecutableImageType gameExecutableImageType)
-      : super(
-      games,
-      availableProntonNames,
-      nonAddedGamesCount,
-      addedGamesCount,
-      fullyAddedGamesCount,
-      addedExternal,
-      freeSSDSpace,
-      freeSDCardSpace,
-      totalSSDSpace,
-      totalSDCardSpace,
-      sortStates,
-      sortDirectionStates,
-      searchText,
-      gameExecutableImageType);
+      GameExecutableImageType gameExecutableImageType,
+      bool batchMode)
+      : super(games, availableProntonNames, nonAddedGamesCount, addedGamesCount, fullyAddedGamesCount, addedExternal, freeSSDSpace, freeSDCardSpace,
+      totalSSDSpace, totalSDCardSpace, sortIndex, sortDirectionIndex, searchText, gameExecutableImageType, batchMode);
 }
 
 class GamesFoldingDataChanged extends BaseDataChanged {
@@ -107,25 +97,13 @@ class GamesFoldingDataChanged extends BaseDataChanged {
       int freeSDCardSpace,
       int totalSSDSpace,
       int totalSDCardSpace,
-      List<bool> sortStates,
-      List<bool> sortDirectionStates,
+      int sortIndex,
+      int sortDirectionIndex,
       String searchText,
-      GameExecutableImageType gameExecutableImageType)
-      : super(
-      games,
-      availableProntonNames,
-      nonAddedGamesCount,
-      addedGamesCount,
-      fullyAddedGamesCount,
-      addedExternal,
-      freeSSDSpace,
-      freeSDCardSpace,
-      totalSSDSpace,
-      totalSDCardSpace,
-      sortStates,
-      sortDirectionStates,
-      searchText,
-      gameExecutableImageType);
+      GameExecutableImageType gameExecutableImageType,
+      bool batchMode)
+      : super(games, availableProntonNames, nonAddedGamesCount, addedGamesCount, fullyAddedGamesCount, addedExternal, freeSSDSpace, freeSDCardSpace,
+      totalSSDSpace, totalSDCardSpace, sortIndex, sortDirectionIndex, searchText, gameExecutableImageType, batchMode);
 }
 
 class SearchTermChanged extends BaseDataChanged {
@@ -140,40 +118,30 @@ class SearchTermChanged extends BaseDataChanged {
       int freeSDCardSpace,
       int totalSSDSpace,
       int totalSDCardSpace,
-      List<bool> sortStates,
-      List<bool> sortDirectionStates,
+      int sortIndex,
+      int sortDirectionIndex,
       String searchText,
-      GameExecutableImageType gameExecutableImageType)
-      : super(
-      games,
-      availableProntonNames,
-      nonAddedGamesCount,
-      addedGamesCount,
-      fullyAddedGamesCount,
-      addedExternal,
-      freeSSDSpace,
-      freeSDCardSpace,
-      totalSSDSpace,
-      totalSDCardSpace,
-      sortStates,
-      sortDirectionStates,
-      searchText,
-      gameExecutableImageType);
+      GameExecutableImageType gameExecutableImageType,
+      bool batchMode)
+      : super(games, availableProntonNames, nonAddedGamesCount, addedGamesCount, fullyAddedGamesCount, addedExternal, freeSSDSpace, freeSDCardSpace,
+      totalSSDSpace, totalSDCardSpace, sortIndex, sortDirectionIndex, searchText, gameExecutableImageType, batchMode);
 }
 
 class DeleteGameClicked extends GameMgrBaseState {
   Game game;
+
   DeleteGameClicked(this.game);
 }
 
 class RenameGameClicked extends GameMgrBaseState {
   Game game;
+
   RenameGameClicked(this.game);
 }
 
-
 class SteamDetected extends GameMgrBaseState {
   VoidCallback okAction;
+
   SteamDetected(this.okAction);
 }
 
@@ -181,5 +149,10 @@ class GameExecutableDataSet extends GameMgrBaseState {
   String name;
   String arguments;
   String compatToolDisplayName;
-  GameExecutableDataSet(this.name, this.arguments,this.compatToolDisplayName);
+
+  GameExecutableDataSet(this.name, this.arguments, this.compatToolDisplayName);
+}
+
+class DeleteSelectedClicked extends GameMgrBaseState {
+  DeleteSelectedClicked();
 }

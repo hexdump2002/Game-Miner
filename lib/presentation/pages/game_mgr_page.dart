@@ -68,6 +68,8 @@ class _GameMgrPageState extends State<GameMgrPage> {
   Widget build(BuildContext context) {
     final stopwatch = Stopwatch()..start();
 
+    const List<String> list = <String>['Name', 'Size', 'Status', 'Notification', 'Date'];
+
     Widget widgets = Scaffold(
       appBar: AppBar(
           // Here we take the value from the MyHomePage object that was created by
@@ -83,58 +85,51 @@ class _GameMgrPageState extends State<GameMgrPage> {
               builder: (context, state) {
                 return Row(children: [
                   Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: ToggleButtons(
-                        direction: Axis.horizontal,
-                        onPressed: (int index) {
+                      padding: const EdgeInsets.all(8.0),
+                      child: DropdownButton<String>(
+                        borderRadius: BorderRadius.all(Radius.circular(3)),
+                        /*hint:const Padding(
+                        padding: EdgeInsets.all(8.0),
+                        child: Text("Filter by"),
+                      ),*/
+                        value: _nsCubit(context).getSortIndex().toString(),
+
+                        icon: TextButton(
+                          child: _nsCubit(context).getSortDirectionIndex() == 0 ? const Icon(Icons.arrow_upward) : const Icon(Icons.arrow_downward),
+                          onPressed: () => {_nsCubit(context).swapSortDirecion()},
+                        ),
+                        //elevation: 16,
+                        //style: const TextStyle(color: Colors.deepPurple),
+                        underline: Container(
+                          height: 0,
+                        ),
+                        onChanged: (String? value) {
+                          int index = int.parse(value!);
                           var nsgpBloc = _nsCubit(context);
                           if (index == 0) {
                             nsgpBloc.sortFilteredByName();
                           } else if (index == 1) {
-                            nsgpBloc.sortFilteredByStatus();
-                          } else if (index == 2) {
                             nsgpBloc.sortFilteredBySize();
+                          } else if (index == 2) {
+                            nsgpBloc.sortFilteredByStatus();
                           } else if (index == 3) {
                             nsgpBloc.sortFilteredByWithErrors();
                           }
                         },
-                        borderRadius: const BorderRadius.all(Radius.circular(8)),
-                        /*selectedBorderColor: Colors.blue[700],
-                        selectedColor: Colors.white,
-                        fillColor: Colors.blue[200],
-                        color: Colors.blue[400],*/
-                        /*borderColor: Colors.blue,
-                        selectedBorderColor: Colors.blue[200],
-                        selectedColor: Colors.white,
-                        fillColor: Colors.blue[300],
-                        color: Colors.blue[300],*/
-                        isSelected: _nsCubit(context).getSortStates(),
-                        children: [
-                          Tooltip(message: tr("sort_by_name"), child: const Icon(Icons.receipt)),
-                          Tooltip(message: tr("sort_by_status"), child: const Icon(Icons.stars)),
-                          Tooltip(message: tr("sort_by_size"), child: const Icon(Icons.storage)),
-                          Tooltip(message: tr("sort_by_info"), child: const Icon(Icons.warning))
-                        ]),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(0, 8, 16, 8),
-                    child: ToggleButtons(
-                        direction: Axis.horizontal,
-                        onPressed: (int index) {
-                          index == 0 ? _nsCubit(context).setSortDirection(SortDirection.Asc) : _nsCubit(context).setSortDirection(SortDirection.Desc);
-                        },
-                        borderRadius: const BorderRadius.all(Radius.circular(8)),
-                        /*borderColor: Colors.blue,
-                        selectedBorderColor: Colors.blue[200],
-                        selectedColor: Colors.white,
-                        fillColor: Colors.blue[300],
-                        color: Colors.blue[300],*/
-                        isSelected: _nsCubit(context).getSortDirectionStates(),
-                        children: [
-                          Tooltip(message: tr("descending"), child: const Icon(Icons.south)),
-                          Tooltip(message: tr("ascending"), child: const Icon(Icons.north))
-                        ]),
-                  ),
+
+                        items: list.mapIndexed<DropdownMenuItem<String>>((int index, String value) {
+                          return DropdownMenuItem<String>(
+                            value: index.toString(),
+                            child: Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Text(value),
+                            ),
+                          );
+                        }).toList(),
+                      )),
+                  Tooltip(
+                      message: "batch_mode",
+                      child: Switch(value: _nsCubit(context).getBatchMode(), onChanged: (value) => _nsCubit(context).swapBatchMode())),
                   IconButton(
                     onPressed: () async {
                       if (_formKey.currentState!.validate()) {
@@ -164,26 +159,70 @@ class _GameMgrPageState extends State<GameMgrPage> {
               },
             )
           ]),
-      body: ExpandableTheme(
-          data: const ExpandableThemeData(hasIcon: false),
-          child: Container(
-              alignment: Alignment.center,
-              child: BlocConsumer<GameMgrCubit, GameMgrBaseState>(listener: (context, state) {
-                if (state is DeleteGameClicked) {
-                  _deleteGame(context, state.game);
-                } else if (state is SteamDetected) {
-                  showSteamActiveWhenSaving(context, state.okAction);
-                } else if (state is RenameGameClicked) {
-                  _renameGame(context, state.game);
-                }
-              }, buildWhen: (previous, current) {
-                return current is! DeleteGameClicked && current is! SteamDetected && current is! RenameGameClicked;
-              }, builder: (context, state) {
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: _buildDataScreen(context, state),
-                );
-              }))),
+      body: BlocConsumer<GameMgrCubit, GameMgrBaseState>(
+        listener: (context, state) {
+          if (state is DeleteGameClicked) {
+            _deleteGame(context, state.game);
+          } else if (state is SteamDetected) {
+            showSteamActiveWhenSaving(context, state.okAction);
+          } else if (state is RenameGameClicked) {
+            _renameGame(context, state.game);
+          }
+          else if (state is DeleteSelectedClicked) {
+            _deleteSelectedGames(context, state);
+          }
+        },
+        buildWhen: (previous, current) {
+          return current is! DeleteGameClicked && current is! SteamDetected && current is! RenameGameClicked && current is! DeleteSelectedClicked;
+        },
+        builder: (context, state) {
+          return Stack(
+            children: [
+              ExpandableTheme(
+                  data: const ExpandableThemeData(hasIcon: false),
+                  child: Container(
+                      alignment: Alignment.center,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: _buildDataScreen(context, state),
+                      ))),
+              if (state is BaseDataChanged && state.batchMode)
+                Align(
+                  alignment: Alignment.topCenter,
+                  child: Container(
+                    color: Colors.grey.shade700,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: ElevatedButton(onPressed: () => {_nsCubit(context).selectAll()}, child: Text(tr("select_all"))),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: ElevatedButton(onPressed: () => {_nsCubit(context).selectNone()}, child: Text(tr("select_none"))),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: ElevatedButton(onPressed: () => _nsCubit(context).tryDeleteSelected(), child: Text(tr("delete_selected"))),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: ElevatedButton(onPressed: () => {}, child: Text(tr("import_selected"))),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: ElevatedButton(onPressed: () => _exportSelectedGames(), child: Text(tr("export_selected"))),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+            ],
+          );
+        },
+      ),
     );
 
     stopwatch.stop();
@@ -306,32 +345,24 @@ class _GameMgrPageState extends State<GameMgrPage> {
             itemBuilder: (BuildContext context, int index) {
               var gameView = gamesView[index];
               return Padding(
-                  padding: const EdgeInsets.fromLTRB(8.0, 8.0, 8.0,0),
-                  child: getGamesView(context,gameView,index, state, themeExtension));
+                  padding: const EdgeInsets.fromLTRB(8.0, 8.0, 8.0, 0), child: getGamesView(context, gameView, index, state, themeExtension));
             }));
   }
 
   Widget _createGameCardImage(BuildContext context, GameView gameView, int index, CustomTheme themeExtension, BaseDataChanged state) {
-    //50 x 100 (Pequeño) 0 padding
-    //75 x 125 (Medio)    "
-    //100x150 (Grande)    "
-    //48x48     padding 4 (arriba y abajo)
-
-    /*Widget picture = index % 2 == 0
-        ? Image.file(File('/home/deck/.local/share/Steam/userdata/1281772390/config/grid/3602488509_icon.ico'),
-            width: 48, height: 48, fit: BoxFit.cover)
-        : Image.file(File('/home/deck/.local/share/Steam/userdata/1281772390/config/grid/2275651219_icon.png'),
-            width: 48, height: 48, fit: BoxFit.cover);*/
-    /*Widget picture = index%2 == 0 ? Image.file(File('/home/deck/.local/share/Steam/userdata/1281772390/config/grid/3602488509p.jpg'),width:75, height: 125, filterQuality: FilterQuality.medium,) :
-    Image.file(File('/home/deck/.local/share/Steam/userdata/1281772390/config/grid/2275651219p.png'),width:75, height:125,  filterQuality: FilterQuality.medium);*/
-
     return Padding(
       padding: const EdgeInsets.fromLTRB(0, 4, 0, 4),
       child: ExpandablePanel(
         controller: ExpandableController(initialExpanded: gameView.isExpanded)..addListener(() => _nsCubit(context).swapExpansionStateForItem(index)),
         header: Row(
           children: [
-            _getGameSteamImage(context, gameView, state.gameExecutableImageType),
+            if (state.batchMode)
+              Column(
+                children: [
+                  Checkbox(value: gameView.selected, onChanged: (value) => {_nsCubit(context).swapGameViewSelected(gameView)}),
+                ],
+              ),
+            _getGameSteamImage(context, gameView, state.gameExecutableImageType, state.batchMode),
             Expanded(
               child: ListTile(
                 title: Column(
@@ -375,144 +406,83 @@ class _GameMgrPageState extends State<GameMgrPage> {
   }
 
   Widget _createGameCardFullBannerSize(GameView gameView, int index, CustomTheme themeExtension, BaseDataChanged state) {
-
-    return Stack(
+    return Row(
       children: [
-        InkWell(
-            child: _getGameSteamImage(context, gameView, GameExecutableImageType.Banner),
-            onTap: () => _nsCubit(context).swapExpansionStateForItem(index)),
-        Container(
-          alignment: Alignment.center,
-          child: ExpandablePanel(
-            controller: ExpandableController(initialExpanded: gameView.isExpanded)
-              ..addListener(() => _nsCubit(context).swapExpansionStateForItem(index)),
-            header: ListTile(
-              title: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                          padding: EdgeInsets.fromLTRB(16, 4, 16, 4),
-                          decoration: BoxDecoration(borderRadius: BorderRadius.circular(20), color: Colors.black.withAlpha(180)),
-                          child: Text(gameView.game.name, style: Theme.of(context).textTheme.headline5, textAlign: TextAlign.left)),
-                      Expanded(child: Container()),
-                      Container(
-                        padding: EdgeInsets.fromLTRB(16,8,18,8),
-                        decoration: BoxDecoration(borderRadius: BorderRadius.circular(20), color: Colors.black.withAlpha(180)),
-                        child: Row(children: [
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(0, 0, 24, 0),
-                            child: gameView.game.isExternal ? null : Text(StringTools.bytesToStorageUnity(gameView.game.gameSize)),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(0, 0, 16, 0),
-                            child: _getExeCurrentStateIcon(GameTools.getGameStatus(gameView.game)),
-                          ),
-                          _getErrorsOrModifiedIcon(gameView),
-                          _buildMenu(gameView)
-                        ]),
-                      )
-                    ],
-                  ),
-                  if (gameView.isExpanded)
-                    Column(
+        if (state.batchMode) Checkbox(value: gameView.selected, onChanged: (value) => {_nsCubit(context).swapGameViewSelected(gameView)}),
+        Expanded(
+          child: Stack(
+            children: [
+              InkWell(
+                  child: _getGameSteamImage(context, gameView, GameExecutableImageType.Banner, state.batchMode),
+                  onTap: () => _nsCubit(context).swapExpansionStateForItem(index)),
+              Container(
+                alignment: Alignment.center,
+                child: ExpandablePanel(
+                  controller: ExpandableController(initialExpanded: gameView.isExpanded)
+                    ..addListener(() => _nsCubit(context).swapExpansionStateForItem(index)),
+                  header: ListTile(
+                    title: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        SizedBox(
-                          height: 4,
+                        Row(
+                          children: [
+                            Container(
+                                padding: EdgeInsets.fromLTRB(16, 4, 16, 4),
+                                decoration: BoxDecoration(borderRadius: BorderRadius.circular(20), color: Colors.black.withAlpha(180)),
+                                child: Text(gameView.game.name, style: Theme.of(context).textTheme.headline5, textAlign: TextAlign.left)),
+                            Expanded(child: Container()),
+                            Container(
+                              padding: EdgeInsets.fromLTRB(16, 8, 18, 8),
+                              decoration: BoxDecoration(borderRadius: BorderRadius.circular(20), color: Colors.black.withAlpha(180)),
+                              child: Row(children: [
+                                Padding(
+                                  padding: const EdgeInsets.fromLTRB(0, 0, 24, 0),
+                                  child: gameView.game.isExternal ? null : Text(StringTools.bytesToStorageUnity(gameView.game.gameSize)),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.fromLTRB(0, 0, 16, 0),
+                                  child: _getExeCurrentStateIcon(GameTools.getGameStatus(gameView.game)),
+                                ),
+                                _getErrorsOrModifiedIcon(gameView),
+                                _buildMenu(gameView)
+                              ]),
+                            )
+                          ],
                         ),
-                        Container(
-                          padding: EdgeInsets.all(4),
-                          color: Colors.black.withAlpha(180),
-                          child: Text(
-                            "${gameView.game.path}",
-                            textAlign: TextAlign.left,
-                            style: TextStyle(color: themeExtension.gameCardHeaderPath, fontSize: 13),
-                          ),
-                        ),
+                        if (gameView.isExpanded)
+                          Column(
+                            children: [
+                              SizedBox(
+                                height: 4,
+                              ),
+                              Container(
+                                padding: EdgeInsets.all(4),
+                                color: Colors.black.withAlpha(180),
+                                child: Text(
+                                  "${gameView.game.path}",
+                                  textAlign: TextAlign.left,
+                                  style: TextStyle(color: themeExtension.gameCardHeaderPath, fontSize: 13),
+                                ),
+                              ),
+                            ],
+                          )
                       ],
-                    )
-                ],
+                    ),
+                  ),
+                  expanded: Container(
+                      padding: EdgeInsets.fromLTRB(0, 16, 0, 16),
+                      margin: EdgeInsets.fromLTRB(16, 16, 16, 16),
+                      decoration: BoxDecoration(borderRadius: BorderRadius.circular(20), color: Colors.black.withAlpha(100)),
+                      child: _buildGameTile(context, themeExtension, gameView, state.availableProntonNames)),
+                  collapsed: Container(),
+                ),
               ),
-            ),
-            expanded: Container(
-                padding: EdgeInsets.fromLTRB(0, 16, 0, 16),
-                margin: EdgeInsets.fromLTRB(16, 16, 16, 16),
-                decoration: BoxDecoration(borderRadius: BorderRadius.circular(20), color: Colors.black.withAlpha(100)),
-                child: _buildGameTile(context, themeExtension, gameView, state.availableProntonNames)),
-            collapsed: Container(),
+            ],
           ),
         ),
       ],
     );
   }
-
-  /*Widget _createGameCardFullBannerSize(GameView gameView, int index, CustomTheme themeExtension, BaseDataChanged state) {
-    Widget? widget;
-    if(index%4==0) {
-      widget = Image.file(File('/home/deck/.local/share/Steam/userdata/1281772390/config/grid/3602488509_hero.jpg'),height: 200,width:1200,fit:BoxFit.cover);
-    }
-    else if(index%4==1) {
-      widget = Image.file(File('/home/deck/.local/share/Steam/userdata/1281772390/config/grid/2275651219_hero.jpg'),height: 200,width:1200,fit:BoxFit.cover);
-    }
-    else if(index%4==2) {
-      widget = Image.file(File('/home/deck/.local/share/Steam/userdata/1281772390/config/grid/2798179095_hero.jpg'),height: 200,width:1200,fit:BoxFit.cover);
-    }
-    else {
-      widget = Image.file(File('/home/deck/.local/share/Steam/userdata/1281772390/config/grid/2807371142_hero.png'),height: 200,width:1200,fit:BoxFit.cover);
-    }
-
-
-    return Stack(
-      children: [
-        widget,
-        Container(
-          alignment: Alignment.center,
-          child: ExpandablePanel(
-            controller: ExpandableController(initialExpanded: gameView.isExpanded)
-              ..addListener(() => _nsCubit(context).swapExpansionStateForItem(index)),
-            header: Container(
-              color: Colors.black.withAlpha(180),
-              child: ListTile(
-                title: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(child: Text(gameView.game.name, style: Theme.of(context).textTheme.headline5, textAlign: TextAlign.left)),
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(0, 0, 24, 0),
-                          child: gameView.game.isExternal ? null : Text(StringTools.bytesToStorageUnity(gameView.game.gameSize)),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(0, 0, 16, 0),
-                          child: _getExeCurrentStateIcon(GameTools.getGameStatus(gameView.game)),
-                        ),
-                        _getErrorsOrModifiedIcon(gameView),
-                        _buildMenu(gameView)
-                      ],
-                    ),
-                    if (gameView.isExpanded)
-                      Text(
-                        "${gameView.game.path}",
-                        textAlign: TextAlign.left,
-                        style: TextStyle(color: themeExtension.gameCardHeaderPath, fontSize: 13),
-                      )
-                  ],
-                ),
-              ),
-            ),
-            expanded: Container(
-                padding: EdgeInsets.fromLTRB(0, 16, 0, 16),
-                margin: EdgeInsets.fromLTRB(16, 16, 16, 16),
-                decoration: BoxDecoration(borderRadius: BorderRadius.circular(20), color: Colors.black12),
-                child: _buildGameTile(context, themeExtension, gameView, state.availableProntonNames)),
-            collapsed: Container(),
-          ),
-        ),
-      ],
-    );
-  }*/
 
   Widget _buildGameTile(BuildContext context, CustomTheme themeExtension, GameView gv, List<String> availableProtons) {
     List<Widget> gameItems = [];
@@ -578,11 +548,11 @@ class _GameMgrPageState extends State<GameMgrPage> {
       availableProntons = [invalidProtonError.data, ...availableProntons];
     }
 
-    if(gv.game.name=="Brotato") {
-        print("id -> ${uge.appId.toString()}");
+    if (gv.game.name == "Brotato") {
+      print("id -> ${uge.appId.toString()}");
     }
 
-    String baseKey= uge.appId.toString();
+    String baseKey = uge.appId.toString();
     GameMgrCubit nsgc = _nsCubit(context);
     return Container(
       color: themeExtension.gameCardExeOptionsBg,
@@ -612,7 +582,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
               },
             ),
             TextFormField(
-              key:UniqueKey(),
+              key: UniqueKey(),
               initialValue: uge.launchOptions,
               decoration: InputDecoration(labelText: tr("launch_options")),
               autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -659,13 +629,19 @@ class _GameMgrPageState extends State<GameMgrPage> {
       color = Colors.blue.shade200;
     }
 
-    Container c = Container(height: 15, width: 15, color: color);
+    /*Widget c = Stack(children: [Container(height: 15, width: 15, color: color), Positioned.fill(
+      child: Align(
+          alignment: Alignment.center,
+          child: Container(height: 6, width: 6, color: Colors.white))
+      )],
+    );*/
+
+    Widget c = Container(height: 15, width: 15, color: color);
 
     return c;
   }
 
   Widget _buildInfoBar(BuildContext context, BaseDataChanged state, CustomTheme themeExtension) {
-
     return Container(
         color: themeExtension.infoBarBgColor,
         padding: EdgeInsets.all(8),
@@ -678,8 +654,16 @@ class _GameMgrPageState extends State<GameMgrPage> {
               ),
             ),
             Padding(
-              padding: EdgeInsets.fromLTRB(0,0,16,0),
-              child: TextButton(onPressed: ()=> _nsCubit(context).cycleViewType(), child: Container(padding: EdgeInsets.all(5),color: Colors.black38,child: Text(viewTypesStr[state.gameExecutableImageType.index], style: TextStyle(color:Colors.white),))),
+              padding: EdgeInsets.fromLTRB(0, 0, 16, 0),
+              child: TextButton(
+                  onPressed: () => _nsCubit(context).cycleViewType(),
+                  child: Container(
+                      padding: EdgeInsets.all(5),
+                      color: Colors.black38,
+                      child: Text(
+                        viewTypesStr[state.gameExecutableImageType.index],
+                        style: TextStyle(color: Colors.white),
+                      ))),
             ),
             Tooltip(
               message: tr("game_status_red_tooltip"),
@@ -696,7 +680,6 @@ class _GameMgrPageState extends State<GameMgrPage> {
                 ],
               ),
             ),
-
             Tooltip(
               message: tr("game_status_orange_tooltip"),
               child: Row(
@@ -712,7 +695,6 @@ class _GameMgrPageState extends State<GameMgrPage> {
                 ],
               ),
             ),
-
             Tooltip(
               message: tr("game_status_green_tooltip"),
               child: Row(
@@ -728,7 +710,6 @@ class _GameMgrPageState extends State<GameMgrPage> {
                 ],
               ),
             ),
-
             Tooltip(
               message: tr("game_status_blue_tooltip"),
               child: Row(
@@ -743,7 +724,6 @@ class _GameMgrPageState extends State<GameMgrPage> {
                 ],
               ),
             ),
-
             Tooltip(
               message: tr("free_sd_card_space"),
               child: Padding(
@@ -828,6 +808,87 @@ class _GameMgrPageState extends State<GameMgrPage> {
     );
   }
 
+  void _deleteSelectedGames(BuildContext context, DeleteSelectedClicked state) {
+    var nsCubit = _nsCubit(context);
+    showPlatformDialog(
+      context: context,
+      builder: (context) {
+        bool deleteImages = true, deleteCompatData = true, deleteShaderData = true;
+        return BasicDialogAlert(
+          title: Row(children: [
+            const Padding(
+              padding: EdgeInsets.fromLTRB(0, 0, 8.0, 0),
+              child: Icon(Icons.warning, color: Colors.red),
+            ),
+            Text(tr('warning'))
+          ]),
+          content: StatefulBuilder(builder: (BuildContext context, StateSetter setState) {
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                RichText(
+                    text: TextSpan(children: [
+                      TextSpan(text: tr("going_to")),
+                      TextSpan(text: tr("delete_capitals"), style: const TextStyle(color: Colors.redAccent)),
+                      TextSpan(text: tr("delete_selected_game_dialog_text" )),
+                      TextSpan(text: tr("warning_action_undone"), style: TextStyle(color: Colors.red, fontSize: 18, height: 2))
+                    ])),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(0, 16, 0, 0),
+                  child: Column(children: [
+                    Row(children: [
+                      Expanded(
+                          child: CheckboxListTile(
+                              dense: true,
+                              title: Text(
+                                "CompatData",
+                                style: TextStyle(fontSize: 14),
+                              ),
+                              value: deleteCompatData,
+                              onChanged: (value) => setState(() => deleteCompatData = value!))),
+                      Expanded(
+                          child: CheckboxListTile(
+                              dense: true,
+                              title: Text("ShaderData", style: TextStyle(fontSize: 14)),
+                              value: deleteShaderData,
+                              onChanged: (value) => setState(() => deleteShaderData = value!))),
+                    ]),
+                    Row(
+                      children: [
+                        Expanded(
+                            child: CheckboxListTile(
+                                dense: true,
+                                title: Text("Images", style: TextStyle(fontSize: 14)),
+                                value: deleteImages,
+                                onChanged: (value) => setState(() => deleteImages = value!))),
+                        Expanded(child: Container())
+                      ],
+                    )
+                  ]),
+                )
+              ],
+            );
+          }),
+          actions: <Widget>[
+            BasicDialogAction(
+              title: Text("OK"),
+              onPressed: () async {
+                nsCubit.deleteSelectedGames(deleteImages, deleteCompatData, deleteShaderData);
+                Navigator.pop(context);
+              },
+            ),
+            BasicDialogAction(
+              title: Text(tr("cancel")),
+              onPressed: () {
+                Navigator.pop(context);
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   void _deleteGame(BuildContext context, Game game) {
     var nsCubit = _nsCubit(context);
     showPlatformDialog(
@@ -848,9 +909,9 @@ class _GameMgrPageState extends State<GameMgrPage> {
               children: [
                 RichText(
                     text: TextSpan(children: [
-                  TextSpan(text: tr("going_to"), style: TextStyle(color: Colors.black)),
+                  TextSpan(text: tr("going_to")),
                   TextSpan(text: tr("delete_capitals"), style: TextStyle(color: Colors.redAccent)),
-                  TextSpan(text: tr("delete_game_dialog_text", args: ['${game.name}']), style: TextStyle(color: Colors.black)),
+                  TextSpan(text: tr("delete_game_dialog_text", args: ['${game.name}'])),
                   TextSpan(text: tr("warning_action_undone"), style: TextStyle(color: Colors.red, fontSize: 18, height: 2))
                 ])),
                 Padding(
@@ -909,6 +970,44 @@ class _GameMgrPageState extends State<GameMgrPage> {
     );
   }
 
+  void _exportSelectedGames() async {
+    var nsCubit = _nsCubit(context);
+    showPlatformDialog(
+      context: context,
+      builder: (context) {
+        return BasicDialogAlert(
+          title: Row(children: [
+            const Padding(
+              padding: EdgeInsets.fromLTRB(0, 0, 8.0, 0),
+              child: Icon(Icons.warning, color: Colors.red),
+            ),
+            Text(tr('warning'))
+          ]),
+          content: Column(mainAxisSize: MainAxisSize.min, children: [
+            Text(tr("export_selected_games_dialog_text")),
+          ]),
+          actions: <Widget>[
+            BasicDialogAction(
+              title: Text("OK"),
+              onPressed: () {
+                nsCubit.exportSelectedGames();
+                Navigator.pop(context);
+              },
+            ),
+            BasicDialogAction(
+              title: Text(tr("cancel")),
+              onPressed: () {
+                Navigator.pop(context);
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+
+  //Import game
   void _resetGameToConfigFile(GameView gv) async {
     var nsCubit = _nsCubit(context);
     showPlatformDialog(
@@ -944,6 +1043,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
       },
     );
   }
+
 
   void _renameGame(BuildContext context, Game game) {
     GameMgrCubit cubit = _nsCubit(context);
@@ -1040,6 +1140,58 @@ class _GameMgrPageState extends State<GameMgrPage> {
     );
   }
 
+  Widget _getGameSteamImage(BuildContext context, GameView gv, GameExecutableImageType imageType, bool batchMode) {
+    //50 x 100 (Pequeño) 0 padding
+    //75 x 125 (Medio)    "
+    //100x150 (Grande)    "
+    //48x48     padding 4 (arriba y abajo)
+
+    if (imageType == GameExecutableImageType.None) {
+      return batchMode ? Container(width: 3, height: 16, color: Colors.redAccent) : Container();
+    } else if (imageType == GameExecutableImageType.Icon) {
+      return Row(children: [
+        if(batchMode) Container(width: 3, height: 48, color: Colors.redAccent),
+        gv.gameImagePath == null
+            ? Container(color: Colors.grey.shade800, width: 48, height: 48, child: Icon(Icons.question_mark))
+            : Image.file(
+                File(gv.gameImagePath!),
+                width: 48,
+                height: 48,
+                fit: BoxFit.fill,
+                filterQuality: FilterQuality.medium,
+              ),
+      ]);
+    } else if (imageType == GameExecutableImageType.CoverSmall) {
+      return Row(children: [
+        if(batchMode) Container(width: 3, height: 75, color: Colors.redAccent),gv.gameImagePath == null
+          ? Container(color: Colors.grey.shade800, width: 50, height: 75, child: Icon(Icons.question_mark))
+          : Image.file(File(gv.gameImagePath!), width: 50, height: 75, fit: BoxFit.fill, filterQuality: FilterQuality.medium)]);
+    } else if (imageType == GameExecutableImageType.CoverMedium) {
+      return Row(children: [
+        if(batchMode) Container(width: 3, height: 125, color: Colors.redAccent),gv.gameImagePath == null
+          ? Container(color: Colors.grey.shade800, width: 75, height: 125, child: Icon(Icons.question_mark))
+          : Image.file(File(gv.gameImagePath!), width: 75, height: 125, fit: BoxFit.fill, filterQuality: FilterQuality.medium)]);
+    } else if (imageType == GameExecutableImageType.CoverBig) {
+      return Row(children: [
+        if(batchMode) Container(width: 3, height: 150, color: Colors.redAccent),gv.gameImagePath == null
+          ? Container(color: Colors.grey.shade800, width: 100, height: 150, child: Icon(Icons.question_mark))
+          : Image.file(File(gv.gameImagePath!), width: 100, height: 150, fit: BoxFit.fill, filterQuality: FilterQuality.medium)]);
+    } else {
+      double width = MediaQuery.of(context).size.width;
+      return Row(children: [
+        if(batchMode) Container(width: 3, height: 150, color: Colors.redAccent),gv.gameImagePath == null
+          ? Expanded(
+              child: Container(
+                  color: Colors.grey.shade800,
+                  height: 150,
+                  child: Icon(
+                    Icons.question_mark,
+                    size: 80,
+                  )))
+          : Image.file(File(gv.gameImagePath!), width: width, height: 150, fit: BoxFit.fitWidth, filterQuality: FilterQuality.medium)]);
+    }
+  }
+/*
   Widget _getGameSteamImage(BuildContext context, GameView gv, GameExecutableImageType imageType) {
     //50 x 100 (Pequeño) 0 padding
     //75 x 125 (Medio)    "
@@ -1073,16 +1225,15 @@ class _GameMgrPageState extends State<GameMgrPage> {
         ],
       ): Image.file(File(gv.gameImagePath!),width: width, height: 150,fit:BoxFit.fitWidth, filterQuality: FilterQuality.medium);
     }
-  }
-
-
+  }*/
 
   Widget getGamesView(BuildContext context, GameView gameView, int index, BaseDataChanged state, CustomTheme themeExtension) {
-    if(state.gameExecutableImageType == GameExecutableImageType.Banner) {
+    if (state.gameExecutableImageType == GameExecutableImageType.Banner) {
       return _createGameCardFullBannerSize(gameView, index, themeExtension, state);
-    }
-    else {
+    } else {
       return _createGameCardImage(context, gameView, index, themeExtension, state);
     }
   }
+
+
 }

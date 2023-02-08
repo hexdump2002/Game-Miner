@@ -209,23 +209,32 @@ class GameTools {
 
   }
 
-  static Future<void> exportGame(Game game, String userId) async {
-    List<GameExecutableExportedData> geed = [];
+  static Future<bool> exportGame(Game game, String userId) async {
+    bool success = true;
+    try {
+      List<GameExecutableExportedData> geed = [];
 
-    for (int i=0; i<game.exeFileEntries.length;++i) {
-      GameExecutable ge = game.exeFileEntries[i];
-      if (ge.added) {
-        geed.add(GameExecutableExportedData(ge.compatToolCode, ge.relativeExePath, ge.name, ge.launchOptions));
-        await exportShortcutArt(game.path,ge, userId);
+      for (int i = 0; i < game.exeFileEntries.length; ++i) {
+        GameExecutable ge = game.exeFileEntries[i];
+        if (ge.added) {
+          geed.add(GameExecutableExportedData(ge.compatToolCode, ge.relativeExePath, ge.name, ge.launchOptions));
+          await exportShortcutArt(game.path, ge, userId);
+        }
       }
-    }
-    GameExportedData ged = GameExportedData(geed);
+      GameExportedData ged = GameExportedData(geed);
 
-    String json = jsonEncode(ged);
-    String fullPath = "${game.path}/gameminer_config.json";
-    var file = File(fullPath);
-    await file.create(recursive: true);
-    await file.writeAsString(json);
+      String json = jsonEncode(ged);
+      String fullPath = "${game.path}/gameminer_config.json";
+      var file = File(fullPath);
+      await file.create(recursive: true);
+      await file.writeAsString(json);
+    }
+    catch(ex) {
+      success = false;
+      print(ex);
+    }
+
+    return success;
   }
 
   static Future<GameExecutableImages> getGameExecutableImages(int appId, String userId) async {

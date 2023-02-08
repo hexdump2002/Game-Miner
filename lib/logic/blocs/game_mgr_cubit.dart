@@ -51,15 +51,18 @@ class GameView {
   bool isExpanded;
   bool modified;
   String? gameImagePath;
+  bool selected;
 
-  GameView(this.game, this.gameImagePath, this.isExpanded, this.modified);
+  GameView(this.game, this.gameImagePath, this.isExpanded, this.modified, this.selected);
+
+
 }
 
 class GameMgrCubit extends Cubit<GameMgrBaseState> {
   List<Game> _baseGames = [];
   List<GameView> _gameViews = [];
-  List<bool> _sortStates = [true, false, false, false];
-  List<bool> _sortDirectionStates = [false, true];
+  int _sortIndex = 0;
+  int _sortDirectionIndex = 0;
   String _searchText = "";
 
   String get searchText => _searchText;
@@ -78,7 +81,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
   late UserSettings _currentUserSettings;
   late final Settings _settings;
 
-  GameExecutableImageType?  _currentImageType;
+  GameExecutableImageType? _currentImageType;
 
   @override
   bool get wantKeepAlive => true;
@@ -92,6 +95,14 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
   int _addedGamesCount = 0;
   int _fullyAddedGamesCount = 0;
   int _addedExternalCount = 0;
+
+  bool _batchMode = false;
+  bool getBatchMode() { return _batchMode;}
+  void swapBatchMode() {
+    _batchMode = !_batchMode;
+    notifyDataChanged();
+  }
+
 
   GameMgrCubit() : super(IninitalState()) {
     _settings = GetIt.I<SettingsRepository>().getSettings();
@@ -142,8 +153,6 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
     filterGamesByName(_searchText);
     _sortedFilteredGames = sortFilteredByCurrent();
 
-
-
     _refreshGameCount();
     await _refreshStorageSize();
 
@@ -158,10 +167,10 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
         _sdCardFreeInBytes,
         _ssdTotalSizeInBytes,
         _sdCardTotalInBytes,
-        _sortStates,
-        _sortDirectionStates,
+        _sortIndex,
+        _sortDirectionIndex,
         searchText,
-        _currentImageType!));
+        _currentImageType!,_batchMode));
 
     stopwatch.stop();
     print('[Logic] Time taken to execute method: ${stopwatch.elapsed}');
@@ -180,7 +189,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
       GameTools.handleGameExecutableErrorsForGame(g);
       bool modified = g.dataCameFromConfigFile();
       String? gameImage = GameTools.getGameImagePath(g, _currentImageType!);
-      gameViews.add(GameView(g, gameImage, false, modified));
+      gameViews.add(GameView(g, gameImage, false, modified, false));
     }
     return gameViews;
   }
@@ -237,21 +246,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
 
     _refreshGameCount();
 
-    emit(GamesDataChanged(
-        _sortedFilteredGames,
-        getAvailableCompatToolDisplayNames(),
-        _nonAddedGamesCount,
-        _addedGamesCount,
-        _fullyAddedGamesCount,
-        _addedExternalCount,
-        _ssdFreeSizeInBytes,
-        _sdCardFreeInBytes,
-        _ssdTotalSizeInBytes,
-        _sdCardTotalInBytes,
-        _sortStates,
-        _sortDirectionStates,
-        searchText,
-        _currentImageType!));
+    notifyDataChanged();
   }
 
   void swapExpansionStateForItem(int index) {
@@ -267,10 +262,10 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
         _sdCardFreeInBytes,
         _ssdTotalSizeInBytes,
         _sdCardTotalInBytes,
-        _sortStates,
-        _sortDirectionStates,
+        _sortIndex,
+        _sortDirectionIndex,
         searchText,
-        _currentImageType!));
+        _currentImageType!,_batchMode));
   }
 
   Future<void> trySave() async {
@@ -304,22 +299,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
     //This is needed because when a game has an error with proton. It is reset to none but not saved
     _refreshGameCount();
 
-    emit(GamesDataChanged(
-        _sortedFilteredGames,
-        getAvailableCompatToolDisplayNames(),
-        _nonAddedGamesCount,
-        _addedGamesCount,
-        _fullyAddedGamesCount,
-        _addedExternalCount,
-        _ssdFreeSizeInBytes,
-        _sdCardFreeInBytes,
-        _ssdTotalSizeInBytes,
-        _sdCardTotalInBytes,
-        _sortStates,
-        _sortDirectionStates,
-        searchText,
-        _currentImageType!
-    ));
+    notifyDataChanged();
   }
 
   /*void saveData(Settings settings, {showInfo = true}) async {
@@ -389,21 +369,17 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
     GameTools.handleGameExecutableErrorsForGame(gv.game);
     _refreshGameCount();
 
-    emit(GamesDataChanged(
-        _sortedFilteredGames,
-        getAvailableCompatToolDisplayNames(),
-        _nonAddedGamesCount,
-        _addedGamesCount,
-        _fullyAddedGamesCount,
-        _addedExternalCount,
-        _ssdFreeSizeInBytes,
-        _sdCardFreeInBytes,
-        _ssdTotalSizeInBytes,
-        _sdCardTotalInBytes,
-        _sortStates,
-        _sortDirectionStates,
-        searchText,
-        _currentImageType!));
+    notifyDataChanged();
+  }
+
+  void tryDeleteSelected() async {
+    if (await SteamTools.isSteamRunning()) {
+      emit(SteamDetected(() {
+        emit(DeleteSelectedClicked());
+      }));
+    } else {
+      emit(DeleteSelectedClicked());
+    }
   }
 
   void tryDeleteGame(Game game) async {
@@ -416,8 +392,33 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
     }
   }
 
-  void deleteGame(Game game, bool deleteImages, bool deleteCompatData, bool deleteShaderData) async {
+  Future<void> deleteSelectedGames(bool deleteImages, bool deleteCompatData, bool deleteShaderData) async{
+    EasyLoading.show(status:tr("deleting_games"));
+
+    List<GameView> gameViewsToDelete = _gameViews.where((element) => element.selected).toList();
+    //We are going to remove items for gameViews so, we get a copy to do not invalidate iterators
+    List<GameView> copyGameViews = List.from(gameViewsToDelete);
+
+    int i=0;
+    bool error=false;
+    while(i<copyGameViews.length && !error) {
+      error = !await deleteGame(copyGameViews[i].game, deleteImages, deleteCompatData, deleteShaderData, showNotifications: false);
+      ++i;
+    }
+
+    if(error) {
+      EasyLoading.showSuccess(tr("all_games_couldnt_be_deleted"));
+    }
+    else {
+      EasyLoading.showSuccess(tr("selected_data_games_was_deleted"));
+    }
+  }
+
+  //Returns if action was succesfully executed
+  Future<bool> deleteGame(Game game, bool deleteImages, bool deleteCompatData, bool deleteShaderData,{bool showNotifications=true}) async {
     try {
+      print("Deleting game -> ${game.name}");
+
       await Directory(game.path).delete(recursive: true);
 
       _baseGames.removeWhere((element) => element.path == game.path);
@@ -442,30 +443,20 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
         GetIt.I<AppsStorageRepository>().invalidateCache();
       }
 
-      EasyLoading.showSuccess(tr("selected_data_was_deleted", args: [game.name]));
+      if(showNotifications) EasyLoading.showSuccess(tr("selected_data_was_deleted", args: [game.name]));
 
       await _refreshStorageSize();
       _refreshGameCount();
 
-      emit(GamesDataChanged(
-          _sortedFilteredGames,
-          getAvailableCompatToolDisplayNames(),
-          _nonAddedGamesCount,
-          _addedGamesCount,
-          _fullyAddedGamesCount,
-          _addedExternalCount,
-          _ssdFreeSizeInBytes,
-          _sdCardFreeInBytes,
-          _ssdTotalSizeInBytes,
-          _sdCardTotalInBytes,
-          _sortStates,
-          _sortDirectionStates,
-          searchText,
-          _currentImageType!));
+      notifyDataChanged();
+
+      return true;
     } catch (e) {
-      EasyLoading.showError(tr('game_couldnt_be_deleted', args: [game.name]));
+      if(showNotifications) EasyLoading.showError(tr('game_couldnt_be_deleted', args: [game.name]));
       print(e.toString());
     }
+
+    return false;
   }
 
   Future<void> tryRenameGame(BuildContext context, Game game) async {
@@ -506,21 +497,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
 
       await Directory(oldPath).rename(game.path);
 
-      emit(GamesDataChanged(
-          _sortedFilteredGames,
-          getAvailableCompatToolDisplayNames(),
-          _nonAddedGamesCount,
-          _addedGamesCount,
-          _fullyAddedGamesCount,
-          _addedExternalCount,
-          _ssdFreeSizeInBytes,
-          _sdCardFreeInBytes,
-          _ssdTotalSizeInBytes,
-          _sdCardTotalInBytes,
-          _sortStates,
-          _sortDirectionStates,
-          searchText,
-          _currentImageType!));
+      notifyDataChanged();
 
       EasyLoading.showSuccess(tr("game_renamed"));
     } catch (e) {
@@ -553,21 +530,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
 
     gv.modified = modified;
 
-    emit(GamesDataChanged(
-        _sortedFilteredGames,
-        getAvailableCompatToolDisplayNames(),
-        _nonAddedGamesCount,
-        _addedGamesCount,
-        _fullyAddedGamesCount,
-        _addedExternalCount,
-        _ssdFreeSizeInBytes,
-        _sdCardFreeInBytes,
-        _ssdTotalSizeInBytes,
-        _sdCardTotalInBytes,
-        _sortStates,
-        _sortDirectionStates,
-        searchText,
-        _currentImageType!));
+    notifyDataChanged();
 
     EasyLoading.showInfo(tr("game_was_reset"));
   }
@@ -577,25 +540,11 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
       gv.isExpanded = false;
     }
 
-    emit(GamesDataChanged(
-        _sortedFilteredGames,
-        getAvailableCompatToolDisplayNames(),
-        _nonAddedGamesCount,
-        _addedGamesCount,
-        _fullyAddedGamesCount,
-        _addedExternalCount,
-        _ssdFreeSizeInBytes,
-        _sdCardFreeInBytes,
-        _ssdTotalSizeInBytes,
-        _sdCardTotalInBytes,
-        _sortStates,
-        _sortDirectionStates,
-        searchText,
-        _currentImageType!));
+    notifyDataChanged();
   }
 
   List<GameView> sortByName(List<GameView> gvs, {SortDirection? direction}) {
-    SortDirection sd = _sortDirectionStates[0] ? SortDirection.Desc : SortDirection.Asc;
+    SortDirection sd = _sortDirectionIndex == 0 ? SortDirection.Asc : SortDirection.Desc;
 
     if (sd == SortDirection.Asc) {
       gvs.sort((a, b) => a.game.name.toLowerCase().compareTo(b.game.name.toLowerCase()));
@@ -606,30 +555,23 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
     return gvs;
   }
 
+  void swapSortDirecion() {
+    _sortDirectionIndex = ++_sortDirectionIndex % 2;
+    _sortedFilteredGames = sortFilteredByCurrent();
+
+    notifyDataChanged();
+  }
+
   void sortFilteredByName({SortDirection? direction}) {
-    _sortStates = [true, false, false, false];
+    _sortIndex = 0;
 
     _sortedFilteredGames = sortByName([..._filteredGames]);
 
-    emit(GamesDataChanged(
-        _sortedFilteredGames,
-        getAvailableCompatToolDisplayNames(),
-        _nonAddedGamesCount,
-        _addedGamesCount,
-        _fullyAddedGamesCount,
-        _addedExternalCount,
-        _ssdFreeSizeInBytes,
-        _sdCardFreeInBytes,
-        _ssdTotalSizeInBytes,
-        _sdCardTotalInBytes,
-        _sortStates,
-        _sortDirectionStates,
-        searchText,
-        _currentImageType!));
+    notifyDataChanged();
   }
 
   List<GameView> sortByWithErrors(List<GameView> gvs, {SortDirection? direction}) {
-    SortDirection sd = _sortDirectionStates[0] ? SortDirection.Desc : SortDirection.Asc;
+    SortDirection sd = _sortDirectionIndex == 0 ? SortDirection.Asc : SortDirection.Desc;
 
     if (sd == SortDirection.Asc) {
       gvs.sort((a, b) {
@@ -665,25 +607,11 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
   }
 
   void sortFilteredByWithErrors({SortDirection? direction}) {
-    _sortStates = [false, false, false, true];
+    _sortIndex = 3;
 
     _sortedFilteredGames = sortByWithErrors([..._filteredGames], direction: direction);
 
-    emit(GamesDataChanged(
-        _sortedFilteredGames,
-        getAvailableCompatToolDisplayNames(),
-        _nonAddedGamesCount,
-        _addedGamesCount,
-        _fullyAddedGamesCount,
-        _addedExternalCount,
-        _ssdFreeSizeInBytes,
-        _sdCardFreeInBytes,
-        _ssdTotalSizeInBytes,
-        _sdCardTotalInBytes,
-        _sortStates,
-        _sortDirectionStates,
-        searchText,
-        _currentImageType!));
+    notifyDataChanged();
   }
 
   List<GameView> sortByStatus(List<GameView> gvs, {SortDirection? direction}) {
@@ -699,7 +627,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
 
     List<GameView> finalList = [];
 
-    SortDirection sortDirection = _sortDirectionStates[0] ? SortDirection.Desc : SortDirection.Asc;
+    SortDirection sortDirection = _sortDirectionIndex == 0 ? SortDirection.Asc : SortDirection.Desc;
 
     if (sortDirection == SortDirection.Desc) {
       finalList
@@ -721,32 +649,15 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
   }
 
   void sortFilteredByStatus({SortDirection? direction}) {
-    _sortStates = [false, true, false, false];
+    _sortIndex = 2;
 
     _sortedFilteredGames = sortByStatus([..._filteredGames], direction: direction);
 
-    emit(GamesDataChanged(
-        _sortedFilteredGames,
-        getAvailableCompatToolDisplayNames(),
-        _nonAddedGamesCount,
-        _addedGamesCount,
-        _fullyAddedGamesCount,
-        _addedExternalCount,
-        _ssdFreeSizeInBytes,
-        _sdCardFreeInBytes,
-        _ssdTotalSizeInBytes,
-        _sdCardTotalInBytes,
-        _sortStates,
-        _sortDirectionStates,
-        searchText,
-        _currentImageType!));
+    notifyDataChanged();
   }
 
   List<GameView> sortBySize(List<GameView> gvs, {SortDirection? direction}) {
-    /*for (GameView gv in _gameViews) {
-      print("${gv.game.name}   ${StringTools.bytesToStorageUnity(gv.game.gameSize)}");
-    }*/
-    SortDirection sortDirection = _sortDirectionStates[0] ? SortDirection.Desc : SortDirection.Asc;
+    SortDirection sortDirection = _sortDirectionIndex == 0 ? SortDirection.Asc : SortDirection.Desc;
 
     if (sortDirection == SortDirection.Asc) {
       gvs.sort((a, b) => a.game.gameSize.compareTo(b.game.gameSize));
@@ -758,25 +669,11 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
   }
 
   void sortFilteredBySize({SortDirection? direction}) {
-    _sortStates = [false, false, true, false];
+    _sortIndex = 2;
 
     _sortedFilteredGames = sortBySize([..._filteredGames], direction: direction);
 
-    emit(GamesDataChanged(
-        _sortedFilteredGames,
-        getAvailableCompatToolDisplayNames(),
-        _nonAddedGamesCount,
-        _addedGamesCount,
-        _fullyAddedGamesCount,
-        _addedExternalCount,
-        _ssdFreeSizeInBytes,
-        _sdCardFreeInBytes,
-        _ssdTotalSizeInBytes,
-        _sdCardTotalInBytes,
-        _sortStates,
-        _sortDirectionStates,
-        searchText,
-        _currentImageType!));
+    notifyDataChanged();
   }
 
   Map<String, List<GameView>> categorizeGamesByStatus(List<GameView> games) {
@@ -815,53 +712,22 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
     _addedExternalCount = data["addedExternal"]!;
   }
 
-  List<bool> getSortStates() {
-    return _sortStates;
+  int getSortIndex() {
+    return _sortIndex;
   }
 
-  List<bool> getSortDirectionStates() {
-    return _sortDirectionStates;
-  }
-
-  void setSortDirection(SortDirection sd) {
-    _sortDirectionStates = sd == SortDirection.Asc ? [true, false] : [false, true];
-
-    if (_sortStates[0]) {
-      sortFilteredByName();
-    } else if (_sortStates[1]) {
-      sortFilteredByStatus();
-    } else if (_sortStates[2]) {
-      sortFilteredBySize();
-    } else if (_sortStates[3]) {
-      sortFilteredByWithErrors();
-    }
-
-    emit(GamesDataChanged(
-        _sortedFilteredGames,
-        getAvailableCompatToolDisplayNames(),
-        _nonAddedGamesCount,
-        _addedGamesCount,
-        _fullyAddedGamesCount,
-        _addedExternalCount,
-        _ssdFreeSizeInBytes,
-        _sdCardFreeInBytes,
-        _ssdTotalSizeInBytes,
-        _sdCardTotalInBytes,
-        _sortStates,
-        _sortDirectionStates,
-        searchText,
-        _currentImageType!));
+  int getSortDirectionIndex() {
+    return _sortDirectionIndex;
   }
 
   List<GameView> sortByCurrent(List<GameView> gvs) {
-    SortDirection sortDirection = _sortDirectionStates[0] ? SortDirection.Desc : SortDirection.Asc;
-    if (_sortStates[0]) {
+    if (_sortIndex == 0) {
       return sortByName(gvs);
-    } else if (_sortStates[1]) {
+    } else if (_sortIndex == 1) {
       return sortByStatus(gvs);
-    } else if (_sortStates[2]) {
+    } else if (_sortIndex == 2) {
       return sortBySize(gvs);
-    } else if (_sortStates[3]) {
+    } else if (_sortIndex == 3) {
       return sortByWithErrors(gvs);
     }
 
@@ -877,7 +743,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
 
     searchTerm = searchTerm.toLowerCase();
     _filteredGames = _gameViews.where((element) => element.game.name.toLowerCase().contains(searchTerm)).toList();
-    _sortedFilteredGames = sortByCurrent([..._filteredGames]);
+    _sortedFilteredGames = sortFilteredByCurrent();
 
     emit(SearchTermChanged(
         _sortedFilteredGames,
@@ -890,10 +756,10 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
         _sdCardFreeInBytes,
         _ssdTotalSizeInBytes,
         _sdCardTotalInBytes,
-        _sortStates,
-        _sortDirectionStates,
+        _sortIndex,
+        _sortDirectionIndex,
         searchText,
-        _currentImageType!));
+        _currentImageType!,_batchMode));
   }
 
   void openFolder(Game game) async {
@@ -932,11 +798,38 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
     repo.save();
   }
 
-  void exportGame(Game game) async {
+  Future<void> exportSelectedGames()async {
+    EasyLoading.show(status:tr("exporting_games"));
+
+    List<GameView> gameViewsToExport = _gameViews.where((element) => element.selected).toList();
+
+    int i=0;
+    bool error=false;
+    while(i<gameViewsToExport.length && !error) {
+      error = !await exportGame(gameViewsToExport[i].game, showNotifications: false);
+      ++i;
+    }
+
+    if(error) {
+      EasyLoading.showSuccess(tr("all_games_couldnt_be_exported"));
+    }
+    else {
+      EasyLoading.showSuccess(tr("selected_games_were_exported"));
+    }
+  }
+
+  Future<bool> exportGame(Game game, {showNotifications:true}) async {
     String exportPath = "${game.path}/gameminer_config.json";
-    EasyLoading.show(status: tr("exporting_game_config", args: [exportPath]));
-    GameTools.exportGame(game, _settings.currentUserId);
-    EasyLoading.showSuccess(tr("game_config_exported", args: [exportPath]));
+    if(showNotifications) {
+      EasyLoading.show(status: tr("exporting_game_config", args: [exportPath]));
+    }
+    bool success = await GameTools.exportGame(game, _settings.currentUserId);
+
+    if(showNotifications) {
+      EasyLoading.showSuccess(tr("game_config_exported", args: [exportPath]));
+    }
+
+    return success;
   }
 
   void notifyDataChanged() {
@@ -951,10 +844,10 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
         _sdCardFreeInBytes,
         _ssdTotalSizeInBytes,
         _sdCardTotalInBytes,
-        _sortStates,
-        _sortDirectionStates,
+        _sortIndex,
+        _sortDirectionIndex,
         searchText,
-        _currentImageType!));
+        _currentImageType!,_batchMode));
   }
 
   void setViewType(GameExecutableImageType geit) {
@@ -969,6 +862,26 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
 
   void cycleViewType() {
     var enumIndex = _currentImageType!.index;
-    setViewType(GameExecutableImageType.values[(enumIndex+1)%GameExecutableImageType.values.length]);
+    setViewType(GameExecutableImageType.values[(enumIndex + 1) % GameExecutableImageType.values.length]);
+  }
+
+  void swapGameViewSelected(GameView gameView) {
+    gameView.selected = !gameView.selected;
+    notifyDataChanged();
+  }
+
+  void selectAll() {
+    for(GameView gv in _gameViews) {
+      gv.selected=true;
+    }
+    notifyDataChanged();
+  }
+
+  void selectNone() {
+    for(GameView gv in _gameViews) {
+      gv.selected=false;
+    }
+
+    notifyDataChanged();
   }
 }
