@@ -27,21 +27,23 @@ class CompatToolsDataProvider {
     var compatToolFolders =  await FileTools.getFolderFilesAsync(path, retrieveRelativePaths: true, recursive: false, onlyFolders: true);
 
     List<CompatTool> compatTools = [];
-    //Read manifests
-    for(int i=0; i<compatToolFolders.length; ++i) {
-      var e = compatToolFolders[i];
-      var fullPath = p.join(p.join(path, e),"compatibilitytool.vdf");
-      TxtVdfFile file = TxtVdfFile();
-      await file.open(fullPath, FileMode.read);
-      Map<String, dynamic> data = await file.read();
-      String compatToolCode = data['compatibilitytools']['compat_tools'].keys.first;
-      String compatToolDisplayName= data['compatibilitytools']['compat_tools'][compatToolCode]['display_name'];
 
-      if(compatToolCode.isEmpty || compatToolDisplayName.isEmpty) throw Exception("Error reading compat tool manifest for $fullPath");
+    if(compatToolFolders != null) {
+      //Read manifests
+      for (int i = 0; i < compatToolFolders.length; ++i) {
+        var e = compatToolFolders[i];
+        var fullPath = p.join(p.join(path, e), "compatibilitytool.vdf");
+        TxtVdfFile file = TxtVdfFile();
+        await file.open(fullPath, FileMode.read);
+        Map<String, dynamic> data = await file.read();
+        String compatToolCode = data['compatibilitytools']['compat_tools'].keys.first;
+        String compatToolDisplayName = data['compatibilitytools']['compat_tools'][compatToolCode]['display_name'];
 
-      compatTools.add(CompatTool(compatToolCode,compatToolDisplayName,false));
+        if (compatToolCode.isEmpty || compatToolDisplayName.isEmpty) throw Exception("Error reading compat tool manifest for $fullPath");
 
-    };
+        compatTools.add(CompatTool(compatToolCode, compatToolDisplayName, false));
+      };
+    }
 
     return compatTools;
   }

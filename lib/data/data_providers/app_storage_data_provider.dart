@@ -25,37 +25,41 @@ class AppsStorageDataProvider {
 
       if (searchInCompatData) {
         var appIds = await FileTools.getFolderFilesAsync(compatdataPath, retrieveRelativePaths: true, recursive: false, onlyFolders: true);
-        for (String appId in appIds) {
-          Map<String, int> metaData = await FileTools.getFolderMetaData("$compatdataPath/$appId", recursive: true);
-          appsStorage.add(AppStorage(
-              appId,
-              "",
-              "",
-              StorageType.CompatData,
-              metaData['size']!,
-              GameType.NonSteam,
-              true));
+        if(appIds!=null) {
+          for (String appId in appIds) {
+            Map<String, int> metaData = await FileTools.getFolderMetaData("$compatdataPath/$appId", recursive: true);
+            appsStorage.add(AppStorage(
+                appId,
+                "",
+                "",
+                StorageType.CompatData,
+                metaData['size']!,
+                GameType.NonSteam,
+                true));
+          }
         }
       }
 
       if (searchInShaderCacheData) {
         var appIds = await FileTools.getFolderFilesAsync(shaderCacheDataPath, retrieveRelativePaths: true, recursive: false, onlyFolders: true);
-        for (String appId in appIds) {
-          AppStorage? as = appsStorage.firstWhereOrNull((element) => element.appId == appId);
-          Map<String, int> metaData = await FileTools.getFolderMetaData("$shaderCacheDataPath/$appId", recursive: true);
-          //if(as == null)  {
-          appsStorage.add(AppStorage(
-              appId,
-              "",
-              "",
-              StorageType.ShaderCache,
-              metaData['size']!,
-              GameType.NonSteam,
-              true));
-          /*}
-          else {
-            as.shaderCacheSize = metaData['size']!;
-          }*/
+        if(appIds != null) {
+          for (String appId in appIds) {
+            AppStorage? as = appsStorage.firstWhereOrNull((element) => element.appId == appId);
+            Map<String, int> metaData = await FileTools.getFolderMetaData("$shaderCacheDataPath/$appId", recursive: true);
+            //if(as == null)  {
+            appsStorage.add(AppStorage(
+                appId,
+                "",
+                "",
+                StorageType.ShaderCache,
+                metaData['size']!,
+                GameType.NonSteam,
+                true));
+            /*}
+            else {
+              as.shaderCacheSize = metaData['size']!;
+            }*/
+          }
         }
       }
     }

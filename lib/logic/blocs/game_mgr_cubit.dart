@@ -871,22 +871,24 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
   }
 
   Future<void> deleteSelectedGameConfigs()async {
-    EasyLoading.show(status:tr("deleting_game_configs"));
+    EasyLoading.show(status:tr("deleting_games_configs"));
 
     List<GameView> gameViewsToExport = _gameViews.where((element) => element.selected).toList();
 
     int i=0;
-    bool error=false;
-    while(i<gameViewsToExport.length && !error) {
-      error = !await exportGame(gameViewsToExport[i], showNotifications: false, refreshUi:false);
+    bool success=true;
+    while(i<gameViewsToExport.length) {
+      bool retval= await deleteGameConfig(gameViewsToExport[i], showNotifications: false, refreshUi:false);
+      if(!retval) success = false;
+
       ++i;
     }
 
-    if(error) {
-      EasyLoading.showError(tr("all_games_couldnt_be_exported"));
+    if(!success) {
+      EasyLoading.showError(tr("games_config_deleted_error"));
     }
     else {
-      EasyLoading.showSuccess(tr("selected_games_were_exported"));
+      EasyLoading.showSuccess(tr("games_config_deleted"));
     }
 
     notifyDataChanged();

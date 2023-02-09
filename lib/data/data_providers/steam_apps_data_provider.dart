@@ -30,44 +30,46 @@ class SteamAppsDataProvider {
 
 
     for(String path in libraryFolders) {
-
       String steamAppsFolder = "$path/steamapps";
 
       //Todo, check for empty folder
       var steamAppFiles = await FileTools.getFolderFilesAsync(
           steamAppsFolder, retrieveRelativePaths: false, recursive: false, regExFilter: r'.+.acf$', onlyFolders: false);
 
-      for (String steamAppPath in steamAppFiles) {
-        TxtVdfFile file = TxtVdfFile();
-        file.open(steamAppPath, FileMode.read);
-        CanonicalizedMap<String,String,dynamic> obj = await file.read();
-        file.close();
+      if (steamAppFiles != null) {
+        for (String steamAppPath in steamAppFiles) {
+          TxtVdfFile file = TxtVdfFile();
+          file.open(steamAppPath, FileMode.read);
+          CanonicalizedMap<String, String, dynamic> obj = await file.read();
+          file.close();
 
-        int shaderCacheSize = -1;
-        int compatDataSize = -1;
+          int shaderCacheSize = -1;
+          int compatDataSize = -1;
 
-        if (!obj["appstate"].containsKey("appid")) throw NotFoundException("Appid field was not found in app manifest $steamAppPath");
+          if (!obj["appstate"].containsKey("appid")) throw NotFoundException("Appid field was not found in app manifest $steamAppPath");
 
-        String appId = obj["appstate"]["appid"];
+          String appId = obj["appstate"]["appid"];
 
-        String appCompatdataPath = "$steamAppsFolder/compatdata/$appId";
-        String appShaderCacheDataPath = "$steamAppsFolder/shadercache/$appId";
-        bool searchInCompatData = await FileTools.existsFolder(appCompatdataPath);
-        bool searchInShaderCacheData = await FileTools.existsFolder(appShaderCacheDataPath);
+          String appCompatdataPath = "$steamAppsFolder/compatdata/$appId";
+          String appShaderCacheDataPath = "$steamAppsFolder/shadercache/$appId";
+          bool searchInCompatData = await FileTools.existsFolder(appCompatdataPath);
+          bool searchInShaderCacheData = await FileTools.existsFolder(appShaderCacheDataPath);
 
-        if (searchInCompatData) {
-          Map<String, int> metaData = await FileTools.getFolderMetaData(appCompatdataPath, recursive: true);
-          compatDataSize = metaData['size']!;
+          if (searchInCompatData) {
+            Map<String, int> metaData = await FileTools.getFolderMetaData(appCompatdataPath, recursive: true);
+            compatDataSize = metaData['size']!;
+          }
+          if (searchInShaderCacheData) {
+            Map<String, int> metaData = await FileTools.getFolderMetaData(appShaderCacheDataPath, recursive: true);
+            shaderCacheSize = metaData['size']!;
+          }
+
+          SteamApp app = SteamApp.FromMap(obj['appstate'], searchInShaderCacheData, searchInCompatData, shaderCacheSize, compatDataSize);
+          apps.add(app);
         }
-        if (searchInShaderCacheData) {
-          Map<String, int> metaData = await FileTools.getFolderMetaData(appShaderCacheDataPath, recursive: true);
-          shaderCacheSize = metaData['size']!;
-        }
-
-        SteamApp app = SteamApp.FromMap(obj['appstate'], searchInShaderCacheData, searchInCompatData, shaderCacheSize, compatDataSize);
-        apps.add(app);
       }
     }
+
     return apps;
   }
 

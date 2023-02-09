@@ -213,6 +213,10 @@ class _GameMgrPageState extends State<GameMgrPage> {
                           padding: const EdgeInsets.all(8.0),
                           child: ElevatedButton(onPressed: () => _exportSelectedGames(), child: Text(tr("export_selected"))),
                         ),
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: ElevatedButton(onPressed: () => _deleteSelectedGameConfigs(), child: Text(tr("delete_configs"))),
+                        ),
                       ],
                     ),
                   ),
@@ -1069,7 +1073,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
     );
   }
 
-  void _deleteGamesConfig(GameView gv) {
+  void _deleteSelectedGameConfigs() {
     var nsCubit = _nsCubit(context);
     showPlatformDialog(
       context: context,
@@ -1089,7 +1093,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
             BasicDialogAction(
               title: Text("OK"),
               onPressed: () {
-                //_nsCubit(context).deleteGameConfig(gv);
+                nsCubit.deleteSelectedGameConfigs();
                 Navigator.pop(context);
               },
             ),

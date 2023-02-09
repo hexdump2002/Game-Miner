@@ -7,16 +7,29 @@ class UserLibraryGamesDataProvider {
     final List<Game> userGames = [];
 
     for (String searchPath in searchPaths) {
-      List<String> gamesPath = await FileTools.getFolderFilesAsync(searchPath, retrieveRelativePaths: false, recursive: false, onlyFolders: true);
-      List<Game> ugs = gamesPath.map<Game>((e) => Game.fromPath(e)).toList();
+      List<String>? gamesPath = await FileTools.getFolderFilesAsync(searchPath, retrieveRelativePaths: false, recursive: false, onlyFolders: true);
+      if(gamesPath!=null) {
+        List<Game> ugs = gamesPath.map<Game>((e) => Game.fromPath(e)).toList();
 
-      userGames.addAll(ugs);
+        userGames.addAll(ugs);
 
-      //Find exe files
-      for (Game ug in ugs) {
-        List<String> exeFiles = await FileTools.getFolderFilesAsync(ug.path,
-            retrieveRelativePaths: false, recursive: true, regExFilter: r".*\.(exe|sh|bat)$", regExCaseSensitive: false);
-        ug.addExeFiles(exeFiles);
+        List<Game> gamesToRemove = [];
+        //Find exe files
+        for (Game ug in ugs) {
+          List<String>? exeFiles = await FileTools.getFolderFilesAsync(ug.path,
+              retrieveRelativePaths: false, recursive: true, regExFilter: r".*\.(exe|sh|bat)$", regExCaseSensitive: false);
+          if(exeFiles!=null) {
+            ug.addExeFiles(exeFiles);
+          }
+          else
+          {
+            //Add it to be Removed because its contents can't be read
+            userGames.remove(ug);
+          }
+        }
+
+        //Remove games with problems when were read
+
       }
     }
 

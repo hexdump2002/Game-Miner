@@ -177,13 +177,15 @@ class GameTools {
       }
 
       String regEx = "^${exe.appId}.*";
-      List<String> imageFiles = await FileTools.getFolderFilesAsync(sourcePath, recursive: false, regExFilter: regEx);
-      for (String imageFile in imageFiles) {
-        String fileName = p.basename(imageFile);
-        String postFix = _getShortcutArtPostFixWithExtension(fileName);
-        String destName = "$hash$postFix";
-        String fullPath = p.join(destPath, destName);
-        await File(imageFile).copy(fullPath);
+      List<String>? imageFiles = await FileTools.getFolderFilesAsync(sourcePath, recursive: false, regExFilter: regEx);
+      if(imageFiles!=null) {
+        for (String imageFile in imageFiles) {
+          String fileName = p.basename(imageFile);
+          String postFix = _getShortcutArtPostFixWithExtension(fileName);
+          String destName = "$hash$postFix";
+          String fullPath = p.join(destPath, destName);
+          await File(imageFile).copy(fullPath);
+        }
       }
     } catch (ex) {
       print("Error: $ex");
@@ -267,8 +269,8 @@ class GameTools {
       }
 
       String? heroImage, coverImage, iconImage, logoImage;
-      List<String> imageFiles = await FileTools.getFolderFilesAsync(imagesPath, recursive: false, regExFilter: "${appId}_*");
-      for (String imageFile in imageFiles) {
+      List<String>? imageFiles = await FileTools.getFolderFilesAsync(imagesPath, recursive: false, regExFilter: "${appId}_*");
+      for (String imageFile in imageFiles!) {
         String fileName = p.basenameWithoutExtension(imageFile);
         if (fileName == "${appId}p")
           coverImage = imageFile;
@@ -303,12 +305,14 @@ class GameTools {
 
       String hash = md5.convert(utf8.encode(exe.relativeExePath)).toString();
       String regEx = "^$hash.*";
-      List<String> imageFiles = await FileTools.getFolderFilesAsync(sourcePath, recursive: false, regExFilter: regEx);
-      for (String imageFile in imageFiles) {
-        String fileName = p.basename(imageFile);
-        fileName = fileName.replaceFirst(hash, exe.appId.toString());
-        String fullPath = p.join(destPath, fileName);
-        await File(imageFile).copy(fullPath);
+      List<String>? imageFiles = await FileTools.getFolderFilesAsync(sourcePath, recursive: false, regExFilter: regEx);
+      if(imageFiles!=null) {
+        for (String imageFile in imageFiles) {
+          String fileName = p.basename(imageFile);
+          fileName = fileName.replaceFirst(hash, exe.appId.toString());
+          String fullPath = p.join(destPath, fileName);
+          await File(imageFile).copy(fullPath);
+        }
       }
     } catch (ex) {
       print("Error: $ex");
@@ -374,9 +378,11 @@ class GameTools {
     String basePath = "${SteamTools.getSteamBaseFolder()}/userdata/$currentUserId/config/grid";
 
     for (GameExecutable ge in game.exeFileEntries) {
-      List<String> imageFiles = await FileTools.getFolderFilesAsync(basePath, recursive: false, regExFilter: "${ge.appId}_*");
-      for (String imageFile in imageFiles) {
-        await File(imageFile).delete();
+      List<String>? imageFiles = await FileTools.getFolderFilesAsync(basePath, recursive: false, regExFilter: "${ge.appId}_*");
+      if(imageFiles!=null) {
+        for (String imageFile in imageFiles) {
+          await File(imageFile).delete();
+        }
       }
     }
   }

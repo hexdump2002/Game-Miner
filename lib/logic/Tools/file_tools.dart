@@ -32,7 +32,8 @@ class FileTools {
     return fileNames;
   }*/
 
-  static Future<List<String>> getFolderFilesAsync(String path, {retrieveRelativePaths = false, bool recursive = true, String regExFilter = "", onlyFolders=false, bool regExCaseSensitive=true}) async{
+  //Returns null if the folder couldn't be read
+  static Future<List<String>?> getFolderFilesAsync(String path, {retrieveRelativePaths = false, bool recursive = true, String regExFilter = "", onlyFolders=false, bool regExCaseSensitive=true}) async{
     final myDir = new Directory(path);
 
     if(!await myDir.exists()) return [];
@@ -64,15 +65,16 @@ class FileTools {
       return finalPath;
     });
 
+    List<String>? foundFiles;
 
     try {
-      return await fileNamesStream.toList();
+      foundFiles = await fileNamesStream.toList();
     }
     on FileSystemException catch (_, ex) {
       print("Folder couldn't be read: $ex");
     }
 
-    return [];
+    return foundFiles;
   }
 
   static String getHomeFolder() {
@@ -160,8 +162,8 @@ class FileTools {
 
     if(! await Directory(folder).exists()) throw NotFoundException("Folder $folder does not exist when saving backup.");
 
-    List<String> files = await getFolderFilesAsync(folder,recursive: false, regExFilter: "${fileName}_.*");
-    if(files.length>=maxBackups)
+    List<String>? files = await getFolderFilesAsync(folder,recursive: false, regExFilter: "${fileName}_.*");
+    if(files!.length>=maxBackups)
     {
         files.sort();
         backupToDelete = files[0];
@@ -179,9 +181,9 @@ class FileTools {
 
     if(! await Directory(folder).exists()) throw NotFoundException("Folder $folder does not exist when saving backup.");
 
-    List<String> files = await getFolderFilesAsync(folder,recursive: false, regExFilter: "${fileName}_.*");
+    List<String>? files = await getFolderFilesAsync(folder,recursive: false, regExFilter: "${fileName}_.*");
 
-    if(files.length>=maxBackups)
+    if(files!.length>=maxBackups)
     {
       files.sort();
 
