@@ -37,17 +37,6 @@ class _GameMgrPageState extends State<GameMgrPage> {
 
   final TextEditingController _genericTextController = TextEditingController();
 
-/*  final Map<String, ObjectKey> _textInputFieldKeys = {};
-  ObjectKey _getObjectKey(String id) {
-    ObjectKey? ok = _textInputFieldKeys[id];
-    if(ok == null) {
-      ok = ObjectKey(id);
-      _textInputFieldKeys[id] =ok;
-    }
-
-    return ok;
-  }*/
-
   @override
   void initState() {
     _nsCubit(context).loadData();
@@ -70,8 +59,8 @@ class _GameMgrPageState extends State<GameMgrPage> {
 
     Widget widgets = Scaffold(
       appBar: AppBar(
-          // Here we take the value from the MyHomePage object that was created by
-          // the App.build method, and use it to set our appbar title.
+        // Here we take the value from the MyHomePage object that was created by
+        // the App.build method, and use it to set our appbar title.
           title: Text("Game Manager"),
           actions: [
             Expanded(
@@ -186,38 +175,41 @@ class _GameMgrPageState extends State<GameMgrPage> {
                       ))),
               if (state is BaseDataChanged && state.batchMode)
                 Align(
-                  alignment: Alignment.topCenter,
-                  child: Container(
-                    color: Colors.grey.shade700,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: ElevatedButton(onPressed: () => {_nsCubit(context).selectAll()}, child: Text(tr("select_all"))),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: ElevatedButton(onPressed: () => {_nsCubit(context).selectNone()}, child: Text(tr("select_none"))),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: ElevatedButton(onPressed: () => _nsCubit(context).tryDeleteSelected(), child: Text(tr("delete_selected"))),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: ElevatedButton(onPressed: () => _importSelectedGamesConfig(), child: Text(tr("import_selected"))),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: ElevatedButton(onPressed: () => _exportSelectedGames(), child: Text(tr("export_selected"))),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: ElevatedButton(onPressed: () => _deleteSelectedGameConfigs(), child: Text(tr("delete_configs"))),
-                        ),
-                      ],
+                  alignment: Alignment.bottomCenter,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(0, 0, 0, 0),
+                    child: Container(
+                      color: Colors.grey.shade700,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: ElevatedButton(onPressed: () => {_nsCubit(context).selectAll()}, style:ElevatedButton.styleFrom(backgroundColor: Colors.grey.shade800), child: Text(tr("select_all"))),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: ElevatedButton(onPressed: () => {_nsCubit(context).selectNone()}, style:ElevatedButton.styleFrom(backgroundColor: Colors.grey.shade800), child: Text(tr("select_none"))),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: ElevatedButton(onPressed: () => _nsCubit(context).tryDeleteSelected(), style:ElevatedButton.styleFrom(backgroundColor: Colors.grey.shade800), child: Text(tr("delete_selected"))),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: ElevatedButton(onPressed: () => _importSelectedGamesConfig(), style:ElevatedButton.styleFrom(backgroundColor: Colors.grey.shade800), child: Text(tr("import_selected"))),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: ElevatedButton(onPressed: () => _exportSelectedGames(), style:ElevatedButton.styleFrom(backgroundColor: Colors.grey.shade800), child: Text(tr("export_selected"))),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: ElevatedButton(onPressed: () => _deleteSelectedGameConfigs(), style:ElevatedButton.styleFrom(backgroundColor: Colors.grey.shade800), child: Text(tr("delete_configs"))),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -298,9 +290,9 @@ class _GameMgrPageState extends State<GameMgrPage> {
           onTap: ()=> _nsCubit(context).tryRenameGame(context, gameView.game),
         ),
         PopupMenuItem<ContextMenuItem>(
-          value: ContextMenuItem.DeleteGame,
-          child: Text( tr("delete_game")),
-          onTap: ()=> _nsCubit(context).tryDeleteGame(gameView.game)
+            value: ContextMenuItem.DeleteGame,
+            child: Text( tr("delete_game")),
+            onTap: ()=> _nsCubit(context).tryDeleteGame(gameView.game)
         ),
         PopupMenuItem<ContextMenuItem>(
           value: ContextMenuItem.ExportConfig,
@@ -308,9 +300,9 @@ class _GameMgrPageState extends State<GameMgrPage> {
           onTap: ()=> _nsCubit(context).exportGame(gameView),
         ),
         PopupMenuItem<ContextMenuItem>(
-          value: ContextMenuItem.ImportConfig,
-          child: Text( tr("import_game_config")),
-          onTap: ()=> _importGameConfig(gameView)
+            value: ContextMenuItem.ImportConfig,
+            child: Text( tr("import_game_config")),
+            onTap: ()=> _importGameConfig(gameView)
         ),
         PopupMenuItem<ContextMenuItem>(
           value: ContextMenuItem.DeleteConfig,
@@ -596,7 +588,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
               },*/
             ),
             DropdownButtonFormField<String>(
-                //key: ObjectKey("${baseKey}_2"),
+              //key: ObjectKey("${baseKey}_2"),
                 items: availableProntons.map<DropdownMenuItem<String>>((String e) {
                   return DropdownMenuItem<String>(value: e, child: Text(e));
                 }).toList(),
@@ -903,11 +895,11 @@ class _GameMgrPageState extends State<GameMgrPage> {
               children: [
                 RichText(
                     text: TextSpan(children: [
-                  TextSpan(text: tr("going_to")),
-                  TextSpan(text: tr("delete_capitals"), style: TextStyle(color: Colors.redAccent)),
-                  TextSpan(text: tr("delete_game_dialog_text", args: ['${game.name}'])),
-                  TextSpan(text: tr("warning_action_undone"), style: TextStyle(color: Colors.red, fontSize: 18, height: 2))
-                ])),
+                      TextSpan(text: tr("going_to")),
+                      TextSpan(text: tr("delete_capitals"), style: TextStyle(color: Colors.redAccent)),
+                      TextSpan(text: tr("delete_game_dialog_text", args: ['${game.name}'])),
+                      TextSpan(text: tr("warning_action_undone"), style: TextStyle(color: Colors.red, fontSize: 18, height: 2))
+                    ])),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(0, 16, 0, 0),
                   child: Column(children: [
@@ -1170,17 +1162,17 @@ class _GameMgrPageState extends State<GameMgrPage> {
                   showPlatformDialog(
                       context: context,
                       builder: (context) => BasicDialogAlert(
-                              title: Text(tr('invalid_game_name')),
-                              content: const Padding(
-                                  padding: EdgeInsets.all(8),
-                                  child: Text("The name is not valid. You can use numbers, letters,  and '-','_','.' characters.")),
-                              actions: [
-                                BasicDialogAction(
-                                    title: Text("OK"),
-                                    onPressed: () {
-                                      Navigator.pop(context);
-                                    })
-                              ]));
+                          title: Text(tr('invalid_game_name')),
+                          content: const Padding(
+                              padding: EdgeInsets.all(8),
+                              child: Text("The name is not valid. You can use numbers, letters,  and '-','_','.' characters.")),
+                          actions: [
+                            BasicDialogAction(
+                                title: Text("OK"),
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                })
+                          ]));
                   return;
                 }
                 cubit.renameGame(game, _genericTextController.text);
@@ -1254,41 +1246,41 @@ class _GameMgrPageState extends State<GameMgrPage> {
         gv.gameImagePath == null
             ? Container(color: Colors.grey.shade800, width: 48, height: 48, child: Icon(Icons.question_mark))
             : Image.file(
-                File(gv.gameImagePath!),
-                width: 48,
-                height: 48,
-                fit: BoxFit.fill,
-                filterQuality: FilterQuality.medium,
-              ),
+          File(gv.gameImagePath!),
+          width: 48,
+          height: 48,
+          fit: BoxFit.fill,
+          filterQuality: FilterQuality.medium,
+        ),
       ]);
     } else if (imageType == GameExecutableImageType.CoverSmall) {
       return Row(children: [
         if(batchMode && gv.hasConfig ) Container(width: 3, height: 75, color: Colors.redAccent),gv.gameImagePath == null
-          ? Container(color: Colors.grey.shade800, width: 50, height: 75, child: Icon(Icons.question_mark))
-          : Image.file(File(gv.gameImagePath!), width: 50, height: 75, fit: BoxFit.fill, filterQuality: FilterQuality.medium)]);
+            ? Container(color: Colors.grey.shade800, width: 50, height: 75, child: Icon(Icons.question_mark))
+            : Image.file(File(gv.gameImagePath!), width: 50, height: 75, fit: BoxFit.fill, filterQuality: FilterQuality.medium)]);
     } else if (imageType == GameExecutableImageType.CoverMedium) {
       return Row(children: [
         if(batchMode && gv.hasConfig ) Container(width: 3, height: 125, color: Colors.redAccent),gv.gameImagePath == null
-          ? Container(color: Colors.grey.shade800, width: 75, height: 125, child: Icon(Icons.question_mark))
-          : Image.file(File(gv.gameImagePath!), width: 75, height: 125, fit: BoxFit.fill, filterQuality: FilterQuality.medium)]);
+            ? Container(color: Colors.grey.shade800, width: 75, height: 125, child: Icon(Icons.question_mark))
+            : Image.file(File(gv.gameImagePath!), width: 75, height: 125, fit: BoxFit.fill, filterQuality: FilterQuality.medium)]);
     } else if (imageType == GameExecutableImageType.CoverBig) {
       return Row(children: [
         if(batchMode && gv.hasConfig ) Container(width: 3, height: 150, color: Colors.redAccent),gv.gameImagePath == null
-          ? Container(color: Colors.grey.shade800, width: 100, height: 150, child: Icon(Icons.question_mark))
-          : Image.file(File(gv.gameImagePath!), width: 100, height: 150, fit: BoxFit.fill, filterQuality: FilterQuality.medium)]);
+            ? Container(color: Colors.grey.shade800, width: 100, height: 150, child: Icon(Icons.question_mark))
+            : Image.file(File(gv.gameImagePath!), width: 100, height: 150, fit: BoxFit.fill, filterQuality: FilterQuality.medium)]);
     } else {
       double width = MediaQuery.of(context).size.width;
       return Row(children: [
         if(batchMode && gv.hasConfig ) Container(width: 3, height: 150, color: Colors.redAccent),gv.gameImagePath == null
-          ? Expanded(
-              child: Container(
-                  color: Colors.grey.shade800,
-                  height: 150,
-                  child: Icon(
-                    Icons.question_mark,
-                    size: 80,
-                  )))
-          : Image.file(File(gv.gameImagePath!), width: width, height: 150, fit: BoxFit.fitWidth, filterQuality: FilterQuality.medium)]);
+            ? Expanded(
+            child: Container(
+                color: Colors.grey.shade800,
+                height: 150,
+                child: Icon(
+                  Icons.question_mark,
+                  size: 80,
+                )))
+            : Image.file(File(gv.gameImagePath!), width: width, height: 150, fit: BoxFit.fitWidth, filterQuality: FilterQuality.medium)]);
     }
   }
 /*
