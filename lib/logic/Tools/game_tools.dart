@@ -208,6 +208,26 @@ class GameTools {
     return fileName.substring(index);
 
   }
+  static Future<bool> deleteGameConfig(Game game) async{
+    String fullConfigFilePath = "${game.path}/gameminer_config.json";
+    String fullConfigDataFolderPath = "${game.path}/game_miner_data";
+    try {
+      if(await FileTools.existsFile(fullConfigFilePath)) {
+        await File(fullConfigFilePath).delete();
+      }
+
+      if(await FileTools.existsFolder(fullConfigDataFolderPath)) {
+        await Directory(fullConfigDataFolderPath).delete(recursive: true);
+      }
+
+
+      return true;
+    }
+    catch(ex) {
+      print(ex);
+      return false;
+    }
+  }
 
   static Future<bool> exportGame(Game game, String userId) async {
     bool success = true;
@@ -389,4 +409,6 @@ class GameTools {
 
     return path;
   }
+
+
 }

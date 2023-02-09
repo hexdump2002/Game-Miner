@@ -30,10 +30,6 @@ class GameExecutable {
   late String relativeExePath;
   late String name;
 
-  //Did this exe used gameminer_config.json to be configured? (For each exe this happens if json exists and there are an exe not in shortcuts
-  //But pressent in the config. (We configure these exes from data from the config file instead of data comming form the shortcut file)
-  bool dataFromConfigFile = false;
-
   String compatToolCode = "None"; //If null there's no proton mapping assigned to this executable
   String compatToolPriority="0";
   String compatToolConfig="";

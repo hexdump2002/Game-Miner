@@ -39,10 +39,10 @@ class Game {
   }
 
   //Did we fully or partially configured game exe data from config file?
-  bool dataCameFromConfigFile() {
+  /*bool dataCameFromConfigFile() {
     GameExecutable? exe = exeFileEntries.firstWhereOrNull((element) => element.dataFromConfigFile==true);
     return exe != null;
-  }
+  }*/
 
   bool hasErrors() {
     GameExecutable? exe = exeFileEntries.firstWhereOrNull((element) => element.errors.isNotEmpty);

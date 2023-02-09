@@ -107,13 +107,21 @@
   "no_changes_nothing_to_save": "No changes, nothing to save",
   "opening_steam": "Opening Steam",
   "select_user": "Select user",
-  "reset_to_config_dialog_text":"You are going to reset this game to the exported configuration. If you have pending changes they will be lost and if you downloaded new images for this game like banners, icons, etc. they will be overwritten by the ones active when you exported the configuration.\n\nDo you want to continue?",
-  "reseting_game_config": "Reseting game",
-  "game_was_reset": "Game was reset, just save to keep the changes",
-  "reset_to_config": "Load config",
+  "import_config_dialog_text":"You are going to reset this game to the exported configuration. If you have pending changes they will be lost and if you downloaded new images for this game like banners, icons, etc. they will be overwritten by the ones active when you exported the configuration.\n\nDo you want to continue?",
+  "import_games_config_dialog_text":"You are going to reset selected games to their exported configuration. If you have pending changes they will be lost and if you downloaded new images for these game like banners, icons, etc. they will be overwritten by the ones active when you exported the configuration.\n\nDo you want to continue?",
+  "importing_game_config": "Importing game",
+  "game_was_imported": "Game was reset, just save to keep the changes",
+  "import_game_config": "Load config",
+  "delete_game_config": "Delete config",
   "config_does_not_exist": "Config file does not exist",
   "game_mgr_options": "Game Manager",
-  "default_image_view": "Default Image Style"
-
-
+  "default_image_view": "Default Image Style",
+  "deleting_game_config": "Deleting config {}",
+  "game_config_deleted": "Game config {} deleted",
+  "game_config_deleted_error": "There was an error deleting config {}",
+  "deleting_games_config": "Deleting selected game configurations",
+  "games_config_deleted": "Selected Game configs were deleted",
+  "games_config_deleted_error": "Some game configurations couldn't be deleted",
+  "delete_games_config_dialog_text": "You are going to delete the configuration for the selected games. This will erase the configurations themself and all the images that were active when the configurations was saved.\n\nDo you want to continue?",
+  "delete_game_config_dialog_text": "You are going to delete {} game configuration . This will erase the configuration itself and all the images that were active when the configuration was saved.\n\nDo you want to continue?"
 }

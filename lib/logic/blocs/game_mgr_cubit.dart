@@ -52,8 +52,9 @@ class GameView {
   bool modified;
   String? gameImagePath;
   bool selected;
+  bool hasConfig;
 
-  GameView(this.game, this.gameImagePath, this.isExpanded, this.modified, this.selected);
+  GameView(this.game, this.gameImagePath, this.isExpanded, this.modified, this.selected,this.hasConfig);
 
 
 }
@@ -67,6 +68,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
 
   String get searchText => _searchText;
 
+  //Falgs if something has been modified. To disallow exiting or doing any action that could incur in data loss
   bool get modified => _gameViews.firstWhereOrNull((element) => element.modified == true) != null;
 
   List<GameView> _filteredGames = [];
@@ -137,7 +139,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
 
       _baseGames = games!;
 
-      _gameViews = _generateGameViews(_baseGames);
+      _gameViews = await _generateGameViews(_baseGames);
 
       /*for(Game g in _baseGames) {
         for(GameExecutable ge in g.exeFileEntries) {
@@ -183,13 +185,13 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
     }
   }
 
-  List<GameView> _generateGameViews(List<Game> games) {
+  Future<List<GameView>> _generateGameViews(List<Game> games) async {
     List<GameView> gameViews = [];
     for (Game g in games) {
       GameTools.handleGameExecutableErrorsForGame(g);
-      bool modified = g.dataCameFromConfigFile();
       String? gameImage = GameTools.getGameImagePath(g, _currentImageType!);
-      gameViews.add(GameView(g, gameImage, false, modified, false));
+      bool hasGameConfig =await FileTools.existsFile("${g.path}/gameminer_config.json");
+      gameViews.add(GameView(g, gameImage, false, false, false, hasGameConfig));
     }
     return gameViews;
   }
@@ -341,14 +343,14 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
 
     saveGameMinerDataAppidMappings(_baseGames);
 
-    //Copy art if this game was just imported
+    /*//Copy art if this game was just imported
     for (Game g in games) {
       for (GameExecutable ge in g.exeFileEntries) {
         if (ge.dataFromConfigFile) {
           await GameTools.importShortcutArt(g.path, ge, _settings.currentUserId);
         }
       }
-    }
+    }*/
 
     if (showInfo) {
       EasyLoading.showSuccess(tr("data_saved"));
@@ -402,12 +404,12 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
     int i=0;
     bool error=false;
     while(i<copyGameViews.length && !error) {
-      error = !await deleteGame(copyGameViews[i].game, deleteImages, deleteCompatData, deleteShaderData, showNotifications: false);
+      error = !await deleteGame(copyGameViews[i].game, deleteImages, deleteCompatData, deleteShaderData, showNotifications: false, refreshUi: false);
       ++i;
     }
 
     if(error) {
-      EasyLoading.showSuccess(tr("all_games_couldnt_be_deleted"));
+      EasyLoading.showError(tr("all_games_couldnt_be_deleted"));
     }
     else {
       EasyLoading.showSuccess(tr("selected_data_games_was_deleted"));
@@ -415,7 +417,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
   }
 
   //Returns if action was succesfully executed
-  Future<bool> deleteGame(Game game, bool deleteImages, bool deleteCompatData, bool deleteShaderData,{bool showNotifications=true}) async {
+  Future<bool> deleteGame(Game game, bool deleteImages, bool deleteCompatData, bool deleteShaderData,{bool showNotifications=true, bool refreshUi=true}) async {
     try {
       print("Deleting game -> ${game.name}");
 
@@ -448,7 +450,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
       await _refreshStorageSize();
       _refreshGameCount();
 
-      notifyDataChanged();
+      if(refreshUi) notifyDataChanged();
 
       return true;
     } catch (e) {
@@ -506,14 +508,40 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
     }
   }
 
-  //Returns true if modification was made
-  Future<void> resetConfig(GameView gv) async {
-    GameExportedData? ged = await GameTools.importGame(gv.game);
-    if (ged == null) {
-      EasyLoading.showInfo(tr("config_does_not_exists"));
+  Future<void> importSelectedGamesConfig() async {
+    EasyLoading.show(status:tr("importing_games"));
+
+    List<GameView> gameViewsToExport = _gameViews.where((element) => element.selected).toList();
+
+    int i=0;
+    bool error=false;
+    while(i<gameViewsToExport.length) {
+      bool success = await importGameConfig(gameViewsToExport[i], showNotifications: false, refreshUi: false);
+      if(!success) error = true;
+      ++i;
     }
 
-    EasyLoading.showInfo(tr("reseting_game_config"));
+    if(error) {
+      EasyLoading.showError(tr("all_games_couldnt_be_imported"));
+    }
+    else {
+      EasyLoading.showSuccess(tr("selected_games_were_imported"));
+    }
+
+    notifyDataChanged();
+  }
+
+  //Returns true if modification was made
+  Future<bool> importGameConfig(GameView gv, {showNotifications=true, refreshUi=true}) async {
+    print("Importing game ${gv.game.name}");
+
+    GameExportedData? ged = await GameTools.importGame(gv.game);
+    if (ged == null) {
+      if(showNotifications) EasyLoading.showInfo(tr("config_does_not_exists"));
+    }
+
+    if(showNotifications) EasyLoading.showInfo(tr("importing_game_config"));
+
     bool modified = false;
     for (GameExecutable ge in gv.game.exeFileEntries) {
       GameExecutableExportedData? foundGe = ged!.executables.firstWhereOrNull((element) => element.executableRelativePath == ge.relativeExePath);
@@ -523,16 +551,18 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
         ge.added = true;
         //ge.appId=SteamTools.generateAppId(p.joinAll([ge.startDir,ge.relativeExePath])); //Se generara el mismo?
         ge.fillProtonMappingData(foundGe.compatToolCode, "", "250");
-        ge.dataFromConfigFile = true; //Mark as configured by config file
+        //ge.dataFromConfigFile = true; //Mark as configured by config file
         modified = true;
       }
     }
 
     gv.modified = modified;
 
-    notifyDataChanged();
+    if(refreshUi) notifyDataChanged();
 
-    EasyLoading.showInfo(tr("game_was_reset"));
+    if(showNotifications) EasyLoading.showInfo(tr("game_was_imported"));
+
+    return true;
   }
 
   void foldAll() {
@@ -806,28 +836,85 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
     int i=0;
     bool error=false;
     while(i<gameViewsToExport.length && !error) {
-      error = !await exportGame(gameViewsToExport[i].game, showNotifications: false);
+      error = !await exportGame(gameViewsToExport[i], showNotifications: false, refreshUi:false);
       ++i;
     }
 
     if(error) {
-      EasyLoading.showSuccess(tr("all_games_couldnt_be_exported"));
+      EasyLoading.showError(tr("all_games_couldnt_be_exported"));
     }
     else {
       EasyLoading.showSuccess(tr("selected_games_were_exported"));
     }
+
+    notifyDataChanged();
   }
 
-  Future<bool> exportGame(Game game, {showNotifications:true}) async {
-    String exportPath = "${game.path}/gameminer_config.json";
+  Future<bool> exportGame(GameView gv, {showNotifications:true, emit, refreshUi=true}) async {
+    String exportPath = "${gv.game.path}/gameminer_config.json";
     if(showNotifications) {
       EasyLoading.show(status: tr("exporting_game_config", args: [exportPath]));
     }
-    bool success = await GameTools.exportGame(game, _settings.currentUserId);
+    bool success = await GameTools.exportGame(gv.game, _settings.currentUserId);
+    if(success)
+    {
+      gv.hasConfig = true;
+    }
 
     if(showNotifications) {
       EasyLoading.showSuccess(tr("game_config_exported", args: [exportPath]));
     }
+
+    if(refreshUi) notifyDataChanged();
+
+    return success;
+  }
+
+  Future<void> deleteSelectedGameConfigs()async {
+    EasyLoading.show(status:tr("deleting_game_configs"));
+
+    List<GameView> gameViewsToExport = _gameViews.where((element) => element.selected).toList();
+
+    int i=0;
+    bool error=false;
+    while(i<gameViewsToExport.length && !error) {
+      error = !await exportGame(gameViewsToExport[i], showNotifications: false, refreshUi:false);
+      ++i;
+    }
+
+    if(error) {
+      EasyLoading.showError(tr("all_games_couldnt_be_exported"));
+    }
+    else {
+      EasyLoading.showSuccess(tr("selected_games_were_exported"));
+    }
+
+    notifyDataChanged();
+  }
+
+
+  Future<bool> deleteGameConfig(GameView gv, {showNotifications:true, emit, refreshUi=true}) async {
+    String exportPath = "${gv.game.path}/gameminer_config.json";
+    if(showNotifications) {
+      EasyLoading.show(status: tr("deleting_game_config", args: [exportPath]));
+    }
+    bool success = await GameTools.deleteGameConfig(gv.game);
+    if(success)
+    {
+      gv.hasConfig = false;
+    }
+
+    if(showNotifications) {
+      if(success) {
+        EasyLoading.showSuccess(tr("game_config_deleted", args: [exportPath]));
+      }
+      else
+      {
+        EasyLoading.showError(tr("game_config_deleted_error", args: [exportPath]));
+      }
+    }
+
+    if(refreshUi) notifyDataChanged();
 
     return success;
   }
@@ -884,4 +971,6 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
 
     notifyDataChanged();
   }
+
+
 }

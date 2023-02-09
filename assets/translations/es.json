@@ -107,13 +107,21 @@
   "no_changes_nothing_to_save": "Sin cambios, nada que salvar",
   "opening_steam": "Abriendo Steam",
   "select_user": "Cambiar usuario",
-  "reset_to_config_dialog_text":"Se va a resetear este juego a la configuración que fue exportada previamente. Si tienes cambios pendientes estos se perderán y si descargastes imagenes como banners, iconos, etc. estos serán sobre escritos con los que estaban activos al exportar la configuración.\n\n¿Quieres continuar?",
-  "reseting_game_config": "Reseteando juego",
-  "game_was_reset": "El juego fue reseteado. Ahora puedes grabar para mantener los cambios.",
-  "reset_to_config": "Cargar config",
+  "import_config_dialog_text":"Se va a resetear este juego a la configuración que fue exportada previamente. Si tienes cambios pendientes estos se perderán y si descargastes imagenes como banners, iconos, etc. estos serán sobre escritos con los que estaban activos al exportar la configuración.\n\n¿Quieres continuar?",
+  "import_games_config_dialog_text": "Se van a resetear los juegos seleccionados a la configuración que fue exportada previamente. Si tienes cambios pendientes estos se perderán y si descargastes imagenes como banners, iconos, etc. estos serán sobre escritos con los que estaban activos al exportar la configuración.\n\n¿Quieres continuar?",
+  "importing_game_config": "Importando juegoe",
+  "game_was_imported": "El juego fue reseteado. Ahora puedes grabar para mantener los cambios.",
+  "import_game_config": "Cargar config",
+  "delete_game_config": "Borrar config",
   "config_does_not_exist": "No existe fichero de configuración",
   "game_mgr_options": "Gestor de juegos",
-  "default_image_view": "Tipo de vista"
-
-
+  "default_image_view": "Tipo de vista",
+  "deleting_game_config": "Borrando config {}",
+  "game_config_deleted": "La configuración de juego {} fue borrada",
+  "game_config_deleted_error": "Hubo un error borrando la configuración de juego {}",
+  "deleting_games_config": "Borrando la configuración de los juegos seleccionados",
+  "games_config_deleted": "Las configuraciones de los juegos seleccionados fueron borradas",
+  "games_config_deleted_error": "Algunas configuraciones no pudieron ser borradas",
+  "delete_games_config_dialog_text": "Vas va a borrar la configuración de los juegos seleccionados. Esto borrará los ficheros de configuración y todas las imagenes que estaban activas cuando se grabaron.\n\n¿Quieres continuar?",
+  "delete_game_config_dialog_text": "Vas va a borrar la configuración del juego {}. Esto borrará el fichero de configuración y todas las imagenes que estaban activas cuando se grabó.\n\n¿Quieres continuar?"
 }
