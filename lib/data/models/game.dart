@@ -23,6 +23,8 @@ class Game {
   late String name;
   bool isExternal = false;
   int gameSize = 0;
+  DateTime creationDate = DateTime.now();
+  int fileCount = 0;
 
   final List<GameExecutable> exeFileEntries = [];
 

@@ -70,8 +70,8 @@ class FileTools {
     try {
       foundFiles = await fileNamesStream.toList();
     }
-    on FileSystemException catch (_, ex) {
-      print("Folder couldn't be read: $ex");
+    on FileSystemException catch (m, ex) {
+      print("Folder couldn't be read: $m");
     }
 
     return foundFiles;
@@ -86,9 +86,13 @@ class FileTools {
   static Future<Map<String, int>> getFolderMetaData(String dirPath, {bool recursive=false}) async{
     int fileCount = 0;
     int totalSize = 0;
+    int creationDate = 0;
+
     var dir = Directory(dirPath);
     try {
       if (await dir.exists()) {
+        FileStat fs = await dir.stat();
+        creationDate = fs.modified.microsecondsSinceEpoch;
         await dir.list(recursive: recursive, followLinks: false)
             .forEach((FileSystemEntity entity) {
           if (entity is File) {
@@ -101,7 +105,7 @@ class FileTools {
       print(e.toString());
     }
 
-    return {'fileCount': fileCount, 'size': totalSize};
+    return {'fileCount': fileCount, 'size': totalSize, 'creationDate':creationDate};
   }
 
   static bool existsFileSync(String path) {

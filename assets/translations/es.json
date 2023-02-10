@@ -126,5 +126,14 @@
   "games_config_deleted": "Las configuraciones de los juegos seleccionados fueron borradas",
   "games_config_deleted_error": "Algunas configuraciones no pudieron ser borradas",
   "delete_games_config_dialog_text": "Vas va a borrar la configuración de los juegos seleccionados. Esto borrará los ficheros de configuración y todas las imagenes que estaban activas cuando se grabaron.\n\n¿Quieres continuar?",
-  "delete_game_config_dialog_text": "Vas va a borrar la configuración del juego {}. Esto borrará el fichero de configuración y todas las imagenes que estaban activas cuando se grabó.\n\n¿Quieres continuar?"
+  "delete_game_config_dialog_text": "Vas va a borrar la configuración del juego {}. Esto borrará el fichero de configuración y todas las imagenes que estaban activas cuando se grabó.\n\n¿Quieres continuar?",
+  "game_status_red_tooltip": "Juego no añadido",
+  "game_status_orange_tooltip": "Juego añadido pero sin CompatTool asignada",
+  "game_status_green_tooltip": "Juego listo para jugar",
+  "game_status_blue_tooltip": "El juego no existe en la librería del usuario",
+  "name": "Nombre",
+  "size": "Tamaño",
+  "status": "Estado",
+  "notification": "Notificación",
+  "date": "Fecha"
 }

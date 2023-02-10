@@ -48,7 +48,6 @@ class GameDataMgrCubit extends Cubit<GameDataMgrState> {
   bool _sortAscending = true;
 
   GameDataMgrCubit() : super(GameDataMgrInitial()) {
-    initialize();
   }
 
   void initialize() async {

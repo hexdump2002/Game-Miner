@@ -1,3 +1,6 @@
+import 'package:game_miner/data/stats.dart';
+import 'package:game_miner/logic/Tools/game_tools.dart';
+
 import '../../logic/Tools/file_tools.dart';
 import '../models/game.dart';
 
@@ -20,6 +23,10 @@ class UserLibraryGamesDataProvider {
               retrieveRelativePaths: false, recursive: true, regExFilter: r".*\.(exe|sh|bat)$", regExCaseSensitive: false);
           if(exeFiles!=null) {
             ug.addExeFiles(exeFiles);
+            GameFolderStats gfs = (await GameTools.getGameFolderStats(ug))!;
+            ug.creationDate = gfs.creationDate;
+            ug.fileCount = gfs.fileCount;
+            ug.gameSize = gfs.size;
           }
           else
           {

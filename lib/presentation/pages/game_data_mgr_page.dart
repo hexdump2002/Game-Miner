@@ -24,6 +24,7 @@ class _GameDataMgrPageState extends State<GameDataMgrPage> {
   @override
   void initState() {
     _bloc = BlocProvider.of<GameDataMgrCubit>(context);
+    _bloc.initialize();
   }
 
   @override

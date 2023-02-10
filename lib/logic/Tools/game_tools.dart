@@ -15,6 +15,7 @@ import 'package:get_it/get_it.dart';
 import 'package:path/path.dart' as p;
 import 'package:collection/collection.dart';
 
+import '../../data/stats.dart';
 import '../../data/models/compat_tool.dart';
 import '../../data/models/game.dart';
 import '../../data/repositories/apps_storage_repository.dart';
@@ -162,6 +163,20 @@ class GameTools {
 
     return games;
   }
+
+  static Future<GameFolderStats?> getGameFolderStats(Game game) async {
+    if(!game.isExternal) {
+      var metaData = await FileTools.getFolderMetaData(game.path, recursive: true);
+      var fileCount = metaData['fileCount']!;
+      var size = metaData['size']!;
+      var dateSinceEpoc = metaData['creationDate'];
+      return GameFolderStats(fileCount, size,DateTime.fromMicrosecondsSinceEpoch(dateSinceEpoc!));
+    }
+    else {
+      return null;
+    }
+  }
+
 
   static Future<void> exportShortcutArt(String outputFolder, GameExecutable exe, String userId) async {
     String sourcePath = "${SteamTools.getSteamBaseFolder()}/userdata/$userId/config/grid";
@@ -346,7 +361,7 @@ class GameTools {
     String basePath = "${SteamTools.getSteamBaseFolder()}/steamapps";
 
     for (GameExecutable ge in game.exeFileEntries) {
-      if (ge.added) {
+      //if (ge.added) {
         AppStorage? as = appsStorage!.firstWhereOrNull((element) {
           return element.appId == ge.appId.toString() && element.storageType == StorageType.CompatData;
         });
@@ -355,7 +370,7 @@ class GameTools {
           String pathToDelete = "$basePath/compatdata/${as.appId}";
           await Directory(pathToDelete).delete(recursive: true);
         }
-      }
+      //}
     }
   }
 
@@ -363,14 +378,14 @@ class GameTools {
     String basePath = "${SteamTools.getSteamBaseFolder()}/steamapps";
 
     for (GameExecutable ge in game.exeFileEntries) {
-      if (ge.added) {
+      //if (ge.added) {
         AppStorage? as =
             appsStorage!.firstWhereOrNull((element) => element.appId == ge.appId.toString() && element.storageType == StorageType.ShaderCache);
         if (as != null) {
           String pathToDelete = "$basePath/shadercache/${as.appId}";
           await Directory(pathToDelete).delete(recursive: true);
         }
-      }
+      //}
     }
   }
 

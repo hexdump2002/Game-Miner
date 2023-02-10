@@ -49,7 +49,7 @@ class CompatToolsMappingDataProvider {
     List<CompatToolMapping> protonMappings = [];
 
     TxtVdfFile file = TxtVdfFile();
-    file.open(fullPath, FileMode.read);
+    await file.open(fullPath, FileMode.read);
     CanonicalizedMap<String,String,dynamic> data = await file.read();
     CanonicalizedMap<String,String,dynamic>? compatToolMappings = data['InstallConfigStore']['software']['Valve']['Steam']['CompatToolMapping'];
     if(compatToolMappings==null) return [];
@@ -66,12 +66,12 @@ class CompatToolsMappingDataProvider {
     String fullPath = _absoluteConfigVdfPath;
 
     TxtVdfFile readFile = TxtVdfFile();
-    readFile.open(fullPath, FileMode.read);
+    await readFile.open(fullPath, FileMode.read);
     var data = await readFile.read();
     readFile.close();
 
     TxtVdfFile writeFile = TxtVdfFile();
-    writeFile.open(writePath, FileMode.writeOnly);
+    await writeFile.open(writePath, FileMode.writeOnly);
 
 
     CanonicalizedMap<String,String,dynamic>? compatToolMappingsMap = data['InstallConfigStore']['software']['Valve']['Steam']['CompatToolMapping'];

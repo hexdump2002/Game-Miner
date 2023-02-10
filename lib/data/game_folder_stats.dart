@@ -1,4 +1,4 @@
-class GameFolderStats {
+/*class GameFolderStats {
   late final String path;
 
   late final int fileCount;
@@ -32,3 +32,4 @@ class GameFolderStats {
 
   int getGameCount() => nonAddedGamesCount+ addedGamesCount + fullyAddedGamesCount;
 }
+*/

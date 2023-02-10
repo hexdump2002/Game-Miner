@@ -16,7 +16,7 @@ import 'package:game_miner/logic/Tools/file_tools.dart';
 import 'package:game_miner/logic/Tools/string_tools.dart';
 import 'package:get_it/get_it.dart';
 
-import 'package:game_miner/data/Stats.dart';
+import 'package:game_miner/data/stats.dart';
 import 'package:game_miner/logic/Tools/steam_tools.dart';
 
 import 'dart:io' show Directory, File;
@@ -54,7 +54,7 @@ class GameView {
   bool selected;
   bool hasConfig;
 
-  GameView(this.game, this.gameImagePath, this.isExpanded, this.modified, this.selected,this.hasConfig);
+  GameView(this.game,this.gameImagePath, this.isExpanded, this.modified, this.selected,this.hasConfig);
 
 
 }
@@ -129,14 +129,6 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
       /*_baseGames*/
       games = await _gameRepository.loadGames(_settings.currentUserId, _currentUserSettings.searchPaths);
 
-      var folderStats = await Stats.getGamesFolderStats(/*_baseGames*/ games);
-      //assert(folderStats.statsByGame.length == /*_baseGames*/ games.length); -> That's not true because we are not adding folder metadatas for external games
-
-      for (int i = 0; i < folderStats.statsByGame.length; ++i) {
-        games[i].gameSize = folderStats.statsByGame[i].size;
-        _gameRepository.update(games[i]);
-      }
-
       _baseGames = games!;
 
       _gameViews = await _generateGameViews(_baseGames);
@@ -187,7 +179,9 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
 
   Future<List<GameView>> _generateGameViews(List<Game> games) async {
     List<GameView> gameViews = [];
-    for (Game g in games) {
+
+    for (int i=0 ;i<games.length; ++i) {
+      Game g = games[i];
       GameTools.handleGameExecutableErrorsForGame(g);
       String? gameImage = GameTools.getGameImagePath(g, _currentImageType!);
       bool hasGameConfig =await FileTools.existsFile("${g.path}/gameminer_config.json");
@@ -432,7 +426,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
       await _saveData(_baseGames, showInfo: false);
 
       if (deleteImages) {
-        GameTools.deleteGameImages(game, _settings.currentUserId);
+        await GameTools.deleteGameImages(game, _settings.currentUserId);
       }
       if (deleteCompatData || deleteShaderData) {
         SteamConfigRepository scr = GetIt.I<SteamConfigRepository>();
@@ -443,6 +437,8 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
 
         //Force a reload when returning to cleaner
         GetIt.I<AppsStorageRepository>().invalidateCache();
+        /*appsStorage = await GetIt.I<AppsStorageRepository>().load(_settings.currentUserId, paths);
+        print(appsStorage);*/
       }
 
       if(showNotifications) EasyLoading.showSuccess(tr("selected_data_was_deleted", args: [game.name]));
@@ -636,15 +632,19 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
     return gvs;
   }
 
-  void sortFilteredByWithErrors({SortDirection? direction}) {
-    _sortIndex = 3;
-
-    _sortedFilteredGames = sortByWithErrors([..._filteredGames], direction: direction);
-
+  void sortFilteredByDate() {
+    _sortIndex = 4;
+    _sortedFilteredGames = sortByDate([..._filteredGames]);
     notifyDataChanged();
   }
 
-  List<GameView> sortByStatus(List<GameView> gvs, {SortDirection? direction}) {
+  void sortFilteredByWithErrors() {
+    _sortIndex = 3;
+    _sortedFilteredGames = sortByWithErrors([..._filteredGames]);
+    notifyDataChanged();
+  }
+
+  List<GameView> sortByStatus(List<GameView> gvs) {
     var gameCategories = categorizeGamesByStatus(gvs);
     List<GameView> notAdded = gameCategories['notAdded']!;
     List<GameView> added = gameCategories['added']!;
@@ -678,10 +678,10 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
     return finalList;
   }
 
-  void sortFilteredByStatus({SortDirection? direction}) {
+  void sortFilteredByStatus() {
     _sortIndex = 2;
 
-    _sortedFilteredGames = sortByStatus([..._filteredGames], direction: direction);
+    _sortedFilteredGames = sortByStatus([..._filteredGames]);
 
     notifyDataChanged();
   }
@@ -693,6 +693,18 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
       gvs.sort((a, b) => a.game.gameSize.compareTo(b.game.gameSize));
     } else {
       gvs.sort((a, b) => b.game.gameSize.compareTo(a.game.gameSize));
+    }
+
+    return gvs;
+  }
+
+  List<GameView> sortByDate(List<GameView> gvs) {
+    SortDirection sortDirection = _sortDirectionIndex == 0 ? SortDirection.Asc : SortDirection.Desc;
+
+    if (sortDirection == SortDirection.Asc) {
+      gvs.sort((a, b) => a.game.creationDate.compareTo(b.game.creationDate));
+    } else {
+      gvs.sort((a, b) => b.game.creationDate.compareTo(a.game.creationDate));
     }
 
     return gvs;
@@ -759,8 +771,9 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
       return sortBySize(gvs);
     } else if (_sortIndex == 3) {
       return sortByWithErrors(gvs);
+    } else if (_sortIndex == 4) {
+      return sortByDate(gvs);
     }
-
     throw Exception("No sort state is active so, can't sort by current");
   }
 

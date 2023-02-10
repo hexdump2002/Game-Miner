@@ -55,23 +55,6 @@ class GamesRepository extends CacheRepository<Game> {
       List<Game> userLibraryGames = await _libraryGamesDataProvider.loadGames(userLibraryPaths);
       List<CompatToolMapping> compatToolMappings = await _compatToolsMappingDataProvider.loadCompatToolMappings();
 
-      //Apply configurations to games
-      for(Game g in userLibraryGames) {
-          GameExportedData? gee = await GameTools.importGame(g);
-          if(gee!=null) {
-            for(GameExecutable ge in g.exeFileEntries) {
-              GameExecutableExportedData? foundGe=gee.executables.firstWhereOrNull((element) => element.executableRelativePath == ge.relativeExePath);
-              if(foundGe!=null) {
-                ge.name = foundGe.executableName;
-                ge.launchOptions = foundGe.executableOptions;
-                ge.added = true;
-                ge.appId=SteamTools.generateAppId(path.joinAll([ge.startDir,ge.relativeExePath]));
-                ge.fillProtonMappingData(foundGe.compatToolCode, "", "250");
-              }
-            }
-          }
-      }
-
       games = userLibraryGames;
 
       List<Game> externalGames = [];

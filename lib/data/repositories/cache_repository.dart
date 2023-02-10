@@ -16,7 +16,9 @@ class CacheRepository<T> {
   }
 
   void removeCacheKey(String key) {
+    print("deleting key: ${_cachedData.length}");
     _cachedData.remove(key);
+    print("deleted key: ${_cachedData.length}");
   }
 
 
