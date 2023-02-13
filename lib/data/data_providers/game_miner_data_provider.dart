@@ -32,7 +32,7 @@ class GameMinerDataProvider {
   }
 
   void saveGameMinerData(String path, GameMinerData gmd) {
-    File(path).open(mode:FileMode.writeOnly);
+    File(path).openSync(mode:FileMode.writeOnly);
 
     String json = jsonEncode(gmd);
 

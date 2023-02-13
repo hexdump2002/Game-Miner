@@ -7,7 +7,7 @@ import '../../logic/Tools/string_tools.dart';
 
 enum GameExecutableErrorType {InvalidProton, BrokenExecutable}
 
-enum GameExecutableImageType {None, Icon, CoverSmall, CoverMedium, CoverBig, Banner}
+enum GameExecutableImageType {None, Icon, CoverSmall, CoverMedium, CoverBig, HalfBanner, Banner}
 
 class GameExecutableImages {
   final String? iconImage;

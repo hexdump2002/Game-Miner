@@ -22,7 +22,7 @@ import '../../data/repositories/games_repository.dart';
 import '../../logic/Tools/game_tools.dart';
 import '../../logic/Tools/steam_tools.dart';
 
-enum ContextMenuItem {ShowFolder, RenameGame, DeleteGame, ExportConfig, ImportConfig, DeleteConfig}
+enum ContextMenuItem { ShowFolder, RenameGame, DeleteGame, ExportConfig, ImportConfig, DeleteConfig }
 
 //WARNING: THIS CLASS USES A LOT OF NON BEST PRACTICES. FOR EXAMPLE: A CUBIT SHOULD BE PORTABLE AND THIS ONE RECEIVES A LOT OF BUILDCONTEXT
 class GameMgrPage extends StatefulWidget {
@@ -59,9 +59,9 @@ class _GameMgrPageState extends State<GameMgrPage> {
 
     Widget widgets = Scaffold(
       appBar: AppBar(
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-          title: Text("Game Manager"),
+          // Here we take the value from the MyHomePage object that was created by
+          // the App.build method, and use it to set our appbar title.
+          title: const Text("Game Manager"),
           actions: [
             Expanded(
               child: Padding(
@@ -74,7 +74,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
                   Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: DropdownButton<String>(
-                        borderRadius: BorderRadius.all(Radius.circular(3)),
+                        borderRadius: const BorderRadius.all(Radius.circular(3)),
                         /*hint:const Padding(
                         padding: EdgeInsets.all(8.0),
                         child: Text("Filter by"),
@@ -117,8 +117,8 @@ class _GameMgrPageState extends State<GameMgrPage> {
                         }).toList(),
                       )),
                   Tooltip(
-                      message: "batch_mode",
-                      child: Switch(value: _nsCubit(context).getBatchMode(), onChanged: (value) => _nsCubit(context).swapBatchMode())),
+                      message: tr("multi_selection_mode"),
+                      child: Switch(value: _nsCubit(context).getMultiSelectionMode(), onChanged: (value) => _nsCubit(context).swapMultiSelectionMode())),
                   IconButton(
                     onPressed: () async {
                       if (_formKey.currentState!.validate()) {
@@ -127,7 +127,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
                         print("There are errors in the form. Fix them!");
                       }
                     },
-                    icon: Icon(Icons.save),
+                    icon: const Icon(Icons.save),
                     tooltip: tr("save"),
                   ),
                   IconButton(
@@ -141,7 +141,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
                     onPressed: () {
                       _nsCubit(context).refresh(context);
                     },
-                    icon: Icon(Icons.refresh),
+                    icon: const Icon(Icons.refresh),
                     tooltip: tr("refresh"),
                   ),
                 ]);
@@ -156,8 +156,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
             showSteamActiveWhenSaving(context, state.okAction);
           } else if (state is RenameGameClicked) {
             _renameGame(context, state.game);
-          }
-          else if (state is DeleteSelectedClicked) {
+          } else if (state is DeleteSelectedClicked) {
             _deleteSelectedGames(context, state);
           }
         },
@@ -175,7 +174,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: _buildDataScreen(context, state),
                       ))),
-              if (state is BaseDataChanged && state.batchMode)
+              if (state is BaseDataChanged && state.multiSelectionMode)
                 Align(
                   alignment: Alignment.bottomCenter,
                   child: Padding(
@@ -188,27 +187,45 @@ class _GameMgrPageState extends State<GameMgrPage> {
                         children: [
                           Padding(
                             padding: const EdgeInsets.all(8.0),
-                            child: ElevatedButton(onPressed: () => {_nsCubit(context).selectAll()}, style:ElevatedButton.styleFrom(backgroundColor: Colors.grey.shade800), child: Text(tr("select_all"))),
+                            child: ElevatedButton(
+                                onPressed: () => {_nsCubit(context).selectAll()},
+                                style: ElevatedButton.styleFrom(backgroundColor: Colors.grey.shade800),
+                                child: Text(tr("select_all"))),
                           ),
                           Padding(
                             padding: const EdgeInsets.all(8.0),
-                            child: ElevatedButton(onPressed: () => {_nsCubit(context).selectNone()}, style:ElevatedButton.styleFrom(backgroundColor: Colors.grey.shade800), child: Text(tr("select_none"))),
+                            child: ElevatedButton(
+                                onPressed: () => {_nsCubit(context).selectNone()},
+                                style: ElevatedButton.styleFrom(backgroundColor: Colors.grey.shade800),
+                                child: Text(tr("select_none"))),
                           ),
                           Padding(
                             padding: const EdgeInsets.all(8.0),
-                            child: ElevatedButton(onPressed: () => _nsCubit(context).tryDeleteSelected(), style:ElevatedButton.styleFrom(backgroundColor: Colors.grey.shade800), child: Text(tr("delete_selected"))),
+                            child: ElevatedButton(
+                                onPressed: () => _nsCubit(context).tryDeleteSelected(),
+                                style: ElevatedButton.styleFrom(backgroundColor: Colors.grey.shade800),
+                                child: Text(tr("delete_selected"))),
                           ),
                           Padding(
                             padding: const EdgeInsets.all(8.0),
-                            child: ElevatedButton(onPressed: () => _importSelectedGamesConfig(), style:ElevatedButton.styleFrom(backgroundColor: Colors.grey.shade800), child: Text(tr("import_selected"))),
+                            child: ElevatedButton(
+                                onPressed: () => _importSelectedGamesConfig(state.games),
+                                style: ElevatedButton.styleFrom(backgroundColor: Colors.grey.shade800),
+                                child: Text(tr("import_selected"))),
                           ),
                           Padding(
                             padding: const EdgeInsets.all(8.0),
-                            child: ElevatedButton(onPressed: () => _exportSelectedGames(), style:ElevatedButton.styleFrom(backgroundColor: Colors.grey.shade800), child: Text(tr("export_selected"))),
+                            child: ElevatedButton(
+                                onPressed: () => _exportSelectedGames(state.games),
+                                style: ElevatedButton.styleFrom(backgroundColor: Colors.grey.shade800),
+                                child: Text(tr("export_selected"))),
                           ),
                           Padding(
                             padding: const EdgeInsets.all(8.0),
-                            child: ElevatedButton(onPressed: () => _deleteSelectedGameConfigs(), style:ElevatedButton.styleFrom(backgroundColor: Colors.grey.shade800), child: Text(tr("delete_configs"))),
+                            child: ElevatedButton(
+                                onPressed: () => _deleteSelectedGameConfigs(state.games),
+                                style: ElevatedButton.styleFrom(backgroundColor: Colors.grey.shade800),
+                                child: Text(tr("delete_configs"))),
                           ),
                         ],
                       ),
@@ -272,44 +289,35 @@ class _GameMgrPageState extends State<GameMgrPage> {
     throw Exception("Unknown state type");
   }
 
-
   Widget _buildContextMenu(GameView gameView) {
     return PopupMenuButton<ContextMenuItem>(
       initialValue: null,
       // Callback that sets the selected popup menu item.
-      onSelected: (ContextMenuItem item) {
-
-      },
+      onSelected: (ContextMenuItem item) {},
       itemBuilder: (BuildContext context) => <PopupMenuEntry<ContextMenuItem>>[
         PopupMenuItem<ContextMenuItem>(
           value: ContextMenuItem.ShowFolder,
-          child: Text( tr("open_folder")),
-          onTap: ()=> _nsCubit(context).openFolder(gameView.game),
+          child: Text(tr("open_folder")),
+          onTap: () => _nsCubit(context).openFolder(gameView.game),
         ),
         PopupMenuItem<ContextMenuItem>(
           value: ContextMenuItem.RenameGame,
-          child: Text( tr("rename_game")),
-          onTap: ()=> _nsCubit(context).tryRenameGame(context, gameView.game),
+          child: Text(tr("rename_game")),
+          onTap: () => _nsCubit(context).tryRenameGame(context, gameView.game),
         ),
         PopupMenuItem<ContextMenuItem>(
-            value: ContextMenuItem.DeleteGame,
-            child: Text( tr("delete_game")),
-            onTap: ()=> _nsCubit(context).tryDeleteGame(gameView.game)
-        ),
+            value: ContextMenuItem.DeleteGame, child: Text(tr("delete_game")), onTap: () => _nsCubit(context).tryDeleteGame(gameView.game)),
         PopupMenuItem<ContextMenuItem>(
           value: ContextMenuItem.ExportConfig,
-          child: Text( tr("export_config")),
-          onTap: ()=> _nsCubit(context).exportGame(gameView),
+          child: Text(tr("export_config")),
+          onTap: () => _nsCubit(context).exportGame(gameView),
         ),
         PopupMenuItem<ContextMenuItem>(
-            value: ContextMenuItem.ImportConfig,
-            child: Text( tr("import_game_config")),
-            onTap: ()=> _importGameConfig(gameView)
-        ),
+            value: ContextMenuItem.ImportConfig, child: Text(tr("import_game_config")), onTap: () => _importGameConfig(gameView)),
         PopupMenuItem<ContextMenuItem>(
           value: ContextMenuItem.DeleteConfig,
-          child: Text( tr("delete_game_config")),
-          onTap: ()=> _deleteGameConfig(gameView),
+          child: Text(tr("delete_game_config")),
+          onTap: () => _deleteGameConfig(gameView),
         ),
       ],
     );
@@ -334,13 +342,13 @@ class _GameMgrPageState extends State<GameMgrPage> {
         controller: ExpandableController(initialExpanded: gameView.isExpanded)..addListener(() => _nsCubit(context).swapExpansionStateForItem(index)),
         header: Row(
           children: [
-            if (state.batchMode)
+            if (state.multiSelectionMode)
               Column(
                 children: [
                   Checkbox(value: gameView.selected, onChanged: (value) => {_nsCubit(context).swapGameViewSelected(gameView)}),
                 ],
               ),
-            _getGameSteamImage(context, gameView, state.gameExecutableImageType, state.batchMode),
+            _getGameSteamImage(context, gameView, state.gameExecutableImageType, state.multiSelectionMode),
             Expanded(
               child: ListTile(
                 title: Column(
@@ -358,7 +366,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
                             ),
                             Padding(
                               padding: const EdgeInsets.fromLTRB(0, 0, 24, 0),
-                              child: gameView.game.isExternal ? null :Text("Updated on ${DateFormat('dd-MM-yyyy').format(gameView.game.creationDate)}", style:TextStyle(fontSize: 12, color:Colors.grey.shade500)),
+                              child: _getDateText(gameView)
                             )
                           ],
                         ),
@@ -383,8 +391,8 @@ class _GameMgrPageState extends State<GameMgrPage> {
           ],
         ),
         expanded: Container(
-            padding: EdgeInsets.fromLTRB(0, 16, 0, 16),
-            margin: EdgeInsets.fromLTRB(16, 16, 16, 16),
+            padding: const EdgeInsets.fromLTRB(0, 16, 0, 16),
+            margin: const EdgeInsets.fromLTRB(16, 16, 16, 16),
             decoration: BoxDecoration(borderRadius: BorderRadius.circular(20), color: Colors.black12),
             child: _buildGameTile(context, themeExtension, gameView, state.availableProntonNames)),
         collapsed: Container(),
@@ -392,15 +400,16 @@ class _GameMgrPageState extends State<GameMgrPage> {
     );
   }
 
+  //region Full Baner
   Widget _createGameCardFullBannerSize(GameView gameView, int index, CustomTheme themeExtension, BaseDataChanged state) {
     return Row(
       children: [
-        if (state.batchMode) Checkbox(value: gameView.selected, onChanged: (value) => {_nsCubit(context).swapGameViewSelected(gameView)}),
+        if (state.multiSelectionMode) Checkbox(value: gameView.selected, onChanged: (value) => {_nsCubit(context).swapGameViewSelected(gameView)}),
         Expanded(
           child: Stack(
             children: [
               InkWell(
-                  child: _getGameSteamImage(context, gameView, GameExecutableImageType.Banner, state.batchMode),
+                  child: _getGameSteamImage(context, gameView, GameExecutableImageType.Banner, state.multiSelectionMode),
                   onTap: () => _nsCubit(context).swapExpansionStateForItem(index)),
               Container(
                 alignment: Alignment.center,
@@ -414,12 +423,12 @@ class _GameMgrPageState extends State<GameMgrPage> {
                         Row(
                           children: [
                             Container(
-                                padding: EdgeInsets.fromLTRB(16, 4, 16, 4),
+                                padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
                                 decoration: BoxDecoration(borderRadius: BorderRadius.circular(20), color: Colors.black.withAlpha(180)),
                                 child: Text(gameView.game.name, style: Theme.of(context).textTheme.headline5, textAlign: TextAlign.left)),
                             Expanded(child: Container()),
                             Container(
-                              padding: EdgeInsets.fromLTRB(16, 0, 18, 0),
+                              padding: const EdgeInsets.fromLTRB(16, 0, 18, 0),
                               decoration: BoxDecoration(borderRadius: BorderRadius.circular(20), color: Colors.black.withAlpha(180)),
                               child: Row(children: [
                                 Padding(
@@ -439,11 +448,11 @@ class _GameMgrPageState extends State<GameMgrPage> {
                         if (gameView.isExpanded)
                           Column(
                             children: [
-                              SizedBox(
+                              const SizedBox(
                                 height: 4,
                               ),
                               Container(
-                                padding: EdgeInsets.all(4),
+                                padding: const EdgeInsets.all(4),
                                 color: Colors.black.withAlpha(180),
                                 child: Text(
                                   "${gameView.game.path}",
@@ -457,8 +466,8 @@ class _GameMgrPageState extends State<GameMgrPage> {
                     ),
                   ),
                   expanded: Container(
-                      padding: EdgeInsets.fromLTRB(0, 16, 0, 16),
-                      margin: EdgeInsets.fromLTRB(16, 16, 16, 16),
+                      padding: const EdgeInsets.fromLTRB(0, 16, 0, 16),
+                      margin: const EdgeInsets.fromLTRB(16, 16, 16, 16),
                       decoration: BoxDecoration(borderRadius: BorderRadius.circular(20), color: Colors.black.withAlpha(100)),
                       child: _buildGameTile(context, themeExtension, gameView, state.availableProntonNames)),
                   collapsed: Container(),
@@ -471,6 +480,64 @@ class _GameMgrPageState extends State<GameMgrPage> {
     );
   }
 
+  Widget _createGameCardHalfBannerSize(GameView gameView, int index, CustomTheme themeExtension, BaseDataChanged state) {
+    return Stack(children: [
+      Container(
+        color: Color.fromARGB(255, 80, 80, 80),
+        alignment: Alignment.center,
+        child: ExpandablePanel(
+          controller: ExpandableController(initialExpanded: gameView.isExpanded)
+            ..addListener(() => _nsCubit(context).swapExpansionStateForItem(index)),
+          header: ListTile(
+            title: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                if (state.multiSelectionMode) Checkbox(value: gameView.selected, onChanged: (value) => {_nsCubit(context).swapGameViewSelected(gameView)}),
+                _getGameSteamImage(context, gameView, GameExecutableImageType.HalfBanner, state.multiSelectionMode),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16,0,0,0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          _getExeCurrentStateIcon(GameTools.getGameStatus(gameView.game)),
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16.0,0,0,0),
+                            child: Text(gameView.game.name, style: Theme.of(context).textTheme.headline5, textAlign: TextAlign.left),
+                          ),
+                        ],
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(32, 4, 0, 0),
+                        child: _getDateText(gameView),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(32, 16, 0, 0),
+                        child: gameView.game.isExternal ? null : Text(StringTools.bytesToStorageUnity(gameView.game.gameSize)),
+                      ),
+
+
+                    ],
+                  ),
+                ),
+              ],
+            ),
+
+          ),
+          expanded: Container(
+              padding: const EdgeInsets.fromLTRB(0, 16, 0, 16),
+              margin: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+              decoration: BoxDecoration(borderRadius: BorderRadius.circular(20), color: Colors.black.withAlpha(100)),
+              child: _buildGameTile(context, themeExtension, gameView, state.availableProntonNames)),
+          collapsed: Container(),
+        ),
+      ),
+    ]);
+  }
+
+  //endregion
+
   Widget _buildGameTile(BuildContext context, CustomTheme themeExtension, GameView gv, List<String> availableProtons) {
     List<Widget> gameItems = [];
 
@@ -481,8 +548,8 @@ class _GameMgrPageState extends State<GameMgrPage> {
         padding: const EdgeInsets.fromLTRB(0, 0, 0, 16),
         child: Container(
             decoration: const BoxDecoration(color: Colors.red, borderRadius: BorderRadius.all(Radius.circular(40))),
-            padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
-            child: Text(tr("folder_no_contains_exe"), style: TextStyle(color: Colors.white, fontSize: 20), textAlign: TextAlign.center)),
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+            child: Text(tr("folder_no_contains_exe"), style: const TextStyle(color: Colors.white, fontSize: 20), textAlign: TextAlign.center)),
       );
     }
 
@@ -497,7 +564,8 @@ class _GameMgrPageState extends State<GameMgrPage> {
               Padding(
                 padding: const EdgeInsets.fromLTRB(0, 0, 8, 0),
                 child: Tooltip(
-                    child: Icon(Icons.warning, color: error ? Colors.red : Color(0)), message: error ? _buildErrorTextForGameExecutable(uge) : ""),
+                    child: Icon(Icons.warning, color: error ? Colors.red : const Color(0)),
+                    message: error ? _buildErrorTextForGameExecutable(uge) : ""),
               ),
               Expanded(
                 child: Text(uge.relativeExePath, style: Theme.of(context).textTheme.headline6, textAlign: TextAlign.left),
@@ -539,53 +607,58 @@ class _GameMgrPageState extends State<GameMgrPage> {
     GameMgrCubit nsgc = _nsCubit(context);
     return Container(
       color: themeExtension.gameCardExeOptionsBg,
-      margin: EdgeInsets.fromLTRB(32, 8, 128, 8),
+      margin: const EdgeInsets.fromLTRB(32, 8, 128, 8),
       child: Padding(
         padding: const EdgeInsets.all(8.0),
         child: Column(
           children: [
-            TextFormField(
-              key: UniqueKey(),
-              initialValue: uge.name,
-              decoration: InputDecoration(labelText: tr("name")),
-              autovalidateMode: AutovalidateMode.onUserInteraction,
-              onChanged: (value) {
-                uge.name = value!;
-                gv.modified = true;
-                //_nsCubit(context).notifyDataChanged();
-              },
-              /*onSaved: (value) => {
-                uge.name = value!
-              },*/
-              validator: (String? value) {
-                if (value == null || value.isEmpty) {
-                  return tr("please_enter_text");
-                }
-                return null;
-              },
+            Focus(
+              onFocusChange: (hasFocus) {if(!hasFocus) {_nsCubit(context).notifyDataChanged();}},
+              child: TextFormField(
+                key: UniqueKey(),
+                initialValue: uge.name,
+                decoration: InputDecoration(labelText: tr("name")),
+                autovalidateMode: AutovalidateMode.onUserInteraction,
+                onChanged: (value) {
+                  uge.name = value!;
+                  gv.modified = true;
+                },
+                /*onSaved: (value) => {
+                  uge.name = value!
+                },*/
+                validator: (String? value) {
+                  if (value == null || value.isEmpty) {
+                    return tr("please_enter_text");
+                  }
+                  return null;
+                },
+              ),
             ),
-            TextFormField(
-              key: UniqueKey(),
-              initialValue: uge.launchOptions,
-              decoration: InputDecoration(labelText: tr("launch_options")),
-              autovalidateMode: AutovalidateMode.onUserInteraction,
-              onChanged: (value) {
-                uge.launchOptions = value!;
-                gv.modified = true;
-                //_nsCubit(context).notifyDataChanged();
-              },
-              /*onSaved: (value) => {
-                uge.name = value!
-              },
-              validator: (String? value) {
-                if (value == null || value.isEmpty) {
-                  return tr("please_enter_text");
-                }
-                return null;
-              },*/
+            Focus(
+              onFocusChange: (hasFocus) {if(!hasFocus) {_nsCubit(context).notifyDataChanged();}},
+              child: TextFormField(
+                key: UniqueKey(),
+                initialValue: uge.launchOptions,
+                decoration: InputDecoration(labelText: tr("launch_options")),
+                autovalidateMode: AutovalidateMode.onUserInteraction,
+                onChanged: (value) {
+                  uge.launchOptions = value!;
+                  gv.modified = true;
+                  //_nsCubit(context).notifyDataChanged();
+                },
+                /*onSaved: (value) => {
+                  uge.name = value!
+                },
+                validator: (String? value) {
+                  if (value == null || value.isEmpty) {
+                    return tr("please_enter_text");
+                  }
+                  return null;
+                },*/
+              ),
             ),
             DropdownButtonFormField<String>(
-              //key: ObjectKey("${baseKey}_2"),
+                //key: ObjectKey("${baseKey}_2"),
                 items: availableProntons.map<DropdownMenuItem<String>>((String e) {
                   return DropdownMenuItem<String>(value: e, child: Text(e));
                 }).toList(),
@@ -627,7 +700,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
   Widget _buildInfoBar(BuildContext context, BaseDataChanged state, CustomTheme themeExtension) {
     return Container(
         color: themeExtension.infoBarBgColor,
-        padding: EdgeInsets.all(8),
+        padding: const EdgeInsets.all(8),
         child: Row(
           children: [
             Expanded(
@@ -637,15 +710,15 @@ class _GameMgrPageState extends State<GameMgrPage> {
               ),
             ),
             Padding(
-              padding: EdgeInsets.fromLTRB(0, 0, 16, 0),
+              padding: const EdgeInsets.fromLTRB(0, 0, 16, 0),
               child: TextButton(
                   onPressed: () => _nsCubit(context).cycleViewType(),
                   child: Container(
-                      padding: EdgeInsets.all(5),
+                      padding: const EdgeInsets.all(5),
                       color: Colors.black38,
                       child: Text(
                         viewTypesStr[state.gameExecutableImageType.index],
-                        style: TextStyle(color: Colors.white),
+                        style: const TextStyle(color: Colors.white),
                       ))),
             ),
             Tooltip(
@@ -654,10 +727,10 @@ class _GameMgrPageState extends State<GameMgrPage> {
                 children: [
                   Container(height: 15, width: 15, color: Colors.red),
                   Padding(
-                    padding: EdgeInsets.fromLTRB(8, 0, 8, 0),
+                    padding: const EdgeInsets.fromLTRB(8, 0, 8, 0),
                     child: Text(
                       state.notAddedGamesCount.toString(),
-                      style: TextStyle(color: Colors.white),
+                      style: const TextStyle(color: Colors.white),
                     ),
                   ),
                 ],
@@ -669,10 +742,10 @@ class _GameMgrPageState extends State<GameMgrPage> {
                 children: [
                   Container(height: 15, width: 15, color: Colors.orange),
                   Padding(
-                    padding: EdgeInsets.fromLTRB(8, 0, 8, 0),
+                    padding: const EdgeInsets.fromLTRB(8, 0, 8, 0),
                     child: Text(
                       state.addedGamesCount.toString(),
-                      style: TextStyle(color: Colors.white),
+                      style: const TextStyle(color: Colors.white),
                     ),
                   ),
                 ],
@@ -684,10 +757,10 @@ class _GameMgrPageState extends State<GameMgrPage> {
                 children: [
                   Container(height: 15, width: 15, color: Colors.green),
                   Padding(
-                    padding: EdgeInsets.fromLTRB(8, 0, 8, 0),
+                    padding: const EdgeInsets.fromLTRB(8, 0, 8, 0),
                     child: Text(
                       state.fullyAddedGamesCount.toString(),
-                      style: TextStyle(color: Colors.white),
+                      style: const TextStyle(color: Colors.white),
                     ),
                   ),
                 ],
@@ -699,10 +772,10 @@ class _GameMgrPageState extends State<GameMgrPage> {
                 children: [
                   Container(height: 15, width: 15, color: Colors.blue.shade200),
                   Padding(
-                      padding: EdgeInsets.fromLTRB(8, 0, 8, 0),
+                      padding: const EdgeInsets.fromLTRB(8, 0, 8, 0),
                       child: Text(
                         state.addedExternal.toString(),
-                        style: TextStyle(color: Colors.white),
+                        style: const TextStyle(color: Colors.white),
                       )),
                 ],
               ),
@@ -713,12 +786,12 @@ class _GameMgrPageState extends State<GameMgrPage> {
                 padding: const EdgeInsets.fromLTRB(8.0, 0, 8, 0),
                 child: Row(
                   children: [
-                    Icon(Icons.sd_card),
+                    const Icon(Icons.sd_card),
                     Padding(
-                      padding: EdgeInsets.fromLTRB(8, 0, 0, 0),
+                      padding: const EdgeInsets.fromLTRB(8, 0, 0, 0),
                       child: Text(
                         "${StringTools.bytesToStorageUnity(state.freeSDCardSpace)} / ${StringTools.bytesToStorageUnity(state.totalSDCardSpace)}",
-                        style: TextStyle(color: Colors.white),
+                        style: const TextStyle(color: Colors.white),
                       ),
                     ),
                   ],
@@ -731,12 +804,12 @@ class _GameMgrPageState extends State<GameMgrPage> {
                 padding: const EdgeInsets.fromLTRB(8.0, 0, 8, 0),
                 child: Row(
                   children: [
-                    Icon(Icons.storage),
+                    const Icon(Icons.storage),
                     Padding(
-                      padding: EdgeInsets.fromLTRB(8, 0, 0, 0),
+                      padding: const EdgeInsets.fromLTRB(8, 0, 0, 0),
                       child: Text(
                         "${StringTools.bytesToStorageUnity(state.freeSSDSpace)} / ${StringTools.bytesToStorageUnity(state.totalSSDSpace)}",
-                        style: TextStyle(color: Colors.white),
+                        style: const TextStyle(color: Colors.white),
                       ),
                     ),
                   ],
@@ -811,11 +884,11 @@ class _GameMgrPageState extends State<GameMgrPage> {
               children: [
                 RichText(
                     text: TextSpan(children: [
-                      TextSpan(text: tr("going_to")),
-                      TextSpan(text: tr("delete_capitals"), style: const TextStyle(color: Colors.redAccent)),
-                      TextSpan(text: tr("delete_selected_game_dialog_text" )),
-                      TextSpan(text: tr("warning_action_undone"), style: TextStyle(color: Colors.red, fontSize: 18, height: 2))
-                    ])),
+                  TextSpan(text: tr("going_to")),
+                  TextSpan(text: tr("delete_capitals"), style: const TextStyle(color: Colors.redAccent)),
+                  TextSpan(text: tr("delete_selected_game_dialog_text")),
+                  TextSpan(text: tr("warning_action_undone"), style: const TextStyle(color: Colors.red, fontSize: 18, height: 2))
+                ])),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(0, 16, 0, 0),
                   child: Column(children: [
@@ -823,7 +896,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
                       Expanded(
                           child: CheckboxListTile(
                               dense: true,
-                              title: Text(
+                              title: const Text(
                                 "CompatData",
                                 style: TextStyle(fontSize: 14),
                               ),
@@ -832,7 +905,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
                       Expanded(
                           child: CheckboxListTile(
                               dense: true,
-                              title: Text("ShaderData", style: TextStyle(fontSize: 14)),
+                              title: const Text("ShaderData", style: TextStyle(fontSize: 14)),
                               value: deleteShaderData,
                               onChanged: (value) => setState(() => deleteShaderData = value!))),
                     ]),
@@ -841,7 +914,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
                         Expanded(
                             child: CheckboxListTile(
                                 dense: true,
-                                title: Text("Images", style: TextStyle(fontSize: 14)),
+                                title: const Text("Images", style: TextStyle(fontSize: 14)),
                                 value: deleteImages,
                                 onChanged: (value) => setState(() => deleteImages = value!))),
                         Expanded(child: Container())
@@ -854,7 +927,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
           }),
           actions: <Widget>[
             BasicDialogAction(
-              title: Text("OK"),
+              title: const Text("OK"),
               onPressed: () async {
                 nsCubit.deleteSelectedGames(deleteImages, deleteCompatData, deleteShaderData);
                 Navigator.pop(context);
@@ -892,11 +965,11 @@ class _GameMgrPageState extends State<GameMgrPage> {
               children: [
                 RichText(
                     text: TextSpan(children: [
-                      TextSpan(text: tr("going_to")),
-                      TextSpan(text: tr("delete_capitals"), style: TextStyle(color: Colors.redAccent)),
-                      TextSpan(text: tr("delete_game_dialog_text", args: ['${game.name}'])),
-                      TextSpan(text: tr("warning_action_undone"), style: TextStyle(color: Colors.red, fontSize: 18, height: 2))
-                    ])),
+                  TextSpan(text: tr("going_to")),
+                  TextSpan(text: tr("delete_capitals"), style: const TextStyle(color: Colors.redAccent)),
+                  TextSpan(text: tr("delete_game_dialog_text", args: ['${game.name}'])),
+                  TextSpan(text: tr("warning_action_undone"), style: const TextStyle(color: Colors.red, fontSize: 18, height: 2))
+                ])),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(0, 16, 0, 0),
                   child: Column(children: [
@@ -904,7 +977,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
                       Expanded(
                           child: CheckboxListTile(
                               dense: true,
-                              title: Text(
+                              title: const Text(
                                 "CompatData",
                                 style: TextStyle(fontSize: 14),
                               ),
@@ -913,7 +986,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
                       Expanded(
                           child: CheckboxListTile(
                               dense: true,
-                              title: Text("ShaderData", style: TextStyle(fontSize: 14)),
+                              title: const Text("ShaderData", style: TextStyle(fontSize: 14)),
                               value: deleteShaderData,
                               onChanged: (value) => setState(() => deleteShaderData = value!))),
                     ]),
@@ -922,7 +995,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
                         Expanded(
                             child: CheckboxListTile(
                                 dense: true,
-                                title: Text("Images", style: TextStyle(fontSize: 14)),
+                                title: const Text("Images", style: TextStyle(fontSize: 14)),
                                 value: deleteImages,
                                 onChanged: (value) => setState(() => deleteImages = value!))),
                         Expanded(child: Container())
@@ -935,7 +1008,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
           }),
           actions: <Widget>[
             BasicDialogAction(
-              title: Text("OK"),
+              title: const Text("OK"),
               onPressed: () async {
                 nsCubit.deleteGame(game, deleteImages, deleteCompatData, deleteShaderData);
                 Navigator.pop(context);
@@ -953,7 +1026,12 @@ class _GameMgrPageState extends State<GameMgrPage> {
     );
   }
 
-  void _exportSelectedGames() async {
+  void _exportSelectedGames(List<GameView> games) async {
+    if(games.where((o)=>o.selected).isEmpty) {
+      EasyLoading.showToast(tr("no_action_no_games_selected"));
+      return;
+    }
+
     var nsCubit = _nsCubit(context);
     showPlatformDialog(
       context: context,
@@ -971,7 +1049,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
           ]),
           actions: <Widget>[
             BasicDialogAction(
-              title: Text("OK"),
+              title: const Text("OK"),
               onPressed: () {
                 nsCubit.exportSelectedGames();
                 Navigator.pop(context);
@@ -989,7 +1067,13 @@ class _GameMgrPageState extends State<GameMgrPage> {
     );
   }
 
-  void _importSelectedGamesConfig() async {
+  void _importSelectedGamesConfig(List<GameView> games) async {
+
+    if(games.where((o)=>o.selected).isEmpty) {
+      EasyLoading.showToast(tr("no_action_no_games_selected"));
+      return;
+    }
+
     var nsCubit = _nsCubit(context);
     showPlatformDialog(
       context: context,
@@ -1007,7 +1091,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
           ]),
           actions: <Widget>[
             BasicDialogAction(
-              title: Text("OK"),
+              title: const Text("OK"),
               onPressed: () {
                 nsCubit.importSelectedGamesConfig();
                 Navigator.pop(context);
@@ -1028,7 +1112,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
   //Import game
   void _importGameConfig(GameView gv) async {
     var nsCubit = _nsCubit(context);
-    showPlatformDialog(
+    Future.microtask(() => showPlatformDialog(
       context: context,
       builder: (context) {
         return BasicDialogAlert(
@@ -1044,7 +1128,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
           ]),
           actions: <Widget>[
             BasicDialogAction(
-              title: Text("OK"),
+              title: const Text("OK"),
               onPressed: () {
                 nsCubit.importGameConfig(gv);
                 Navigator.pop(context);
@@ -1059,10 +1143,16 @@ class _GameMgrPageState extends State<GameMgrPage> {
           ],
         );
       },
-    );
+    ));
   }
 
-  void _deleteSelectedGameConfigs() {
+  void _deleteSelectedGameConfigs(List<GameView> games) {
+
+    if(games.where((o)=>o.selected).isEmpty) {
+      EasyLoading.showToast(tr("no_action_no_games_selected"));
+      return;
+    }
+
     var nsCubit = _nsCubit(context);
     showPlatformDialog(
       context: context,
@@ -1080,7 +1170,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
           ]),
           actions: <Widget>[
             BasicDialogAction(
-              title: Text("OK"),
+              title: const Text("OK"),
               onPressed: () {
                 nsCubit.deleteSelectedGameConfigs();
                 Navigator.pop(context);
@@ -1101,37 +1191,37 @@ class _GameMgrPageState extends State<GameMgrPage> {
   void _deleteGameConfig(GameView gv) {
     var nsCubit = _nsCubit(context);
     Future.microtask(() => showPlatformDialog(
-      context: context,
-      builder: (context) {
-        return BasicDialogAlert(
-          title: Row(children: [
-            const Padding(
-              padding: EdgeInsets.fromLTRB(0, 0, 8.0, 0),
-              child: Icon(Icons.warning, color: Colors.red),
-            ),
-            Text(tr('warning'))
-          ]),
-          content: Column(mainAxisSize: MainAxisSize.min, children: [
-            Text(tr("delete_game_config_dialog_text",args:[gv.game.name])),
-          ]),
-          actions: <Widget>[
-            BasicDialogAction(
-              title: Text("OK"),
-              onPressed: () {
-                nsCubit.deleteGameConfig(gv);
-                Navigator.pop(context);
-              },
-            ),
-            BasicDialogAction(
-              title: Text(tr("cancel")),
-              onPressed: () {
-                Navigator.pop(context);
-              },
-            ),
-          ],
-        );
-      },
-    ));
+          context: context,
+          builder: (context) {
+            return BasicDialogAlert(
+              title: Row(children: [
+                const Padding(
+                  padding: EdgeInsets.fromLTRB(0, 0, 8.0, 0),
+                  child: Icon(Icons.warning, color: Colors.red),
+                ),
+                Text(tr('warning'))
+              ]),
+              content: Column(mainAxisSize: MainAxisSize.min, children: [
+                Text(tr("delete_game_config_dialog_text", args: [gv.game.name])),
+              ]),
+              actions: <Widget>[
+                BasicDialogAction(
+                  title: const Text("OK"),
+                  onPressed: () {
+                    nsCubit.deleteGameConfig(gv);
+                    Navigator.pop(context);
+                  },
+                ),
+                BasicDialogAction(
+                  title: Text(tr("cancel")),
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                ),
+              ],
+            );
+          },
+        ));
   }
 
   void _renameGame(BuildContext context, Game game) {
@@ -1143,14 +1233,14 @@ class _GameMgrPageState extends State<GameMgrPage> {
       builder: (context) => BasicDialogAlert(
         title: Text(tr("rename_game")),
         content: Padding(
-          padding: EdgeInsets.all(8),
+          padding: const EdgeInsets.all(8),
           child: TextField(
             controller: _genericTextController,
           ),
         ),
         actions: <Widget>[
           BasicDialogAction(
-              title: Text("OK"),
+              title: const Text("OK"),
               onPressed: () async {
                 var text = _genericTextController.text;
                 RegExp r = RegExp(r'^[\w\-. ]+$');
@@ -1159,17 +1249,17 @@ class _GameMgrPageState extends State<GameMgrPage> {
                   showPlatformDialog(
                       context: context,
                       builder: (context) => BasicDialogAlert(
-                          title: Text(tr('invalid_game_name')),
-                          content: const Padding(
-                              padding: EdgeInsets.all(8),
-                              child: Text("The name is not valid. You can use numbers, letters,  and '-','_','.' characters.")),
-                          actions: [
-                            BasicDialogAction(
-                                title: Text("OK"),
-                                onPressed: () {
-                                  Navigator.pop(context);
-                                })
-                          ]));
+                              title: Text(tr('invalid_game_name')),
+                              content: const Padding(
+                                  padding: EdgeInsets.all(8),
+                                  child: Text("The name is not valid. You can use numbers, letters,  and '-','_','.' characters.")),
+                              actions: [
+                                BasicDialogAction(
+                                    title: const Text("OK"),
+                                    onPressed: () {
+                                      Navigator.pop(context);
+                                    })
+                              ]));
                   return;
                 }
                 cubit.renameGame(game, _genericTextController.text);
@@ -1206,7 +1296,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
         ),
         actions: <Widget>[
           BasicDialogAction(
-            title: Text("OK"),
+            title: const Text("OK"),
             onPressed: () async {
               Navigator.pop(context);
               EasyLoading.show(status: tr("closing_steam"));
@@ -1229,73 +1319,108 @@ class _GameMgrPageState extends State<GameMgrPage> {
     );
   }
 
-  Widget _getGameSteamImage(BuildContext context, GameView gv, GameExecutableImageType imageType, bool batchMode) {
+  Widget _getGameSteamImage(BuildContext context, GameView gv, GameExecutableImageType imageType, bool multiSelectionMode) {
     //50 x 100 (Pequeño) 0 padding
     //75 x 125 (Medio)    "
     //100x150 (Grande)    "
     //48x48     padding 4 (arriba y abajo)
 
     if (imageType == GameExecutableImageType.None) {
-      return batchMode && gv.hasConfig ? Container(width: 3, height: 16, color: Colors.redAccent) : Container();
+      return multiSelectionMode && gv.hasConfig ? Container(width: 3, height: 16, color: Colors.redAccent) : Container();
     } else if (imageType == GameExecutableImageType.Icon) {
       return Row(children: [
-        if(batchMode && gv.hasConfig ) Container(width: 3, height: 48, color: Colors.redAccent),
+        if (multiSelectionMode && gv.hasConfig) Container(width: 3, height: 48, color: Colors.redAccent),
         gv.gameImagePath == null
-            ? Container(color: Colors.grey.shade800, width: 48, height: 48, child: Icon(Icons.question_mark))
+            ? Container(color: Colors.grey.shade800, width: 48, height: 48, child: const Icon(Icons.question_mark))
             : Image.file(
-          File(gv.gameImagePath!),
-          width: 48,
-          height: 48,
-          fit: BoxFit.fill,
-          filterQuality: FilterQuality.medium,
-        ),
+                File(gv.gameImagePath!),
+                width: 48,
+                height: 48,
+                fit: BoxFit.fill,
+                filterQuality: FilterQuality.medium,
+              ),
       ]);
     } else if (imageType == GameExecutableImageType.CoverSmall) {
       return Row(children: [
-        if(batchMode && gv.hasConfig ) Container(width: 3, height: 75, color: Colors.redAccent),gv.gameImagePath == null
-            ? Container(color: Colors.grey.shade800, width: 50, height: 75, child: Icon(Icons.question_mark))
-            : Image.file(File(gv.gameImagePath!), width: 50, height: 75, fit: BoxFit.fill, filterQuality: FilterQuality.medium)]);
+        if (multiSelectionMode && gv.hasConfig) Container(width: 3, height: 75, color: Colors.redAccent),
+        gv.gameImagePath == null
+            ? Container(color: Colors.grey.shade800, width: 50, height: 75, child: const Icon(Icons.question_mark))
+            : Image.file(File(gv.gameImagePath!), width: 50, height: 75, fit: BoxFit.fill, filterQuality: FilterQuality.medium)
+      ]);
     } else if (imageType == GameExecutableImageType.CoverMedium) {
       return Row(children: [
-        if(batchMode && gv.hasConfig ) Container(width: 3, height: 125, color: Colors.redAccent),gv.gameImagePath == null
-            ? Container(color: Colors.grey.shade800, width: 75, height: 125, child: Icon(Icons.question_mark))
-            : Image.file(File(gv.gameImagePath!), width: 75, height: 125, fit: BoxFit.fill, filterQuality: FilterQuality.medium)]);
+        if (multiSelectionMode && gv.hasConfig) Container(width: 3, height: 125, color: Colors.redAccent),
+        gv.gameImagePath == null
+            ? Container(color: Colors.grey.shade800, width: 75, height: 125, child: const Icon(Icons.question_mark))
+            : Image.file(File(gv.gameImagePath!), width: 75, height: 125, fit: BoxFit.fill, filterQuality: FilterQuality.medium)
+      ]);
     } else if (imageType == GameExecutableImageType.CoverBig) {
       return Row(children: [
-        if(batchMode && gv.hasConfig ) Container(width: 3, height: 150, color: Colors.redAccent),gv.gameImagePath == null
-            ? Container(color: Colors.grey.shade800, width: 100, height: 150, child: Icon(Icons.question_mark))
-            : Image.file(File(gv.gameImagePath!), width: 100, height: 150, fit: BoxFit.fill, filterQuality: FilterQuality.medium)]);
-    } else {
-      double width = MediaQuery.of(context).size.width-90;
+        if (multiSelectionMode && gv.hasConfig) Container(width: 3, height: 150, color: Colors.redAccent),
+        gv.gameImagePath == null
+            ? Container(color: Colors.grey.shade800, width: 100, height: 150, child: const Icon(Icons.question_mark))
+            : Image.file(File(gv.gameImagePath!), width: 100, height: 150, fit: BoxFit.fill, filterQuality: FilterQuality.medium)
+      ]);
+    } else if (imageType == GameExecutableImageType.Banner) {
+      double width = MediaQuery.of(context).size.width - 90;
       return Row(children: [
-        if(batchMode && gv.hasConfig ) Container(width: 3, height: 150, color: Colors.redAccent),gv.gameImagePath == null
+        if (multiSelectionMode && gv.hasConfig) Container(width: 3, height: 150, color: Colors.redAccent),
+        gv.gameImagePath == null
             ? Expanded(
-            child: Container(
+                child: Container(
+                    color: Colors.grey.shade800,
+                    height: 150,
+                    child: const Icon(
+                      Icons.question_mark,
+                      size: 80,
+                    )))
+            : Image.file(File(gv.gameImagePath!), width: width, height: 150, fit: BoxFit.fitWidth, filterQuality: FilterQuality.medium)
+      ]);
+    } else if (imageType == GameExecutableImageType.HalfBanner) {
+      print("${gv.game.name} ${gv.gameImagePath}");
+      return Row(children: [
+        if (multiSelectionMode && gv.hasConfig) Container(width: 3, height: 150, color: Colors.redAccent),
+        gv.gameImagePath == null
+            ? Container(
                 color: Colors.grey.shade800,
+                width: 465,
                 height: 150,
-                child: Icon(
+                child: const Icon(
                   Icons.question_mark,
                   size: 80,
-                )))
-            : Image.file(File(gv.gameImagePath!), width: width, height: 150, fit: BoxFit.fitWidth, filterQuality: FilterQuality.medium)]);
+                ))
+            : Image.file(File(gv.gameImagePath!), width: 465, height: 150, fit: BoxFit.fitWidth, filterQuality: FilterQuality.medium)
+      ]);
+    } else {
+      return Container(child: const Text("Error with image type"));
     }
   }
 
   Widget getGamesView(BuildContext context, GameView gameView, int index, BaseDataChanged state, CustomTheme themeExtension) {
     if (state.gameExecutableImageType == GameExecutableImageType.Banner) {
       return Padding(
-        padding: const EdgeInsets.fromLTRB(8,8,8,8),
+        padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
         child: _createGameCardFullBannerSize(gameView, index, themeExtension, state),
       );
-    } else {
+    }
+    else if(state.gameExecutableImageType == GameExecutableImageType.HalfBanner) {
       return Padding(
-        padding: const EdgeInsets.fromLTRB(8,8,8,8),
+        padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
+        child: _createGameCardHalfBannerSize(gameView, index, themeExtension, state)
+      );
+    }
+    else {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
         child: _createGameCardImage(context, gameView, index, themeExtension, state),
       );
     }
   }
 
-
-
-
+  Widget? _getDateText(GameView gameView) {
+    return gameView.game.isExternal
+        ? null
+        : Text("Updated on ${DateFormat('dd-MM-yyyy').format(gameView.game.creationDate)}",
+        style: TextStyle(fontSize: 12, color: Colors.grey.shade500));
+  }
 }

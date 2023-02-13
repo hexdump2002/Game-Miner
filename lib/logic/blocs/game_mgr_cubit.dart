@@ -98,10 +98,10 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
   int _fullyAddedGamesCount = 0;
   int _addedExternalCount = 0;
 
-  bool _batchMode = false;
-  bool getBatchMode() { return _batchMode;}
-  void swapBatchMode() {
-    _batchMode = !_batchMode;
+  bool _multiSelectionMode = false;
+  bool getMultiSelectionMode() { return _multiSelectionMode;}
+  void swapMultiSelectionMode() {
+    _multiSelectionMode = !_multiSelectionMode;
     notifyDataChanged();
   }
 
@@ -164,7 +164,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
         _sortIndex,
         _sortDirectionIndex,
         searchText,
-        _currentImageType!,_batchMode));
+        _currentImageType!,_multiSelectionMode));
 
     stopwatch.stop();
     print('[Logic] Time taken to execute method: ${stopwatch.elapsed}');
@@ -261,7 +261,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
         _sortIndex,
         _sortDirectionIndex,
         searchText,
-        _currentImageType!,_batchMode));
+        _currentImageType!,_multiSelectionMode));
   }
 
   Future<void> trySave() async {
@@ -369,6 +369,11 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
   }
 
   void tryDeleteSelected() async {
+    if(_gameViews.where((o)=>o.selected).isEmpty) {
+      EasyLoading.showToast(tr("no_action_no_games_selected"));
+      return;
+    }
+
     if (await SteamTools.isSteamRunning()) {
       emit(SteamDetected(() {
         emit(DeleteSelectedClicked());
@@ -766,9 +771,9 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
     if (_sortIndex == 0) {
       return sortByName(gvs);
     } else if (_sortIndex == 1) {
-      return sortByStatus(gvs);
-    } else if (_sortIndex == 2) {
       return sortBySize(gvs);
+    } else if (_sortIndex == 2) {
+      return sortByStatus(gvs);
     } else if (_sortIndex == 3) {
       return sortByWithErrors(gvs);
     } else if (_sortIndex == 4) {
@@ -802,7 +807,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
         _sortIndex,
         _sortDirectionIndex,
         searchText,
-        _currentImageType!,_batchMode));
+        _currentImageType!,_multiSelectionMode));
   }
 
   void openFolder(Game game) async {
@@ -814,7 +819,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
     }
   }
 
-  void saveGameMinerDataAppidMappings(List<Game> baseGames) {
+  void saveGameMinerDataAppidMappings(List<Game> baseGames) async {
     /*//TODO:We can get the data from here but the correct way should be creating a SteamApps repository but... today I'm too tired
     AppsStorageRepository asr = GetIt.I<AppsStorageRepository>();
     var appsStorage = asr.getAll()!;*/
@@ -830,15 +835,9 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
       }
     }
 
-    //It seems steam handles these games as it should deleting the data when uninstalled
-    /*for(AppStorage appStorage in appsStorage) {
-      if(appStorage.isSteamApp) {
-        gmd.appsIdToName[appStorage.appId] = appStorage.name;
-      }
-    }*/
 
     repo.update(gmd);
-    repo.save();
+    await repo.save(_currentUserSettings.backupsEnabled, _currentUserSettings.maxBackupsCount);
   }
 
   Future<void> exportSelectedGames()async {
@@ -949,7 +948,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
         _sortIndex,
         _sortDirectionIndex,
         searchText,
-        _currentImageType!,_batchMode));
+        _currentImageType!,_multiSelectionMode));
   }
 
   void setViewType(GameExecutableImageType geit) {

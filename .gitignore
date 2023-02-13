@@ -26,4 +26,4 @@ settings.cfg
 /build-dir/
 /.flatpak-builder/
 /GameMiner-Linux-Portable.tar.gz
-/game_miner.json
+/game_miner.js*

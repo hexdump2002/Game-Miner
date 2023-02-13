@@ -421,6 +421,9 @@ class GameTools {
         case GameExecutableImageType.Banner:
           path = ge.images.heroImage;
           break;
+        case GameExecutableImageType.HalfBanner:
+          path = ge.images.heroImage;
+          break;
         default:
           path = null;
       }

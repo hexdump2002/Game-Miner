@@ -27,7 +27,7 @@ class MainPage extends StatefulWidget {
   State<MainPage> createState() => _MainPageState();
 }
 
-class _MainPageState extends State<MainPage> with WindowListener{
+class _MainPageState extends State<MainPage> with WindowListener {
   List<dynamic> _cubits = List.generate(4, (index) => null);
   List<Widget?> _pages = List.generate(4, (index) => null);
 
@@ -49,26 +49,27 @@ class _MainPageState extends State<MainPage> with WindowListener{
 
   @override
   void onWindowClose() async {
-
-    if(_cubits[2]!=null && (_cubits[2] as SettingsCubit).modified) {
-      showSimpleDialog(context, tr("config_not_saved_exit_caption"), tr("config_not_saved_exit"), true, true,  () async {
-        Navigator.of(context).pop();
-        await windowManager.destroy();
-      });
-    }
-    else if((_cubits[0] as GameMgrCubit).modified) {
-      showSimpleDialog(context, tr("data_not_saved_exit_caption"), tr("data_not_saved_exit"), true, true,  () async {
-        Navigator.of(context).pop();
-        await windowManager.destroy();
-      });
-    }
-    else
-    {
-      await windowManager.destroy();
-    }
-
-
+    showDataNotSavedDialog(context,tr("warning"), tr("config_not_saved_exit_text"),tr("warning"), tr("data_not_saved_exit_text"),() async => await windowManager.destroy());
   }
+
+  void showDataNotSavedDialog(BuildContext buildContext, String configNotSavedCaption, String configNotSaveText, String dataNotSavedCaption, String dataNotSavedText,VoidCallback doAction) async {
+    if (_cubits[2] != null && (_cubits[2] as SettingsCubit).modified) {
+      showSimpleDialog(buildContext,configNotSavedCaption,configNotSaveText, true, true, () async {
+        //Navigator.of(buildContext).pop();
+        doAction();
+      });
+    }
+    else if ((_cubits[0] as GameMgrCubit).modified) {
+      showSimpleDialog(buildContext,dataNotSavedCaption, dataNotSavedText, true, true, () async {
+        //Navigator.of(buildContext).pop();
+        doAction();
+      });
+    }
+    else {
+      doAction();
+    }
+  }
+
 
   void _init() async {
     // Add this line to override the default close handler
@@ -110,13 +111,13 @@ class _MainPageState extends State<MainPage> with WindowListener{
             selectedIndex: selectedIndex,
             groupAlignment: 0,
             onDestinationSelected: (int index) {
-              if(canMoveToDiffentPage()) {
+              if (canMoveToDiffentPage()) {
                 BlocProvider
                     .of<MainPageCubit>(context)
                     .selectedIndex = index;
               }
               else {
-                if(_bloc.selectedIndex == 2) {
+                if (_bloc.selectedIndex == 2) {
                   showSimpleDialog(context, tr("config_not_saved_exit_caption"), tr('config_not_saved_exit'), true, true, () async {
                     BlocProvider
                         .of<MainPageCubit>(context)
@@ -137,11 +138,11 @@ class _MainPageState extends State<MainPage> with WindowListener{
                         radius: 30,
                         child: su.avatarUrlMedium != null
                             ? CachedNetworkImage(imageUrl: su.avatarUrlMedium!,
-                                placeholder: (context, url) => CircularProgressIndicator(),
-                                errorWidget: (context, error, stackTrace) {
-                                  return const Icon(Icons.person);
-                                },
-                              )
+                          placeholder: (context, url) => CircularProgressIndicator(),
+                          errorWidget: (context, error, stackTrace) {
+                            return const Icon(Icons.person);
+                          },
+                        )
                             : const Icon(Icons.person)),
                   ),
                 ),
@@ -194,19 +195,18 @@ class _MainPageState extends State<MainPage> with WindowListener{
           ),
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(0,0,0,8),
+          padding: const EdgeInsets.fromLTRB(0, 0, 0, 8),
           child: Tooltip(
             message: tr("open_steam"),
             child: GestureDetector(
-              child: Image.asset('assets/images/steam.png',width: 64, height: 64,),
-              onTap: () async {
-                // do something when the button is pressed
-                EasyLoading.show(status: tr("opening_steam"));
-                SteamTools.openSteamClient(false);
-                await Future.delayed(const Duration(seconds: 3));
-                EasyLoading.dismiss();
-
-              }),
+                child: Image.asset('assets/images/steam.png', width: 64, height: 64,),
+                onTap: () async {
+                  // do something when the button is pressed
+                  EasyLoading.show(status: tr("opening_steam"));
+                  SteamTools.openSteamClient(false);
+                  await Future.delayed(const Duration(seconds: 3));
+                  EasyLoading.dismiss();
+                }),
           ),
         ),
         Text("Ver.Testing")
@@ -225,7 +225,7 @@ class _MainPageState extends State<MainPage> with WindowListener{
         {
           var cubit = GameMgrCubit();
           _cubits[0] = cubit;
-          widget = BlocProvider.value(value: cubit,   child: GameMgrPage());
+          widget = BlocProvider.value(value: cubit, child: GameMgrPage());
           break;
         }
       case 1:
@@ -237,7 +237,11 @@ class _MainPageState extends State<MainPage> with WindowListener{
         break;
       case 2:
         widget = BlocProvider(
-          create: (context) { var cubit=SettingsCubit(); _cubits[2] = cubit; return cubit;},
+          create: (context) {
+            var cubit = SettingsCubit();
+            _cubits[2] = cubit;
+            return cubit;
+          },
           child: SettingsPage(),
         );
         break;
@@ -253,26 +257,29 @@ class _MainPageState extends State<MainPage> with WindowListener{
     return widget;
   }
 
-  void _showUserSelector(BuildContext context, String caption) {
-    showPlatformDialog(
-      context: context,
-      builder: (context) => BasicDialogAlert(
-          title: Text(caption),
-          content: SteamUserSelector(userSelectedCallback: (BuildContext context, SteamUser steamUser) => {_bloc.changeUser(context, steamUser)}),
-          actions: [
-            BasicDialogAction(
-              title: Text(tr("cancel")),
-              onPressed: () {
-                Navigator.pop(context);
-              },
-            ),
-          ]),
-    );
+  void _showUserSelector(BuildContext buildContext, String caption) {
+
+    showDataNotSavedDialog(buildContext, tr("warning"), tr("config_not_saved_change_user_text"),tr("warning"), tr("data_not_saved_change_user_text"),() {
+      Future.microtask(() => showPlatformDialog(
+        context: context,
+        builder: (context) =>
+            BasicDialogAlert(
+                title: Text(caption),
+                content: SteamUserSelector(
+                    userSelectedCallback: (BuildContext context, SteamUser steamUser) => {_bloc.changeUser(buildContext, steamUser)}),
+                actions: [
+                  BasicDialogAction(
+                    title: Text(tr("cancel")),
+                    onPressed: () {
+                      Navigator.pop(buildContext);
+                    },
+                  ),
+                ]),
+      ));});
   }
 
   bool canMoveToDiffentPage() {
-
-    if(_bloc.selectedIndex == 2 && (_cubits[2] as SettingsCubit).modified) {
+    if (_bloc.selectedIndex == 2 && (_cubits[2] as SettingsCubit).modified) {
       return false;
     }
 

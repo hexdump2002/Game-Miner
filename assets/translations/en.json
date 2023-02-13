@@ -100,10 +100,10 @@
   "reset_changing_user": "After changing users Game miner needs to be restarted. Press Ok, and relaunch Game Miner",
   "game_modified": "With changes",
   "settings_close_steam_at_startup": "Close Steam at startup",
-  "config_not_saved_exit_caption": "Config not saved",
-  "config_not_saved_exit": "The are configuration changes that have not been saved. If you exit you will loose them. Do you want to exit now?",
-  "data_not_saved_exit_caption": "Game data not saved",
-  "data_not_saved_exit": "The is game data that has not been saved. Do you want to exit?",
+  "config_not_saved_exit_text": "The are configuration changes that have not been saved. If you exit you will loose them. Do you want to exit now?",
+  "data_not_saved_exit_text": "The is game data that has not been saved. Do you want to exit?",
+  "config_not_saved_change_user_text": "The are configuration changes that have not been saved. If you change users you will loose them. Do you want to change users now?",
+  "data_not_saved_change_user_text": "There is game data that has not been saved. If you change users you will loose them. Do you want to change users now?",
   "name": "Name",
   "search": "Search",
   "launch_options": "Launch options",
@@ -135,5 +135,7 @@
   "size": "Size",
   "status": "Status",
   "notification": "Notification",
-  "date": "Date"
+  "date": "Date",
+  "multi_selection_mode": "Multi selection mode",
+  "no_action_no_games_selected": "This action can't be accomplished because there are no games selected"
 }
