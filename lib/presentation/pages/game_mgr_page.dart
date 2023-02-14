@@ -292,6 +292,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
   Widget _buildContextMenu(GameView gameView) {
     return PopupMenuButton<ContextMenuItem>(
       initialValue: null,
+      enabled: !gameView.game.isExternal,
       // Callback that sets the selected popup menu item.
       onSelected: (ContextMenuItem item) {},
       itemBuilder: (BuildContext context) => <PopupMenuEntry<ContextMenuItem>>[
@@ -336,8 +337,9 @@ class _GameMgrPageState extends State<GameMgrPage> {
   }
 
   Widget _createGameCardImage(BuildContext context, GameView gameView, int index, CustomTheme themeExtension, BaseDataChanged state) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(0, 4, 0, 4),
+    return Container(
+      color: const Color.fromARGB(255, 80, 80, 80),
+      padding: EdgeInsets.fromLTRB(0,4, 0, 4),
       child: ExpandablePanel(
         controller: ExpandableController(initialExpanded: gameView.isExpanded)..addListener(() => _nsCubit(context).swapExpansionStateForItem(index)),
         header: Row(
@@ -402,138 +404,125 @@ class _GameMgrPageState extends State<GameMgrPage> {
 
   //region Full Baner
   Widget _createGameCardFullBannerSize(GameView gameView, int index, CustomTheme themeExtension, BaseDataChanged state) {
-    return Row(
-      children: [
-        if (state.multiSelectionMode) Checkbox(value: gameView.selected, onChanged: (value) => {_nsCubit(context).swapGameViewSelected(gameView)}),
-        Expanded(
-          child: Stack(
-            children: [
-              InkWell(
-                  child: _getGameSteamImage(context, gameView, GameExecutableImageType.Banner, state.multiSelectionMode),
-                  onTap: () => _nsCubit(context).swapExpansionStateForItem(index)),
-              Container(
-                alignment: Alignment.center,
-                child: ExpandablePanel(
-                  controller: ExpandableController(initialExpanded: gameView.isExpanded)
-                    ..addListener(() => _nsCubit(context).swapExpansionStateForItem(index)),
-                  header: ListTile(
-                    title: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                                padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
-                                decoration: BoxDecoration(borderRadius: BorderRadius.circular(20), color: Colors.black.withAlpha(180)),
-                                child: Text(gameView.game.name, style: Theme.of(context).textTheme.headline5, textAlign: TextAlign.left)),
-                            Expanded(child: Container()),
-                            Container(
-                              padding: const EdgeInsets.fromLTRB(16, 0, 18, 0),
-                              decoration: BoxDecoration(borderRadius: BorderRadius.circular(20), color: Colors.black.withAlpha(180)),
-                              child: Row(children: [
-                                Padding(
-                                  padding: const EdgeInsets.fromLTRB(0, 0, 24, 0),
-                                  child: gameView.game.isExternal ? null : Text(StringTools.bytesToStorageUnity(gameView.game.gameSize)),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.fromLTRB(0, 0, 16, 0),
-                                  child: _getExeCurrentStateIcon(GameTools.getGameStatus(gameView.game)),
-                                ),
-                                _getErrorsOrModifiedIcon(gameView),
-                                _buildContextMenu(gameView)
-                              ]),
-                            )
-                          ],
+    return ExpandablePanel(
+      controller: ExpandableController(initialExpanded: gameView.isExpanded)
+        ..addListener(() => _nsCubit(context).swapExpansionStateForItem(index)),
+      header: Stack(
+        children: [
+          _getGameSteamImage(context, gameView, GameExecutableImageType.Banner, state.multiSelectionMode),
+          ListTile(
+            title: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    if (state.multiSelectionMode) Checkbox(value: gameView.selected, onChanged: (value) => {_nsCubit(context).swapGameViewSelected(gameView)}),
+                    Container(
+                        padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+                        decoration: BoxDecoration(borderRadius: BorderRadius.circular(20), color: Colors.black.withAlpha(180)),
+                        child: Text(gameView.game.name, style: Theme.of(context).textTheme.headline5, textAlign: TextAlign.left)),
+                    Expanded(child: Container()),
+                    Container(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 18, 0),
+                      decoration: BoxDecoration(borderRadius: BorderRadius.circular(20), color: Colors.black.withAlpha(180)),
+                      child: Row(children: [
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(0, 0, 24, 0),
+                          child: gameView.game.isExternal ? null : Text(StringTools.bytesToStorageUnity(gameView.game.gameSize)),
                         ),
-                        if (gameView.isExpanded)
-                          Column(
-                            children: [
-                              const SizedBox(
-                                height: 4,
-                              ),
-                              Container(
-                                padding: const EdgeInsets.all(4),
-                                color: Colors.black.withAlpha(180),
-                                child: Text(
-                                  "${gameView.game.path}",
-                                  textAlign: TextAlign.left,
-                                  style: TextStyle(color: themeExtension.gameCardHeaderPath, fontSize: 13),
-                                ),
-                              ),
-                            ],
-                          )
-                      ],
-                    ),
-                  ),
-                  expanded: Container(
-                      padding: const EdgeInsets.fromLTRB(0, 16, 0, 16),
-                      margin: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-                      decoration: BoxDecoration(borderRadius: BorderRadius.circular(20), color: Colors.black.withAlpha(100)),
-                      child: _buildGameTile(context, themeExtension, gameView, state.availableProntonNames)),
-                  collapsed: Container(),
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(0, 0, 16, 0),
+                          child: _getExeCurrentStateIcon(GameTools.getGameStatus(gameView.game)),
+                        ),
+                        _getErrorsOrModifiedIcon(gameView),
+                        _buildContextMenu(gameView)
+                      ]),
+                    )
+                  ],
                 ),
-              ),
-            ],
+                if (gameView.isExpanded)
+                  Column(
+                    children: [
+                      const SizedBox(
+                        height: 4,
+                      ),
+                      Container(
+                        padding: const EdgeInsets.all(4),
+                        color: Colors.black.withAlpha(180),
+                        child: Text(
+                          "${gameView.game.path}",
+                          textAlign: TextAlign.left,
+                          style: TextStyle(color: themeExtension.gameCardHeaderPath, fontSize: 13),
+                        ),
+                      ),
+                    ],
+                  )
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
+      expanded: Container(
+          padding: const EdgeInsets.fromLTRB(0, 16, 0, 16),
+          margin: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+          decoration: BoxDecoration(borderRadius: BorderRadius.circular(20), color: Colors.black.withAlpha(100)),
+          child: _buildGameTile(context, themeExtension, gameView, state.availableProntonNames)),
+      collapsed: Container(),
     );
   }
 
   Widget _createGameCardHalfBannerSize(GameView gameView, int index, CustomTheme themeExtension, BaseDataChanged state) {
-    return Stack(children: [
-      Container(
-        color: Color.fromARGB(255, 80, 80, 80),
-        alignment: Alignment.center,
-        child: ExpandablePanel(
-          controller: ExpandableController(initialExpanded: gameView.isExpanded)
-            ..addListener(() => _nsCubit(context).swapExpansionStateForItem(index)),
-          header: ListTile(
-            title: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                if (state.multiSelectionMode) Checkbox(value: gameView.selected, onChanged: (value) => {_nsCubit(context).swapGameViewSelected(gameView)}),
-                _getGameSteamImage(context, gameView, GameExecutableImageType.HalfBanner, state.multiSelectionMode),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16,0,0,0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          _getExeCurrentStateIcon(GameTools.getGameStatus(gameView.game)),
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(16.0,0,0,0),
-                            child: Text(gameView.game.name, style: Theme.of(context).textTheme.headline5, textAlign: TextAlign.left),
-                          ),
-                        ],
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(32, 4, 0, 0),
-                        child: _getDateText(gameView),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(32, 16, 0, 0),
-                        child: gameView.game.isExternal ? null : Text(StringTools.bytesToStorageUnity(gameView.game.gameSize)),
-                      ),
+    return Container(
+      color: Color.fromARGB(255, 80, 80, 80),
+      alignment: Alignment.center,
+      child: ExpandablePanel(
+        controller: ExpandableController(initialExpanded: gameView.isExpanded)
+          ..addListener(() => _nsCubit(context).swapExpansionStateForItem(index)),
+        header: ListTile(
+          title: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              if (state.multiSelectionMode) Checkbox(value: gameView.selected, onChanged: (value) => {_nsCubit(context).swapGameViewSelected(gameView)}),
+              _getGameSteamImage(context, gameView, GameExecutableImageType.HalfBanner, state.multiSelectionMode),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16,0,0,0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        _getExeCurrentStateIcon(GameTools.getGameStatus(gameView.game)),
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16.0,0,0,0),
+                          child: Text(gameView.game.name, style: Theme.of(context).textTheme.headline5, textAlign: TextAlign.left),
+                        ),
+                      ],
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(32, 4, 0, 0),
+                      child: _getDateText(gameView),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(32, 16, 0, 0),
+                      child: gameView.game.isExternal ? null : Text(StringTools.bytesToStorageUnity(gameView.game.gameSize)),
+                    ),
 
 
-                    ],
-                  ),
+                  ],
                 ),
-              ],
-            ),
-
+              ),
+            ],
           ),
-          expanded: Container(
-              padding: const EdgeInsets.fromLTRB(0, 16, 0, 16),
-              margin: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-              decoration: BoxDecoration(borderRadius: BorderRadius.circular(20), color: Colors.black.withAlpha(100)),
-              child: _buildGameTile(context, themeExtension, gameView, state.availableProntonNames)),
-          collapsed: Container(),
+
         ),
+        expanded: Container(
+            padding: const EdgeInsets.fromLTRB(0, 16, 0, 16),
+            margin: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+            decoration: BoxDecoration(borderRadius: BorderRadius.circular(20), color: Colors.black.withAlpha(100)),
+            child: _buildGameTile(context, themeExtension, gameView, state.availableProntonNames)),
+        collapsed: Container(),
       ),
-    ]);
+    );
   }
 
   //endregion
@@ -617,7 +606,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
               child: TextFormField(
                 key: UniqueKey(),
                 initialValue: uge.name,
-                decoration: InputDecoration(labelText: tr("name")),
+                decoration: InputDecoration(labelText: tr("name"),errorStyle: TextStyle(color: Colors.redAccent.shade100)),
                 autovalidateMode: AutovalidateMode.onUserInteraction,
                 onChanged: (value) {
                   uge.name = value!;
@@ -1418,9 +1407,17 @@ class _GameMgrPageState extends State<GameMgrPage> {
   }
 
   Widget? _getDateText(GameView gameView) {
-    return gameView.game.isExternal
-        ? null
-        : Text("Updated on ${DateFormat('dd-MM-yyyy').format(gameView.game.creationDate)}",
-        style: TextStyle(fontSize: 12, color: Colors.grey.shade500));
+    if(gameView.game.isExternal) return null;
+
+    try {
+      String formatedDate = DateFormat('dd-MM-yyyy').format(gameView.game.creationDate);
+      return Text("Updated on $formatedDate",
+          style: TextStyle(fontSize: 12, color: Colors.grey.shade500));
+    }
+    catch(ex) {
+      print(ex);
+      return null;
+    }
+
   }
 }

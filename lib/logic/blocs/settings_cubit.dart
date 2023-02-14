@@ -80,7 +80,7 @@ class SettingsCubit extends Cubit<SettingsState> {
     repo.updateUserSettings(_currentUserId, _currentUserSettings);
     repo.save();
 
-    if(showMessages) EasyLoading.showSuccess(tr("settings_saved"));
+    if(showMessages) EasyLoading.showToast(tr("settings_saved"));
 
     //Request a reload next time i
     if(!_areSettingsPathEqual(_currentUserSettings, _oldUserSettings)) {

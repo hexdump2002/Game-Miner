@@ -137,5 +137,6 @@
   "notification": "Notification",
   "date": "Date",
   "multi_selection_mode": "Multi selection mode",
-  "no_action_no_games_selected": "This action can't be accomplished because there are no games selected"
+  "no_action_no_games_selected": "This action can't be accomplished because there are no games selected",
+  "selected_games_were_imported": "Selected games where imported"
 }

@@ -269,7 +269,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
 
     //There is no data to save
     if (gamesWithChangesAndNoErrors.isEmpty) {
-      EasyLoading.showSuccess(tr("no_changes_nothing_to_save")); //Nothing to save
+      EasyLoading.showToast(tr("no_changes_nothing_to_save")); //Nothing to save
       return;
     }
 
@@ -337,17 +337,8 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
 
     saveGameMinerDataAppidMappings(_baseGames);
 
-    /*//Copy art if this game was just imported
-    for (Game g in games) {
-      for (GameExecutable ge in g.exeFileEntries) {
-        if (ge.dataFromConfigFile) {
-          await GameTools.importShortcutArt(g.path, ge, _settings.currentUserId);
-        }
-      }
-    }*/
-
     if (showInfo) {
-      EasyLoading.showSuccess(tr("data_saved"));
+      EasyLoading.showToast(tr("data_saved"));
     }
   }
 
@@ -411,7 +402,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
       EasyLoading.showError(tr("all_games_couldnt_be_deleted"));
     }
     else {
-      EasyLoading.showSuccess(tr("selected_data_games_was_deleted"));
+      EasyLoading.showToast(tr("selected_data_games_was_deleted"));
     }
   }
 
@@ -446,7 +437,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
         print(appsStorage);*/
       }
 
-      if(showNotifications) EasyLoading.showSuccess(tr("selected_data_was_deleted", args: [game.name]));
+      if(showNotifications) EasyLoading.showToast(tr("selected_data_was_deleted", args: [game.name]));
 
       await _refreshStorageSize();
       _refreshGameCount();
@@ -502,7 +493,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
 
       notifyDataChanged();
 
-      EasyLoading.showSuccess(tr("game_renamed"));
+      EasyLoading.showToast(tr("game_renamed"));
     } catch (e) {
       EasyLoading.showError(tr("game_couldnt_be_renamed", args: [game.name]));
       print(e);
@@ -526,19 +517,20 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
       EasyLoading.showError(tr("all_games_couldnt_be_imported"));
     }
     else {
-      EasyLoading.showSuccess(tr("selected_games_were_imported"));
+      EasyLoading.showToast(tr("selected_games_were_imported"));
     }
 
     notifyDataChanged();
   }
 
-  //Returns true if modification was made
+  //Returns true if everything went ok
   Future<bool> importGameConfig(GameView gv, {showNotifications=true, refreshUi=true}) async {
     print("Importing game ${gv.game.name}");
 
     GameExportedData? ged = await GameTools.importGame(gv.game);
     if (ged == null) {
-      if(showNotifications) EasyLoading.showInfo(tr("config_does_not_exists"));
+      if(showNotifications) EasyLoading.showToast(tr("config_does_not_exist"));
+      return true;
     }
 
     if(showNotifications) EasyLoading.showInfo(tr("importing_game_config"));
@@ -561,7 +553,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
 
     if(refreshUi) notifyDataChanged();
 
-    if(showNotifications) EasyLoading.showInfo(tr("game_was_imported"));
+    if(showNotifications) EasyLoading.showToast(tr("game_was_imported"));
 
     return true;
   }
@@ -856,7 +848,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
       EasyLoading.showError(tr("all_games_couldnt_be_exported"));
     }
     else {
-      EasyLoading.showSuccess(tr("selected_games_were_exported"));
+      EasyLoading.showToast(tr("selected_games_were_exported"));
     }
 
     notifyDataChanged();
@@ -874,7 +866,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
     }
 
     if(showNotifications) {
-      EasyLoading.showSuccess(tr("game_config_exported", args: [exportPath]));
+      EasyLoading.showToast(tr("game_config_exported", args: [exportPath]));
     }
 
     if(refreshUi) notifyDataChanged();
@@ -900,7 +892,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
       EasyLoading.showError(tr("games_config_deleted_error"));
     }
     else {
-      EasyLoading.showSuccess(tr("games_config_deleted"));
+      EasyLoading.showToast(tr("games_config_deleted"));
     }
 
     notifyDataChanged();
@@ -920,7 +912,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
 
     if(showNotifications) {
       if(success) {
-        EasyLoading.showSuccess(tr("game_config_deleted", args: [exportPath]));
+        EasyLoading.showToast(tr("game_config_deleted", args: [exportPath]));
       }
       else
       {

@@ -42,9 +42,11 @@ void main() async {
   await windowManager.ensureInitialized();
   await EasyLocalization.ensureInitialized();
 
+
   windowManager.setMinimumSize(const Size(800,700));
   runApp(EasyLocalization(child: MyApp(), supportedLocales: [Locale('en'), Locale('es')], path: 'assets/translations', fallbackLocale: Locale('en')));
   EasyLoading.instance.userInteractions = false;
+  EasyLoading.instance.displayDuration=const Duration(seconds: 2);
 }
 
 class CustomTheme extends ThemeExtension<CustomTheme> {

@@ -146,6 +146,9 @@ class GamesRepository extends CacheRepository<Game> {
     List<SteamShortcut> shortcuts = [];
 
     for (Game g in games) {
+      if(g.name.contains("Child")) {
+        print("hello");
+      }
       for (GameExecutable ge in g.exeFileEntries) {
         if (ge.added == true) {
           SteamShortcut s = SteamShortcut();
@@ -153,7 +156,7 @@ class GamesRepository extends CacheRepository<Game> {
           s.appId = ge.appId;
           s.appName = ge.name;
           s.startDir = ge.startDir.isEmpty ? "" : StringTools.addQuotesToPath(ge.startDir);
-          s.icon = ge.icon;
+          s.icon = ge.icon.isEmpty ? (ge.images.iconImage==null? ge.icon :ge.images.iconImage!) : ge.icon;
           s.shortcutPath = ge.shortcutPath.isEmpty ? "" :StringTools.addQuotesToPath(ge.shortcutPath);
           s.launchOptions = ge.launchOptions;
           s.isHidden = ge.isHidden;

@@ -311,7 +311,7 @@ class GameDataMgrCubit extends Cubit<GameDataMgrState> {
   void deleteAll(BuildContext context) {
     var toDelete = _filteredDataStorageEntries.where((e) => e.selected == true).toList();
     if (toDelete.isEmpty) {
-      EasyLoading.showToast(tr("shader_page_no_selected_items"), duration: Duration(seconds: 2));
+      EasyLoading.showToast(tr("shader_page_no_selected_items"));
       return;
     }
 
