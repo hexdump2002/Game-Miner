@@ -6,6 +6,9 @@ import 'package:game_miner/presentation/pages/view_image_type_common.dart';
 
 import '../../data/models/settings.dart';
 
+//2234758278 Path: /home/deck/Games/Metroid_Prime_Remastered/usr/bin/metroid_prime.sh
+//3979613357 Path: /home/deck/Games/Metroid PrimeRemastered/usr/bin/metroid_prime.sh
+
 class SettingsPage extends StatefulWidget {
   const SettingsPage({Key? key}) : super(key: key);
 
@@ -16,6 +19,9 @@ class SettingsPage extends StatefulWidget {
 class _SettingsPageState extends State<SettingsPage> {
   late final SettingsCubit _bloc;
   late final Future<void> _blocInitializer;
+
+  //This follows same order as ExecutableNameProcesTextProcessingOption in settings
+  List<String> processingTextOptions = ["do_nothing", "capitalized",  "title_capitalized", "all_uppercase", "all_lowercase"];
 
   @override
   void initState() {
@@ -87,7 +93,52 @@ class _SettingsPageState extends State<SettingsPage> {
                         decoration: const InputDecoration()),
                   )
                 ])),
-
+            Padding(
+                padding: EdgeInsets.fromLTRB(8, 32, 8, 8),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                  Container(
+                    padding: EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                        // Red border with the width is equal to 5
+                        border: Border.all(width: 1, color: Colors.grey.shade600)),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text(
+                          tr("apply_game_processing_config_text"),
+                          textAlign: TextAlign.start,
+                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                        ),
+                        SizedBox(width: 0,height: 16),
+                        Padding(
+                            padding: padding,
+                            child: Row(
+                              children: [
+                                Expanded(child: Text(tr("remove_extension"))),
+                                Switch(
+                                  value: settings.executableNameProcessRemoveExtension,
+                                  onChanged: (bool? value) { _bloc.setExecutableNameProcessRemoveExtension(value!);},
+                                )
+                              ],
+                            )),
+                        Padding(
+                            padding: padding,
+                            child: Row(children: [
+                              Expanded(child: Text(tr("text_processing"))),
+                              Expanded(
+                                child: DropdownButtonFormField<ExecutableNameProcesTextProcessingOption>(
+                                    items: ExecutableNameProcesTextProcessingOption.values.map<DropdownMenuItem<ExecutableNameProcesTextProcessingOption>>((ExecutableNameProcesTextProcessingOption e) {
+                                      return DropdownMenuItem<ExecutableNameProcesTextProcessingOption>(value: e, child: Text(tr(processingTextOptions[e.index])));
+                                    }).toList(),
+                                    value: settings.executableNameProcessTextProcessingOption,
+                                    onChanged: (ExecutableNameProcesTextProcessingOption? value) => _bloc.setDefaultNameProcessTextProcessingOption(value!) ,
+                                    decoration: const InputDecoration()),
+                              )
+                            ]))
+                      ],
+                    ),
+                  )
+                ])),
           ],
         ),
       ),

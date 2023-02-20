@@ -1,5 +1,4 @@
 class Settings {
-
   String currentUserId = "";
   Map<String, UserSettings> _userSettings = {};
 
@@ -32,11 +31,11 @@ class Settings {
   UserSettings? getCurrentUserSettings() {
     return getUserSettings(currentUserId);
   }
-
 }
 
-class UserSettings {
+enum ExecutableNameProcesTextProcessingOption { noProcessing, capitalized, titleCase, upperCase, lowerCase }
 
+class UserSettings {
   List<String> searchPaths = [];
 
   String defaultCompatTool = "not_assigned";
@@ -50,6 +49,9 @@ class UserSettings {
 
   bool warnSteamOpenWhenSaving = true;
 
+  bool executableNameProcessRemoveExtension = true;
+  ExecutableNameProcesTextProcessingOption executableNameProcessTextProcessingOption = ExecutableNameProcesTextProcessingOption.noProcessing;
+
   UserSettings();
 
   UserSettings.fromJson(Map<String, dynamic> json) {
@@ -61,8 +63,14 @@ class UserSettings {
     maxBackupsCount = json['maxBackupsCount'];
     defaultGameManagerView = json['defaultGameManagerView'];
 
+    //To provide compatibility with previous versions of config we have to check for config
+    executableNameProcessRemoveExtension = json['executableNameProcessRemoveExtension'] ?? false;
+    executableNameProcessTextProcessingOption = json['executableNameProcessTextProcessingOption'] != null
+        ? ExecutableNameProcesTextProcessingOption.values[json['executableNameProcessTextProcessingOption']]
+        : ExecutableNameProcesTextProcessingOption.noProcessing;
+
     //Backward compatibility
-    if(defaultCompatTool == "None") defaultCompatTool = "not_assigned";
+    if (defaultCompatTool == "None") defaultCompatTool = "not_assigned";
   }
 
   Map<String, dynamic> toJson() {
@@ -75,7 +83,9 @@ class UserSettings {
       'closeSteamAtStartUp': closeSteamAtStartUp,
       'backupsEnabled': backupsEnabled,
       'maxBackupsCount': maxBackupsCount,
-      'defaultGameManagerView': defaultGameManagerView
+      'defaultGameManagerView': defaultGameManagerView,
+      'executableNameProcessTextProcessingOption': executableNameProcessTextProcessingOption.index,
+      'executableNameProcessRemoveExtension': executableNameProcessRemoveExtension
     };
   }
 

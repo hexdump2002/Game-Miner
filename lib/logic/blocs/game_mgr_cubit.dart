@@ -55,9 +55,7 @@ class GameView {
   bool selected;
   bool hasConfig;
 
-  GameView(this.game,this.gameImagePath, this.isExpanded, this.modified, this.selected,this.hasConfig);
-
-
+  GameView(this.game, this.gameImagePath, this.isExpanded, this.modified, this.selected, this.hasConfig);
 }
 
 class GameMgrCubit extends Cubit<GameMgrBaseState> {
@@ -100,12 +98,15 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
   int _addedExternalCount = 0;
 
   bool _multiSelectionMode = false;
-  bool getMultiSelectionMode() { return _multiSelectionMode;}
+
+  bool getMultiSelectionMode() {
+    return _multiSelectionMode;
+  }
+
   void swapMultiSelectionMode() {
     _multiSelectionMode = !_multiSelectionMode;
     notifyDataChanged();
   }
-
 
   GameMgrCubit() : super(IninitalState()) {
     _settings = GetIt.I<SettingsRepository>().getSettings();
@@ -165,7 +166,8 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
         _sortIndex,
         _sortDirectionIndex,
         searchText,
-        _currentImageType!,_multiSelectionMode));
+        _currentImageType!,
+        _multiSelectionMode));
 
     //stopwatch.stop();
     //print('[Logic] Time taken to execute method: ${stopwatch.elapsed}');
@@ -181,11 +183,11 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
   Future<List<GameView>> _generateGameViews(List<Game> games) async {
     List<GameView> gameViews = [];
 
-    for (int i=0 ;i<games.length; ++i) {
+    for (int i = 0; i < games.length; ++i) {
       Game g = games[i];
       GameTools.handleGameExecutableErrorsForGame(g);
       String? gameImage = GameTools.getGameImagePath(g, _currentImageType!);
-      bool hasGameConfig =await FileTools.existsFile("${g.path}/gameminer_config.json");
+      bool hasGameConfig = await FileTools.existsFile("${g.path}/gameminer_config.json");
       gameViews.add(GameView(g, gameImage, false, false, false, hasGameConfig));
     }
     return gameViews;
@@ -208,11 +210,36 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
   }
 
   String getCompatToolDisplayNameFromCode(String code) {
-    return CompatToolTools.getCompatToolDisplayNameFromCode(code,_availableCompatTools);
+    return CompatToolTools.getCompatToolDisplayNameFromCode(code, _availableCompatTools);
   }
 
   String getCompatToolCodeFromDisplayName(String displayName) {
-    return CompatToolTools.getCompatToolCodeFromDisplayName(displayName,_availableCompatTools);
+    return CompatToolTools.getCompatToolCodeFromDisplayName(displayName, _availableCompatTools);
+  }
+
+  void _applyNameProcessing(GameExecutable ge) {
+    UserSettings cus = _settings.getCurrentUserSettings()!;
+
+    if (cus.executableNameProcessRemoveExtension) {
+      ge.name = p.basenameWithoutExtension(ge.name);
+    }
+
+    switch (cus.executableNameProcessTextProcessingOption) {
+      case ExecutableNameProcesTextProcessingOption.titleCase:
+        ge.name = ge.name.toTitleCase();
+        break;
+      case ExecutableNameProcesTextProcessingOption.capitalized:
+        ge.name = ge.name.toCapitalized();
+        break;
+      case ExecutableNameProcesTextProcessingOption.upperCase:
+        ge.name = ge.name.toUpperCase();
+        break;
+      case ExecutableNameProcesTextProcessingOption.lowerCase:
+        ge.name = ge.name.toLowerCase();
+        break;
+      default:
+        break;
+    }
   }
 
   swapExeAdding(GameView gv, GameExecutable ge) {
@@ -222,6 +249,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
     if (ge.added) {
       //ge.appId = SteamTools.generateAppId("${ge.startDir}/${ge.relativeExePath}");
       ge.fillProtonMappingData(_currentUserSettings.defaultCompatTool, "", "250");
+      _applyNameProcessing(ge);
       //_globalStats.MoveGameByStatus(uge, VMGameAddedStatus.Added);
     } else {
       //ge.appId = 0;
@@ -252,7 +280,8 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
         _sortIndex,
         _sortDirectionIndex,
         searchText,
-        _currentImageType!,_multiSelectionMode));
+        _currentImageType!,
+        _multiSelectionMode));
   }
 
   Future<void> trySave() async {
@@ -351,7 +380,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
   }
 
   void tryDeleteSelected() async {
-    if(_gameViews.where((o)=>o.selected).isEmpty) {
+    if (_gameViews.where((o) => o.selected).isEmpty) {
       EasyLoading.showToast(tr("no_action_no_games_selected"));
       return;
     }
@@ -377,30 +406,30 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
     }
   }
 
-  Future<void> deleteSelectedGames(bool deleteImages, bool deleteCompatData, bool deleteShaderData) async{
-    EasyLoading.show(status:tr("deleting_games"));
+  Future<void> deleteSelectedGames(bool deleteImages, bool deleteCompatData, bool deleteShaderData) async {
+    EasyLoading.show(status: tr("deleting_games"));
 
     List<GameView> gameViewsToDelete = _gameViews.where((element) => element.selected).toList();
     //We are going to remove items for gameViews so, we get a copy to do not invalidate iterators
     List<GameView> copyGameViews = List.from(gameViewsToDelete);
 
-    int i=0;
-    bool error=false;
-    while(i<copyGameViews.length && !error) {
+    int i = 0;
+    bool error = false;
+    while (i < copyGameViews.length && !error) {
       error = !await deleteGame(copyGameViews[i].game, deleteImages, deleteCompatData, deleteShaderData, showNotifications: false, refreshUi: false);
       ++i;
     }
 
-    if(error) {
+    if (error) {
       EasyLoading.showError(tr("all_games_couldnt_be_deleted"));
-    }
-    else {
+    } else {
       EasyLoading.showToast(tr("selected_data_games_was_deleted"));
     }
   }
 
   //Returns if action was succesfully executed
-  Future<bool> deleteGame(Game game, bool deleteImages, bool deleteCompatData, bool deleteShaderData,{bool showNotifications=true, bool refreshUi=true}) async {
+  Future<bool> deleteGame(Game game, bool deleteImages, bool deleteCompatData, bool deleteShaderData,
+      {bool showNotifications = true, bool refreshUi = true}) async {
     try {
       print("Deleting game -> ${game.name}");
 
@@ -430,16 +459,16 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
         print(appsStorage);*/
       }
 
-      if(showNotifications) EasyLoading.showToast(tr("selected_data_was_deleted", args: [game.name]));
+      if (showNotifications) EasyLoading.showToast(tr("selected_data_was_deleted", args: [game.name]));
 
       await _refreshStorageSize();
       _refreshGameCount();
 
-      if(refreshUi) notifyDataChanged();
+      if (refreshUi) notifyDataChanged();
 
       return true;
     } catch (e) {
-      if(showNotifications) EasyLoading.showError(tr('game_couldnt_be_deleted', args: [game.name]));
+      if (showNotifications) EasyLoading.showError(tr('game_couldnt_be_deleted', args: [game.name]));
       print(e.toString());
     }
 
@@ -494,22 +523,21 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
   }
 
   Future<void> importSelectedGamesConfig() async {
-    EasyLoading.show(status:tr("importing_games"));
+    EasyLoading.show(status: tr("importing_games"));
 
     List<GameView> gameViewsToExport = _gameViews.where((element) => element.selected).toList();
 
-    int i=0;
-    bool error=false;
-    while(i<gameViewsToExport.length) {
+    int i = 0;
+    bool error = false;
+    while (i < gameViewsToExport.length) {
       bool success = await importGameConfig(gameViewsToExport[i], showNotifications: false, refreshUi: false);
-      if(!success) error = true;
+      if (!success) error = true;
       ++i;
     }
 
-    if(error) {
+    if (error) {
       EasyLoading.showError(tr("all_games_couldnt_be_imported"));
-    }
-    else {
+    } else {
       EasyLoading.showToast(tr("selected_games_were_imported"));
     }
 
@@ -517,16 +545,16 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
   }
 
   //Returns true if everything went ok
-  Future<bool> importGameConfig(GameView gv, {showNotifications=true, refreshUi=true}) async {
+  Future<bool> importGameConfig(GameView gv, {showNotifications = true, refreshUi = true}) async {
     print("Importing game ${gv.game.name}");
 
     GameExportedData? ged = await GameTools.importGame(gv.game);
     if (ged == null) {
-      if(showNotifications) EasyLoading.showToast(tr("config_does_not_exist"));
+      if (showNotifications) EasyLoading.showToast(tr("config_does_not_exist"));
       return true;
     }
 
-    if(showNotifications) EasyLoading.showInfo(tr("importing_game_config"));
+    if (showNotifications) EasyLoading.showInfo(tr("importing_game_config"));
 
     bool modified = false;
     for (GameExecutable ge in gv.game.exeFileEntries) {
@@ -545,13 +573,13 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
     gv.modified = modified;
 
     //Recheck errors for the imported game
-    if(gv.modified) {
+    if (gv.modified) {
       GameTools.handleGameExecutableErrorsForGame(gv.game);
     }
 
-    if(refreshUi) notifyDataChanged();
+    if (refreshUi) notifyDataChanged();
 
-    if(showNotifications) EasyLoading.showToast(tr("game_was_imported"));
+    if (showNotifications) EasyLoading.showToast(tr("game_was_imported"));
 
     return true;
   }
@@ -797,7 +825,8 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
         _sortIndex,
         _sortDirectionIndex,
         searchText,
-        _currentImageType!,_multiSelectionMode));
+        _currentImageType!,
+        _multiSelectionMode));
   }
 
   void openFolder(Game game) async {
@@ -825,100 +854,92 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
       }
     }
 
-
     repo.update(gmd);
     await repo.save(_currentUserSettings.backupsEnabled, _currentUserSettings.maxBackupsCount);
   }
 
-  Future<void> exportSelectedGames()async {
-    EasyLoading.show(status:tr("exporting_games"));
+  Future<void> exportSelectedGames() async {
+    EasyLoading.show(status: tr("exporting_games"));
 
     List<GameView> gameViewsToExport = _gameViews.where((element) => element.selected).toList();
 
-    int i=0;
-    bool error=false;
-    while(i<gameViewsToExport.length && !error) {
-      error = !await exportGame(gameViewsToExport[i], showNotifications: false, refreshUi:false);
+    int i = 0;
+    bool error = false;
+    while (i < gameViewsToExport.length && !error) {
+      error = !await exportGame(gameViewsToExport[i], showNotifications: false, refreshUi: false);
       ++i;
     }
 
-    if(error) {
+    if (error) {
       EasyLoading.showError(tr("all_games_couldnt_be_exported"));
-    }
-    else {
+    } else {
       EasyLoading.showToast(tr("selected_games_were_exported"));
     }
 
     notifyDataChanged();
   }
 
-  Future<bool> exportGame(GameView gv, {showNotifications:true, emit, refreshUi=true}) async {
+  Future<bool> exportGame(GameView gv, {showNotifications: true, emit, refreshUi = true}) async {
     String exportPath = "${gv.game.path}/gameminer_config.json";
-    if(showNotifications) {
+    if (showNotifications) {
       EasyLoading.show(status: tr("exporting_game_config", args: [exportPath]));
     }
     bool success = await GameTools.exportGame(gv.game, _settings.currentUserId);
-    if(success)
-    {
+    if (success) {
       gv.hasConfig = true;
     }
 
-    if(showNotifications) {
+    if (showNotifications) {
       EasyLoading.showToast(tr("game_config_exported", args: [exportPath]));
     }
 
-    if(refreshUi) notifyDataChanged();
+    if (refreshUi) notifyDataChanged();
 
     return success;
   }
 
-  Future<void> deleteSelectedGameConfigs()async {
-    EasyLoading.show(status:tr("deleting_games_configs"));
+  Future<void> deleteSelectedGameConfigs() async {
+    EasyLoading.show(status: tr("deleting_games_configs"));
 
     List<GameView> gameViewsToExport = _gameViews.where((element) => element.selected).toList();
 
-    int i=0;
-    bool success=true;
-    while(i<gameViewsToExport.length) {
-      bool retval= await deleteGameConfig(gameViewsToExport[i], showNotifications: false, refreshUi:false);
-      if(!retval) success = false;
+    int i = 0;
+    bool success = true;
+    while (i < gameViewsToExport.length) {
+      bool retval = await deleteGameConfig(gameViewsToExport[i], showNotifications: false, refreshUi: false);
+      if (!retval) success = false;
 
       ++i;
     }
 
-    if(!success) {
+    if (!success) {
       EasyLoading.showError(tr("games_config_deleted_error"));
-    }
-    else {
+    } else {
       EasyLoading.showToast(tr("games_config_deleted"));
     }
 
     notifyDataChanged();
   }
 
-
-  Future<bool> deleteGameConfig(GameView gv, {showNotifications:true, emit, refreshUi=true}) async {
+  Future<bool> deleteGameConfig(GameView gv, {showNotifications: true, emit, refreshUi = true}) async {
     String exportPath = "${gv.game.path}/gameminer_config.json";
-    if(showNotifications) {
+    if (showNotifications) {
       EasyLoading.show(status: tr("deleting_game_config", args: [exportPath]));
     }
     bool success = await GameTools.deleteGameConfig(gv.game);
-    if(success)
-    {
+    if (success) {
       gv.hasConfig = false;
     }
 
-    if(showNotifications) {
-      if(success) {
+    if (showNotifications) {
+      if (success) {
         EasyLoading.showToast(tr("game_config_deleted", args: [exportPath]));
-      }
-      else
-      {
+      } else {
         EasyLoading.showError(tr("game_config_deleted_error", args: [exportPath]));
       }
     }
 
-    if(refreshUi) notifyDataChanged();
+    if (refreshUi) notifyDataChanged();
 
     return success;
   }
@@ -938,7 +959,8 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
         _sortIndex,
         _sortDirectionIndex,
         searchText,
-        _currentImageType!,_multiSelectionMode));
+        _currentImageType!,
+        _multiSelectionMode));
   }
 
   void setViewType(GameExecutableImageType geit) {
@@ -962,19 +984,17 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
   }
 
   void selectAll() {
-    for(GameView gv in _gameViews) {
-      gv.selected=true;
+    for (GameView gv in _gameViews) {
+      gv.selected = true;
     }
     notifyDataChanged();
   }
 
   void selectNone() {
-    for(GameView gv in _gameViews) {
-      gv.selected=false;
+    for (GameView gv in _gameViews) {
+      gv.selected = false;
     }
 
     notifyDataChanged();
   }
-
-
 }

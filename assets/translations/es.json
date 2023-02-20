@@ -138,5 +138,13 @@
   "date": "Fecha",
   "multi_selection_mode": "Modo multiselección",
   "no_action_no_games_selected": "Esta acción no puede realizarse por que no hay juegos seleccionados",
-  "selected_games_were_imported": "Los juegos seleccionados fueron importados"
+  "selected_games_were_imported": "Los juegos seleccionados fueron importados",
+  "apply_game_processing_config_text": "Procesado del nombre del Executable (Solo aplica en juegos no añadidos)",
+  "remove_extension": "Quitar extensión",
+  "text_processing": "Procesar texto",
+  "do_nothing":"No procesar",
+  "title_capitalized": "Iniciales en mayúsculas",
+  "capitalized": "Primera letra en mayúscula",
+  "all_uppercase":  "Todo en mayúsculas",
+  "all_lowercase": "Todo en minúsculas"
 }

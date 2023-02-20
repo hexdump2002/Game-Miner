@@ -169,6 +169,18 @@ class SettingsCubit extends Cubit<SettingsState> {
     emit(GeneralOptionsChanged(_currentUserSettings));
   }
 
+  void setExecutableNameProcessRemoveExtension(bool value) {
+    _currentUserSettings.executableNameProcessRemoveExtension = value;
+    _modified = true;
+    emit(GeneralOptionsChanged(_currentUserSettings));
+  }
+
+  setDefaultNameProcessTextProcessingOption(ExecutableNameProcesTextProcessingOption executableNameProcesTextProcessingOption) {
+    _currentUserSettings.executableNameProcessTextProcessingOption = executableNameProcesTextProcessingOption;
+    _modified = true;
+    emit(GeneralOptionsChanged(_currentUserSettings));
+  }
+
 
 
 

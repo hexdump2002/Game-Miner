@@ -140,5 +140,13 @@
   "date": "Date",
   "multi_selection_mode": "Multi selection mode",
   "no_action_no_games_selected": "This action can't be accomplished because there are no games selected",
-  "selected_games_were_imported": "Selected games where imported"
+  "selected_games_were_imported": "Selected games where imported",
+  "apply_game_processing_config_text": "Executable name processing (Only applies to non added games)",
+  "remove_extension": "Remove extension",
+  "text_processing": "Text processing",
+  "do_nothing":"No process",
+  "title_capitalized": "Initials capitalized",
+  "capitalized": "First letter capitalized",
+  "all_uppercase":  "All uppercase",
+  "all_lowercase": "All lowercase"
 }
