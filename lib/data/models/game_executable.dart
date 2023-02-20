@@ -30,7 +30,7 @@ class GameExecutable {
   late String relativeExePath;
   late String name;
 
-  String compatToolCode = "None"; //If null there's no proton mapping assigned to this executable
+  String compatToolCode = "not_assigned"; //If null there's no proton mapping assigned to this executable
   String compatToolPriority="0";
   String compatToolConfig="";
   bool added = false;
@@ -103,7 +103,7 @@ class GameExecutable {
   }
 
   void clearCompatToolMappingData() {
-    compatToolCode = "None";
+    compatToolCode = "not_assigned";
     compatToolConfig = "";
     compatToolPriority = "0";
 

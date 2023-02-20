@@ -56,7 +56,9 @@ class CompatToolsMappingDataProvider {
 
     for(String key in compatToolMappings.keys) {
       CanonicalizedMap<String,String,dynamic> compaToolMapping = compatToolMappings[key];
-      protonMappings.add(CompatToolMapping(key, compaToolMapping['name'] as String, compaToolMapping['config'] as String, compaToolMapping['priority'] as String));
+      String name = compaToolMapping['name'];
+      if(name.isEmpty) name = "not_assigned"; //TODO: Move this into a repostiry. THis belongs to domain not here!!!!!!!!!!!!!!!!!!
+      protonMappings.add(CompatToolMapping(key, /*compaToolMapping['name'] as String*/name, compaToolMapping['config'] as String, compaToolMapping['priority'] as String));
     }
 
     return protonMappings;

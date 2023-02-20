@@ -12,6 +12,7 @@ import 'package:game_miner/data/repositories/compat_tools_repository.dart';
 import 'package:game_miner/data/repositories/game_miner_data_repository.dart';
 import 'package:game_miner/data/repositories/games_repository.dart';
 import 'package:game_miner/data/repositories/settings_repository.dart';
+import 'package:game_miner/logic/Tools/compat_tool_tools.dart';
 import 'package:game_miner/logic/Tools/file_tools.dart';
 import 'package:game_miner/logic/Tools/string_tools.dart';
 import 'package:get_it/get_it.dart';
@@ -116,14 +117,14 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
   }
 
   Future<void> _loadData(UserSettings settings) async {
-    final stopwatch = Stopwatch()..start();
+    //final stopwatch = Stopwatch()..start();
 
     _currentImageType ??= GameExecutableImageType.values[_currentUserSettings.defaultGameManagerView];
 
     List<Game>? games = _gameRepository.getGames();
 
     if (games == null) {
-      print("Cache Miss. Loading Games");
+      //print("Cache Miss. Loading Games");
       emit(RetrievingGameData());
 
       /*_baseGames*/
@@ -166,8 +167,8 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
         searchText,
         _currentImageType!,_multiSelectionMode));
 
-    stopwatch.stop();
-    print('[Logic] Time taken to execute method: ${stopwatch.elapsed}');
+    //stopwatch.stop();
+    //print('[Logic] Time taken to execute method: ${stopwatch.elapsed}');
   }
 
   void refreshGameViewImages(List<GameView> gameViews) {
@@ -203,25 +204,15 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
   }
 
   List<String> getAvailableCompatToolDisplayNames() {
-    List<String> ctn = _availableCompatTools.map<String>((e) => e.displayName).toList();
-    ctn.insert(0, "None");
-    return ctn;
+    return CompatToolTools.getAvailableCompatToolDisplayNames(_availableCompatTools);
   }
 
   String getCompatToolDisplayNameFromCode(String code) {
-    if (code.isEmpty || code == "None") return "None";
-    CompatTool? ct = _availableCompatTools.firstWhereOrNull((element) => element.code == code);
-    if (ct == null) return "None";
-
-    return ct.displayName;
+    return CompatToolTools.getCompatToolDisplayNameFromCode(code,_availableCompatTools);
   }
 
   String getCompatToolCodeFromDisplayName(String displayName) {
-    if (displayName == "None") return "None";
-    CompatTool? ct = _availableCompatTools.firstWhereOrNull((element) => element.displayName == displayName);
-    if (ct == null) return "Node";
-
-    return ct.code;
+    return CompatToolTools.getCompatToolCodeFromDisplayName(displayName,_availableCompatTools);
   }
 
   swapExeAdding(GameView gv, GameExecutable ge) {
@@ -345,7 +336,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
   void setCompatToolDataFor(GameView gv, GameExecutable uge, String value) {
     //assert(value!=null);
 
-    if (value == "None") {
+    if (value == "not_assigned" || value == "no_use") {
       uge.clearCompatToolMappingData();
     } else {
       uge.fillProtonMappingData(getCompatToolCodeFromDisplayName(value), "", "250");
@@ -365,12 +356,14 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
       return;
     }
 
+    int gameViewsToDeleteCount = _gameViews.where((element) => element.selected).length;
+
     if (await SteamTools.isSteamRunning()) {
       emit(SteamDetected(() {
-        emit(DeleteSelectedClicked());
+        emit(DeleteSelectedClicked(gameViewsToDeleteCount));
       }));
     } else {
-      emit(DeleteSelectedClicked());
+      emit(DeleteSelectedClicked(gameViewsToDeleteCount));
     }
   }
 
@@ -551,6 +544,11 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
 
     gv.modified = modified;
 
+    //Recheck errors for the imported game
+    if(gv.modified) {
+      GameTools.handleGameExecutableErrorsForGame(gv.game);
+    }
+
     if(refreshUi) notifyDataChanged();
 
     if(showNotifications) EasyLoading.showToast(tr("game_was_imported"));
@@ -708,7 +706,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
   }
 
   void sortFilteredBySize({SortDirection? direction}) {
-    _sortIndex = 2;
+    _sortIndex = 1;
 
     _sortedFilteredGames = sortBySize([..._filteredGames], direction: direction);
 

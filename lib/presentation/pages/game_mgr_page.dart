@@ -53,7 +53,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
 
   @override
   Widget build(BuildContext context) {
-    final stopwatch = Stopwatch()..start();
+    //final stopwatch = Stopwatch()..start();
 
     const List<String> contextMenuItemIds = <String>['name', 'size', 'status', 'notification', 'date'];
 
@@ -238,8 +238,8 @@ class _GameMgrPageState extends State<GameMgrPage> {
       ),
     );
 
-    stopwatch.stop();
-    print('[UI] Time taken to execute method: ${stopwatch.elapsed}');
+    //stopwatch.stop();
+    //print('[UI] Time taken to execute method: ${stopwatch.elapsed}');
 
     return widgets;
   }
@@ -484,33 +484,36 @@ class _GameMgrPageState extends State<GameMgrPage> {
             children: [
               if (state.multiSelectionMode) Checkbox(value: gameView.selected, onChanged: (value) => {_nsCubit(context).swapGameViewSelected(gameView)}),
               _getGameSteamImage(context, gameView, GameExecutableImageType.HalfBanner, state.multiSelectionMode),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16,0,0,0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        _getExeCurrentStateIcon(GameTools.getGameStatus(gameView.game)),
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(16.0,0,0,0),
-                          child: Text(gameView.game.name, style: Theme.of(context).textTheme.headline5, textAlign: TextAlign.left),
-                        ),
-                      ],
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(32, 4, 0, 0),
-                      child: _getDateText(gameView),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(32, 16, 0, 0),
-                      child: gameView.game.isExternal ? null : Text(StringTools.bytesToStorageUnity(gameView.game.gameSize)),
-                    ),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16,0,0,0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          _getExeCurrentStateIcon(GameTools.getGameStatus(gameView.game)),
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16.0,0,0,0),
+                            child: Text(gameView.game.name, style: Theme.of(context).textTheme.headline5, textAlign: TextAlign.left),
+                          ),
+                        ],
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(32, 4, 0, 0),
+                        child: _getDateText(gameView),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(32, 16, 0, 0),
+                        child: gameView.game.isExternal ? null : Text(StringTools.bytesToStorageUnity(gameView.game.gameSize)),
+                      ),
 
 
-                  ],
+                    ],
+                  ),
                 ),
               ),
+              _buildContextMenu(gameView)
             ],
           ),
 
@@ -875,7 +878,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
                     text: TextSpan(children: [
                   TextSpan(text: tr("going_to")),
                   TextSpan(text: tr("delete_capitals"), style: const TextStyle(color: Colors.redAccent)),
-                  TextSpan(text: tr("delete_selected_game_dialog_text")),
+                  TextSpan(text: tr("delete_selected_game_dialog_text",args:[state.selectedGameCount.toString()])),
                   TextSpan(text: tr("warning_action_undone"), style: const TextStyle(color: Colors.red, fontSize: 18, height: 2))
                 ])),
                 Padding(
@@ -1366,7 +1369,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
             : Image.file(File(gv.gameImagePath!), width: width, height: 150, fit: BoxFit.fitWidth, filterQuality: FilterQuality.medium)
       ]);
     } else if (imageType == GameExecutableImageType.HalfBanner) {
-      print("${gv.game.name} ${gv.gameImagePath}");
+      //print("${gv.game.name} ${gv.gameImagePath}");
       return Row(children: [
         if (multiSelectionMode && gv.hasConfig) Container(width: 3, height: 150, color: Colors.redAccent),
         gv.gameImagePath == null

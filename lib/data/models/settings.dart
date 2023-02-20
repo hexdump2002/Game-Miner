@@ -39,7 +39,7 @@ class UserSettings {
 
   List<String> searchPaths = [];
 
-  String defaultCompatTool = "None";
+  String defaultCompatTool = "not_assigned";
   bool darkTheme = true;
   bool backupsEnabled = true;
   int maxBackupsCount = 5;
@@ -60,9 +60,14 @@ class UserSettings {
     backupsEnabled = json['backupsEnabled'];
     maxBackupsCount = json['maxBackupsCount'];
     defaultGameManagerView = json['defaultGameManagerView'];
+
+    //Backward compatibility
+    if(defaultCompatTool == "None") defaultCompatTool = "not_assigned";
   }
 
   Map<String, dynamic> toJson() {
+    assert(defaultCompatTool != "None");
+
     return {
       'searchPaths': searchPaths,
       'defaultCompatTool': defaultCompatTool,

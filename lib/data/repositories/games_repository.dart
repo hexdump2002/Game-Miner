@@ -55,6 +55,9 @@ class GamesRepository extends CacheRepository<Game> {
       List<Game> userLibraryGames = await _libraryGamesDataProvider.loadGames(userLibraryPaths);
       List<CompatToolMapping> compatToolMappings = await _compatToolsMappingDataProvider.loadCompatToolMappings();
 
+
+      //
+
       games = userLibraryGames;
 
       List<Game> externalGames = [];
@@ -146,9 +149,6 @@ class GamesRepository extends CacheRepository<Game> {
     List<SteamShortcut> shortcuts = [];
 
     for (Game g in games) {
-      if(g.name.contains("Child")) {
-        print("hello");
-      }
       for (GameExecutable ge in g.exeFileEntries) {
         if (ge.added == true) {
           SteamShortcut s = SteamShortcut();
@@ -222,10 +222,11 @@ class GamesRepository extends CacheRepository<Game> {
     games.forEach((e) {
       e.exeFileEntries.forEach((uge) {
         if(uge.added) {
+          String compatToolCode = "";
           if (usedProtonMappings.containsKey(uge.appId)) throw Exception("An appId with 2 differnt pronton mappings found!. This is not valid.");
-          if (uge.compatToolCode == "None") return;
+          if (uge.compatToolCode != "not_assigned") compatToolCode = uge.compatToolCode;
 
-          usedProtonMappings[uge.appId] = CompatToolMapping(uge.appId.toString(), uge.compatToolCode, uge.compatToolConfig, uge.compatToolPriority);
+          usedProtonMappings[uge.appId] = CompatToolMapping(uge.appId.toString(), /*uge.compatToolCode*/compatToolCode, uge.compatToolConfig, uge.compatToolPriority);
         }
       });
     });

@@ -154,5 +154,6 @@ class GameExecutableDataSet extends GameMgrBaseState {
 }
 
 class DeleteSelectedClicked extends GameMgrBaseState {
-  DeleteSelectedClicked();
+  int selectedGameCount;
+  DeleteSelectedClicked(this.selectedGameCount);
 }

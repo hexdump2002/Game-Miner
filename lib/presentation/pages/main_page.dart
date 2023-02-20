@@ -118,7 +118,7 @@ class _MainPageState extends State<MainPage> with WindowListener {
               }
               else {
                 if (_bloc.selectedIndex == 2) {
-                  showSimpleDialog(context, tr("config_not_saved_exit_caption"), tr('config_not_saved_exit'), true, true, () async {
+                  showSimpleDialog(context, tr("warning"), tr('config_not_saved_exit_text'), true, true, () async {
                     BlocProvider
                         .of<MainPageCubit>(context)
                         .selectedIndex = index;
@@ -209,7 +209,10 @@ class _MainPageState extends State<MainPage> with WindowListener {
                 }),
           ),
         ),
-        Text("Ver.Testing")
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: const Text("0.9.010"),
+        ) //versión
       ],
 
     );

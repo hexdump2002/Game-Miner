@@ -5,14 +5,13 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:game_miner/data/repositories/compat_tools_repository.dart';
 import 'package:game_miner/data/repositories/games_repository.dart';
 import 'package:game_miner/data/repositories/settings_repository.dart';
+import 'package:game_miner/logic/Tools/compat_tool_tools.dart';
 import 'package:game_miner/logic/Tools/file_tools.dart';
 import 'package:game_miner/presentation/pages/view_image_type_common.dart';
 import 'package:get_it/get_it.dart';
 import 'package:meta/meta.dart';
 
 import '../../data/models/compat_tool.dart';
-import '../../data/models/compat_tool_mapping.dart';
-import '../../data/models/game_executable.dart';
 import '../../data/models/settings.dart';
 import '../Tools/steam_tools.dart';
 
@@ -46,9 +45,7 @@ class SettingsCubit extends Cubit<SettingsState> {
   UserSettings getUserSettings() { return _currentUserSettings;}
 
   List<String> getAvailableCompatToolDisplayNames() {
-    List<String> ctn = _availableCompatTools.map<String>( (e) => e.displayName).toList();
-    ctn.insert(0, "None");
-    return ctn;
+    return CompatToolTools.getAvailableCompatToolDisplayNames(_availableCompatTools);
   }
 
   String getDefaultCompatToolDisplayNameFromCode() {
@@ -56,13 +53,11 @@ class SettingsCubit extends Cubit<SettingsState> {
   }
 
   String getCompatToolDisplayNameFromCode(String code) {
-    if(code == "None") return "None";
-    return _availableCompatTools.firstWhere((element) => element.code == code).displayName;
+    return CompatToolTools.getCompatToolDisplayNameFromCode(code, _availableCompatTools);
   }
 
   String getCompatToolCodeFromDisplayName(String displayName) {
-    if(displayName == "None") return "None";
-    return _availableCompatTools.firstWhere((element) => element.displayName == displayName).code;
+    return CompatToolTools.getCompatToolCodeFromDisplayName(displayName, _availableCompatTools);
   }
 
   void setDefaultCompatToolFromName(String value) {

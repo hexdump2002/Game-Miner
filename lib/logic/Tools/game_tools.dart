@@ -32,7 +32,7 @@ class GameTools {
       if (ge.added && ge.brokenLink) ge.errors.add(GameExecutableError(GameExecutableErrorType.BrokenExecutable, ""));
       if (!hasExecutableCorrectProtonsAssigned(ge)) {
         ge.errors.add(GameExecutableError(GameExecutableErrorType.InvalidProton, ge.compatToolCode));
-        //ge.compatToolCode = "None";
+        //No reseteamos compatToolCode pq queremos mostrar el proton en el combo
       }
     }
   }
@@ -40,7 +40,7 @@ class GameTools {
   static bool hasExecutableCorrectProtonsAssigned(GameExecutable exe) {
     CompatToolsRepository ctr = GetIt.I<CompatToolsRepository>();
     List<CompatTool> cts = ctr.getCachedCompatTools();
-    if (exe.compatToolCode != "None") {
+    if (exe.compatToolCode != "not_assigned" && exe.compatToolCode != "no_use") {
       CompatTool? ctm = cts.firstWhereOrNull((element) => element.code == exe.compatToolCode);
       if (ctm == null) {
         return false;
@@ -58,7 +58,7 @@ class GameTools {
 
     bool added = game.exeFileEntries.firstWhereOrNull((element) => element.added == true) != null;
     bool oneExeAddedAndCompatToolAssigned =
-        game.exeFileEntries.firstWhereOrNull((element) => element.added == true && element.compatToolCode != "None") != null;
+        game.exeFileEntries.firstWhereOrNull((element) => element.added == true && element.compatToolCode != "not_assigned") != null;
 
     GameStatus status = GameStatus.NonAdded;
     if (added == true && oneExeAddedAndCompatToolAssigned == true) {
