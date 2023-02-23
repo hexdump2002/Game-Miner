@@ -146,5 +146,22 @@
   "title_capitalized": "Iniciales en mayúsculas",
   "capitalized": "Primera letra en mayúscula",
   "all_uppercase":  "Todo en mayúsculas",
-  "all_lowercase": "Todo en minúsculas"
+  "all_lowercase": "Todo en minúsculas",
+  "advanced_filter": "Filtro avanzado",
+  "filter_status": "Mostrar juegos con estado",
+  "filter_search_path": "Mostrar juegos cargados desde",
+  "ad_fil_red_tooltip": "Sin añadir",
+  "ad_fil_orange_tooltip": "Sin CompatTool",
+  "ad_fil_green_tooltip": "Preparado",
+  "ad_fil_blue_tooltip": "Externo",
+  "filter_general": "Mostrar juegos",
+  "filter_with_errors": "Con Errores",
+  "filter_with_no_errors": "Sin Errores",
+  "filter_with_changes": "Con Cambios",
+  "filter_with_no_changes": "Sin Cambios",
+  "filter_with_images": "Con Imagenes",
+  "filter_with_no_images": "Sin Imagenes",
+  "filter_with_configuration": "Con Configuración",
+  "filter_with_no_configuration": "Sin Configuración",
+  "filter_both": "Ambos"
 }

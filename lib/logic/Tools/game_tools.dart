@@ -165,26 +165,23 @@ class GameTools {
   }
 
   static Future<GameFolderStats?> getGameFolderStats(Game game) async {
-    if(!game.isExternal) {
+    if (!game.isExternal) {
       var metaData = await FileTools.getFolderMetaData(game.path, recursive: true);
       var fileCount = metaData['fileCount']!;
       var size = metaData['size']!;
       var dateSinceEpoc = metaData['creationDate'];
-      return GameFolderStats(fileCount, size,DateTime.fromMicrosecondsSinceEpoch(dateSinceEpoc!));
-    }
-    else {
+      return GameFolderStats(fileCount, size, DateTime.fromMicrosecondsSinceEpoch(dateSinceEpoc!));
+    } else {
       return null;
     }
   }
-
 
   static Future<void> exportShortcutArt(String outputFolder, GameExecutable exe, String userId) async {
     String sourcePath = "${SteamTools.getSteamBaseFolder()}/userdata/$userId/config/grid";
     String destPath = outputFolder + "/game_miner_data";
 
     try {
-
-      String hash= md5.convert(utf8.encode(exe.relativeExePath)).toString();
+      String hash = md5.convert(utf8.encode(exe.relativeExePath)).toString();
 
       //Check if we must create the needed folder to hold the images
       if (!await FileTools.existsFolder(destPath)) {
@@ -193,7 +190,7 @@ class GameTools {
 
       String regEx = "^${exe.appId}.*";
       List<String>? imageFiles = await FileTools.getFolderFilesAsync(sourcePath, recursive: false, regExFilter: regEx);
-      if(imageFiles!=null) {
+      if (imageFiles != null) {
         for (String imageFile in imageFiles) {
           String fileName = p.basename(imageFile);
           String postFix = _getShortcutArtPostFixWithExtension(fileName);
@@ -210,37 +207,35 @@ class GameTools {
   static String _getShortcutArtPostFixWithExtension(String fileName) {
     //Cover
     int index = fileName.indexOf("p.");
-    if(index!=-1) {
+    if (index != -1) {
       return fileName.substring(index);
     }
 
     //ico, logo, etc.
     index = fileName.indexOf(r'_');
-    if(index!=-1) {
+    if (index != -1) {
       return fileName.substring(index);
     }
 
     //Home image
     index = fileName.indexOf(".");
     return fileName.substring(index);
-
   }
-  static Future<bool> deleteGameConfig(Game game) async{
+
+  static Future<bool> deleteGameConfig(Game game) async {
     String fullConfigFilePath = "${game.path}/gameminer_config.json";
     String fullConfigDataFolderPath = "${game.path}/game_miner_data";
     try {
-      if(await FileTools.existsFile(fullConfigFilePath)) {
+      if (await FileTools.existsFile(fullConfigFilePath)) {
         await File(fullConfigFilePath).delete();
       }
 
-      if(await FileTools.existsFolder(fullConfigDataFolderPath)) {
+      if (await FileTools.existsFolder(fullConfigDataFolderPath)) {
         await Directory(fullConfigDataFolderPath).delete(recursive: true);
       }
 
-
       return true;
-    }
-    catch(ex) {
+    } catch (ex) {
       print(ex);
       return false;
     }
@@ -265,8 +260,7 @@ class GameTools {
       var file = File(fullPath);
       await file.create(recursive: true);
       await file.writeAsString(json);
-    }
-    catch(ex) {
+    } catch (ex) {
       success = false;
       print(ex);
     }
@@ -321,7 +315,7 @@ class GameTools {
       String hash = md5.convert(utf8.encode(exe.relativeExePath)).toString();
       String regEx = "^$hash.*";
       List<String>? imageFiles = await FileTools.getFolderFilesAsync(sourcePath, recursive: false, regExFilter: regEx);
-      if(imageFiles!=null) {
+      if (imageFiles != null) {
         for (String imageFile in imageFiles) {
           String fileName = p.basename(imageFile);
           fileName = fileName.replaceFirst(hash, exe.appId.toString());
@@ -362,14 +356,14 @@ class GameTools {
 
     for (GameExecutable ge in game.exeFileEntries) {
       //if (ge.added) {
-        AppStorage? as = appsStorage!.firstWhereOrNull((element) {
-          return element.appId == ge.appId.toString() && element.storageType == StorageType.CompatData;
-        });
-        if (as != null) {
-          print("BOrrando compatdata de exe ${as.appId}");
-          String pathToDelete = "$basePath/compatdata/${as.appId}";
-          await Directory(pathToDelete).delete(recursive: true);
-        }
+      AppStorage? as = appsStorage!.firstWhereOrNull((element) {
+        return element.appId == ge.appId.toString() && element.storageType == StorageType.CompatData;
+      });
+      if (as != null) {
+        print("BOrrando compatdata de exe ${as.appId}");
+        String pathToDelete = "$basePath/compatdata/${as.appId}";
+        await Directory(pathToDelete).delete(recursive: true);
+      }
       //}
     }
   }
@@ -379,12 +373,12 @@ class GameTools {
 
     for (GameExecutable ge in game.exeFileEntries) {
       //if (ge.added) {
-        AppStorage? as =
-            appsStorage!.firstWhereOrNull((element) => element.appId == ge.appId.toString() && element.storageType == StorageType.ShaderCache);
-        if (as != null) {
-          String pathToDelete = "$basePath/shadercache/${as.appId}";
-          await Directory(pathToDelete).delete(recursive: true);
-        }
+      AppStorage? as =
+          appsStorage!.firstWhereOrNull((element) => element.appId == ge.appId.toString() && element.storageType == StorageType.ShaderCache);
+      if (as != null) {
+        String pathToDelete = "$basePath/shadercache/${as.appId}";
+        await Directory(pathToDelete).delete(recursive: true);
+      }
       //}
     }
   }
@@ -394,7 +388,7 @@ class GameTools {
 
     for (GameExecutable ge in game.exeFileEntries) {
       List<String>? imageFiles = await FileTools.getFolderFilesAsync(basePath, recursive: false, regExFilter: "${ge.appId}_*");
-      if(imageFiles!=null) {
+      if (imageFiles != null) {
         for (String imageFile in imageFiles) {
           await File(imageFile).delete();
         }
@@ -432,6 +426,18 @@ class GameTools {
     }
 
     return path;
+  }
+
+  static bool doesGameHasImages(Game game) {
+    GameExecutable? ge  = game.exeFileEntries.firstWhereOrNull((element) {
+      GameExecutableImages images = element.images;
+      return images.iconImage != null  ||
+        images.heroImage != null  ||
+        images.coverImage != null ||
+        images.logoImage != null ;
+    });
+
+    return ge!=null;
   }
 
 

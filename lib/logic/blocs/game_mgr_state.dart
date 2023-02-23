@@ -24,6 +24,7 @@ class BaseDataChanged extends GameMgrBaseState {
   final String searchText;
   final GameExecutableImageType gameExecutableImageType;
   final bool multiSelectionMode;
+  final AdvancedFilter advancedFilter;
 
   BaseDataChanged(
       this.games,
@@ -40,7 +41,8 @@ class BaseDataChanged extends GameMgrBaseState {
       this.sortDirectionIndex,
       this.searchText,
       this.gameExecutableImageType,
-      this.multiSelectionMode);
+      this.multiSelectionMode,
+      this.advancedFilter);
 }
 
 class GamesDataRetrieved extends BaseDataChanged {
@@ -59,9 +61,10 @@ class GamesDataRetrieved extends BaseDataChanged {
       int sortDirectionIndex,
       String searchText,
       GameExecutableImageType gameExecutableImageType,
-      bool multiSelectionMode)
+      bool multiSelectionMode,
+      AdvancedFilter advancedFilter)
       : super(games, availableProntonNames, nonAddedGamesCount, addedGamesCount, fullyAddedGamesCount, addedExternal, freeSSDSpace, freeSDCardSpace,
-            totalSSDSpace, totalSDCardSpace, sortIndex, sortDirectionIndex, searchText, gameExecutableImageType, multiSelectionMode);
+            totalSSDSpace, totalSDCardSpace, sortIndex, sortDirectionIndex, searchText, gameExecutableImageType, multiSelectionMode, advancedFilter);
 }
 
 class GamesDataChanged extends BaseDataChanged {
@@ -80,9 +83,10 @@ class GamesDataChanged extends BaseDataChanged {
       int sortDirectionIndex,
       String searchText,
       GameExecutableImageType gameExecutableImageType,
-      bool multiSelectionMode)
+      bool multiSelectionMode,
+      AdvancedFilter advancedFilter)
       : super(games, availableProntonNames, nonAddedGamesCount, addedGamesCount, fullyAddedGamesCount, addedExternal, freeSSDSpace, freeSDCardSpace,
-      totalSSDSpace, totalSDCardSpace, sortIndex, sortDirectionIndex, searchText, gameExecutableImageType, multiSelectionMode);
+      totalSSDSpace, totalSDCardSpace, sortIndex, sortDirectionIndex, searchText, gameExecutableImageType, multiSelectionMode, advancedFilter);
 }
 
 class GamesFoldingDataChanged extends BaseDataChanged {
@@ -101,13 +105,14 @@ class GamesFoldingDataChanged extends BaseDataChanged {
       int sortDirectionIndex,
       String searchText,
       GameExecutableImageType gameExecutableImageType,
-      bool multiSelectionMode)
+      bool multiSelectionMode,
+      AdvancedFilter advancedFilter)
       : super(games, availableProntonNames, nonAddedGamesCount, addedGamesCount, fullyAddedGamesCount, addedExternal, freeSSDSpace, freeSDCardSpace,
-      totalSSDSpace, totalSDCardSpace, sortIndex, sortDirectionIndex, searchText, gameExecutableImageType, multiSelectionMode);
+      totalSSDSpace, totalSDCardSpace, sortIndex, sortDirectionIndex, searchText, gameExecutableImageType, multiSelectionMode, advancedFilter);
 }
 
-class SearchTermChanged extends BaseDataChanged {
-  SearchTermChanged(
+class FilterChanged extends BaseDataChanged {
+  FilterChanged(
       List<GameView> games,
       List<String> availableProntonNames,
       int nonAddedGamesCount,
@@ -122,9 +127,10 @@ class SearchTermChanged extends BaseDataChanged {
       int sortDirectionIndex,
       String searchText,
       GameExecutableImageType gameExecutableImageType,
-      bool multiSelectionMode)
+      bool multiSelectionMode,
+      AdvancedFilter advancedFilter)
       : super(games, availableProntonNames, nonAddedGamesCount, addedGamesCount, fullyAddedGamesCount, addedExternal, freeSSDSpace, freeSDCardSpace,
-      totalSSDSpace, totalSDCardSpace, sortIndex, sortDirectionIndex, searchText, gameExecutableImageType, multiSelectionMode);
+      totalSSDSpace, totalSDCardSpace, sortIndex, sortDirectionIndex, searchText, gameExecutableImageType, multiSelectionMode, advancedFilter);
 }
 
 class DeleteGameClicked extends GameMgrBaseState {

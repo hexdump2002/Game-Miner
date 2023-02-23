@@ -148,5 +148,24 @@
   "title_capitalized": "Initials capitalized",
   "capitalized": "First letter capitalized",
   "all_uppercase":  "All uppercase",
-  "all_lowercase": "All lowercase"
+  "all_lowercase": "All lowercase",
+  "advanced_filter": "Advanced filter",
+  "filter_status": "Show games with status",
+  "filter_search_path": "Show games loaded from",
+  "ad_fil_red_tooltip": "Not Added",
+  "ad_fil_orange_tooltip": "No CompatTool",
+  "ad_fil_green_tooltip": "Ready",
+  "ad_fil_blue_tooltip": "Not in Library",
+  "filter_general": "Show games",
+  "filter_with_errors": "With Errors",
+  "filter_with_no_errors": "With No Errors",
+  "filter_with_changes": "With Changes",
+  "filter_with_no_changes": "With No Changes",
+  "filter_with_images": "With Images",
+  "filter_with_no_images": "With no Images",
+  "filter_with_configuration": "With Confiuration",
+  "filter_with_no_configuration": "With no Configuration",
+  "filter_both": "Both"
+
+
 }

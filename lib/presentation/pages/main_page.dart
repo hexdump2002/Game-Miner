@@ -211,7 +211,7 @@ class _MainPageState extends State<MainPage> with WindowListener {
         ),
         Padding(
           padding: const EdgeInsets.all(8.0),
-          child: const Text("0.9.012"),
+          child: const Text("0.9.020"),
         ) //versión
       ],
 

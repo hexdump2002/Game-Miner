@@ -58,12 +58,27 @@ class GameView {
   GameView(this.game, this.gameImagePath, this.isExpanded, this.modified, this.selected, this.hasConfig);
 }
 
+class AdvancedFilter {
+  bool showStatusRed = true;
+  bool showStatusOrange = true;
+  bool showStatusGreen = true;
+  bool showStatusBlue = true;
+  List<String> searchPaths; //All games inside these search paths will show
+  int showErrors = 2;
+  int showChanges = 2;
+  int showImages =2;
+  int showConfiguration=2;
+
+  AdvancedFilter(this.searchPaths);
+}
+
 class GameMgrCubit extends Cubit<GameMgrBaseState> {
   List<Game> _baseGames = [];
   List<GameView> _gameViews = [];
   int _sortIndex = 0;
   int _sortDirectionIndex = 0;
   String _searchText = "";
+  late AdvancedFilter _advancedFilter;
 
   String get searchText => _searchText;
 
@@ -76,8 +91,6 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
 
   final CompatToolsRepository _compatToolsRepository = GetIt.I<CompatToolsRepository>();
   final GamesRepository _gameRepository = GetIt.I<GamesRepository>();
-
-  //final CompatToolsMappingRepository _compatToolsMappipngRepository = GetIt.I<CompatToolsMappingRepository>();
 
   late UserSettings _currentUserSettings;
   late final Settings _settings;
@@ -110,10 +123,16 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
 
   GameMgrCubit() : super(IninitalState()) {
     _settings = GetIt.I<SettingsRepository>().getSettings();
+    _advancedFilter = AdvancedFilter([..._settings.getCurrentUserSettings()!.searchPaths]);
   }
 
   void loadData() {
     _currentUserSettings = _settings!.getUserSettings(_settings!.currentUserId)!;
+    //If we changed the search paths in settings, reset the filter and add them all as active
+    if(_advancedFilter.searchPaths != _currentUserSettings.searchPaths) {
+      _advancedFilter.searchPaths = [..._currentUserSettings.searchPaths];
+    }
+
     _loadData(_currentUserSettings);
   }
 
@@ -146,10 +165,10 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
     _filteredGames.addAll(_gameViews);
     _availableCompatTools = await _compatToolsRepository.loadCompatTools();
 
-    filterGamesByName(_searchText);
+    applyAdvancedFilter(_advancedFilter);
     _sortedFilteredGames = sortFilteredByCurrent();
 
-    _refreshGameCount();
+    _refreshGameCountFromGameViews(_sortedFilteredGames);
     await _refreshStorageSize();
 
     emit(GamesDataRetrieved(
@@ -167,7 +186,8 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
         _sortDirectionIndex,
         searchText,
         _currentImageType!,
-        _multiSelectionMode));
+        _multiSelectionMode,
+    _advancedFilter));
 
     //stopwatch.stop();
     //print('[Logic] Time taken to execute method: ${stopwatch.elapsed}');
@@ -259,7 +279,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
 
     GameTools.handleGameExecutableErrorsForGame(gv.game);
 
-    _refreshGameCount();
+    _refreshGameCountFromGameViews(_sortedFilteredGames);
 
     notifyDataChanged();
   }
@@ -281,7 +301,8 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
         _sortDirectionIndex,
         searchText,
         _currentImageType!,
-        _multiSelectionMode));
+        _multiSelectionMode,
+        _advancedFilter));
   }
 
   Future<void> trySave() async {
@@ -313,7 +334,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
     }
 
     //This is needed because when a game has an error with proton. It is reset to none but not saved
-    _refreshGameCount();
+    _refreshGameCountFromGameViews(_sortedFilteredGames);
 
     notifyDataChanged();
   }
@@ -374,7 +395,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
     gv.modified = true;
 
     GameTools.handleGameExecutableErrorsForGame(gv.game);
-    _refreshGameCount();
+    _refreshGameCountFromGameViews(_sortedFilteredGames);
 
     notifyDataChanged();
   }
@@ -462,7 +483,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
       if (showNotifications) EasyLoading.showToast(tr("selected_data_was_deleted", args: [game.name]));
 
       await _refreshStorageSize();
-      _refreshGameCount();
+      _refreshGameCountFromGameViews(_sortedFilteredGames);
 
       if (refreshUi) notifyDataChanged();
 
@@ -769,8 +790,13 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
     _sdCardTotalInBytes = data['sdTotalSpace']!;
   }
 
-  void _refreshGameCount() {
-    var data = Stats.getGameStatusStats(_baseGames);
+  void _refreshGameCountFromGameViews(List<GameView> gameViews) {
+    List<Game> games = gameViews.map<Game>((e) => e.game).toList();
+    _refreshGameCount(games);
+  }
+
+  void _refreshGameCount(List<Game> games) {
+    var data = Stats.getGameStatusStats(games);
     _nonAddedGamesCount = data["notAdded"]!;
     _addedGamesCount = data["added"]!;
     _fullyAddedGamesCount = data["fullyAdded"]!;
@@ -804,30 +830,165 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
     return sortByCurrent([..._filteredGames]);
   }
 
-  void filterGamesByName(String searchTerm) {
+  void applyAdvancedFilter(AdvancedFilter advancedFilter) {
+    _advancedFilter = advancedFilter;
+
+    _filteredGames = filterGamesByName(_gameViews, _searchText);
+    _filteredGames = filterGamesByChanges(_filteredGames, _advancedFilter.showChanges);
+    _filteredGames = filterGamesByStatus(_filteredGames, _advancedFilter.showStatusRed, _advancedFilter.showStatusOrange, _advancedFilter.showStatusGreen, _advancedFilter.showStatusBlue);
+    _filteredGames = filterGamesByConfiguration(_filteredGames, _advancedFilter.showConfiguration);
+    _filteredGames = filterGamesByError(_filteredGames, _advancedFilter.showErrors);
+    _filteredGames = filterGamesByImages(_filteredGames, _advancedFilter.showImages);
+    _filteredGames = filterGamesBySearchPaths(_filteredGames, _advancedFilter.searchPaths);
+
+    _sortedFilteredGames = sortFilteredByCurrent();
+
+    _refreshGameCountFromGameViews(_sortedFilteredGames);
+
+    notifyDataChanged();
+  }
+
+  //region Filters
+  searchTermChanged(String term) {
+    _searchText = term;
+    applyAdvancedFilter(_advancedFilter);
+  }
+
+  AdvancedFilter getAdvancedFilter() { return _advancedFilter; }
+
+  List<GameView> filterGamesByName(List<GameView> gameViews, String searchTerm) {
     _searchText = searchTerm;
 
     searchTerm = searchTerm.toLowerCase();
-    _filteredGames = _gameViews.where((element) => element.game.name.toLowerCase().contains(searchTerm)).toList();
-    _sortedFilteredGames = sortFilteredByCurrent();
-
-    emit(SearchTermChanged(
-        _sortedFilteredGames,
-        getAvailableCompatToolDisplayNames(),
-        _nonAddedGamesCount,
-        _addedGamesCount,
-        _fullyAddedGamesCount,
-        _addedExternalCount,
-        _ssdFreeSizeInBytes,
-        _sdCardFreeInBytes,
-        _ssdTotalSizeInBytes,
-        _sdCardTotalInBytes,
-        _sortIndex,
-        _sortDirectionIndex,
-        searchText,
-        _currentImageType!,
-        _multiSelectionMode));
+    return gameViews.where((element) => element.game.name.toLowerCase().contains(searchTerm)).toList();
   }
+
+  List<GameView> filterGamesByStatus(List<GameView> gameViews,  bool showRed, bool showOrange, bool showGreen, bool showBlue) {
+    List<GameView> gvs = gameViews.where((element) {
+      GameStatus status = GameTools.getGameStatus(element.game);
+
+      if(showRed && status == GameStatus.NonAdded) {
+        return true;
+      } else if(showOrange && status == GameStatus.Added) {
+        return true;
+      } else if(showGreen && status == GameStatus.FullyAdded) {
+        return true;
+      } else if(showBlue && status == GameStatus.AddedExternal) {
+        return true;
+      }
+
+      return false;
+    }).toList();
+
+    return gvs;
+  }
+
+  List<GameView> filterGamesBySearchPaths(List<GameView> gameViews, List<String> searchPaths) {
+    List<GameView> gvs = gameViews.where((gameView) {
+      return searchPaths.firstWhereOrNull((searchPath) {
+        String searchPathWithSeparator = searchPath+p.separator;
+        return gameView.game.path.startsWith(searchPathWithSeparator);
+      })!=null;
+    }).toList();
+
+    return gvs;
+  }
+
+  List<GameView> filterGamesByImages(List<GameView> gameViews, int showWithImages) {
+    //Both
+    if(showWithImages == 2) return gameViews;
+
+    //With images
+    if(showWithImages == 0) {
+      return gameViews.where((element) =>GameTools.doesGameHasImages(element.game)).toList();
+    }
+    else {
+      //With no changes
+      return gameViews.where((element) => !GameTools.doesGameHasImages(element.game)).toList();
+    }
+  }
+
+  List<GameView> filterGamesByChanges(List<GameView> gameViews, int showChanges) {
+    //Both
+    if(showChanges == 2) return gameViews;
+
+    //With changes
+    if(showChanges == 0) {
+      return gameViews.where((element) => element.modified).toList();
+    }
+    else {
+      //With no changes
+      return gameViews.where((element) => !element.modified).toList();
+    }
+
+  }
+
+  List<GameView> filterGamesByError(List<GameView> gameViews, int showError) {
+    if(showError ==2 ) return gameViews;
+
+    //With errors
+    if(showError == 0) {
+      return gameViews.where((element) =>  element.game.hasErrors()).toList();
+    }
+    else {
+      //With no errors
+      return gameViews.where((element) =>  !element.game.hasErrors()).toList();
+    }
+  }
+
+  List<GameView> filterGamesByConfiguration(List<GameView> gameViews, int showConfiguration) {
+    if(showConfiguration ==2 ) return gameViews;
+
+    //With errors
+    if(showConfiguration == 0) {
+      return gameViews.where((element) =>  element.hasConfig).toList();
+    }
+    else {
+      //With no errors
+      return gameViews.where((element) =>  !element.hasConfig).toList();
+    }
+  }
+/*
+  void setFilterRedStatus(bool value) {
+    _advancedFilter.showStatusRed = value;
+  }
+  void setFilterOrangeStatus(bool value) {
+    _advancedFilter.showStatusOrange = value;
+  }
+  void setFilterGreenStatus(bool value) {
+    _advancedFilter.showStatusGreen = value;
+  }void setFilterBlueStatus(bool value) {
+    _advancedFilter.showStatusBlue = value;
+  }
+  void setFilterSearchPaths(List<String> paths) {
+    _advancedFilter.searchPaths = paths;
+  }
+  void setFilterWithErrors(bool value) {
+    _advancedFilter.showErrors = value;
+  }
+  void setFilterWithNoErrors(bool value) {
+    _advancedFilter.showErrors = value;
+  }
+  void setFilterWithChanges(bool value) {
+    _advancedFilter.showChanges = value;
+  }
+  void setFilterWithNoChanges(bool value) {
+    _advancedFilter.showChanges = value;
+  }
+  void setFilterWithImages(bool value) {
+    _advancedFilter.showImages = value;
+  }
+  void setFilterWithNoImages(bool value) {
+    _advancedFilter.showImages = value;
+  }
+  void setFilterWithConfiguration(bool value) {
+    _advancedFilter.showConfiguration = value;
+  }
+  void setFilterWithNoConfiguration(bool value) {
+    _advancedFilter.showConfiguration = value;
+  }*/
+
+  //endregion
 
   void openFolder(Game game) async {
     String path = StringTools.removeQuotes(game.path); // external ones are not touched so they can come with this
@@ -960,7 +1121,8 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
         _sortDirectionIndex,
         searchText,
         _currentImageType!,
-        _multiSelectionMode));
+        _multiSelectionMode,
+        _advancedFilter));
   }
 
   void setViewType(GameExecutableImageType geit) {
@@ -997,4 +1159,8 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
 
     notifyDataChanged();
   }
+
+
+
+
 }

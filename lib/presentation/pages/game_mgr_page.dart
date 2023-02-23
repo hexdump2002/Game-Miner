@@ -21,6 +21,7 @@ import '../../data/models/settings.dart';
 import '../../data/repositories/games_repository.dart';
 import '../../logic/Tools/game_tools.dart';
 import '../../logic/Tools/steam_tools.dart';
+import '../widgets/advanced_filter_widget.dart';
 
 enum ContextMenuItem { ShowFolder, RenameGame, DeleteGame, ExportConfig, ImportConfig, DeleteConfig }
 
@@ -66,11 +67,18 @@ class _GameMgrPageState extends State<GameMgrPage> {
             Expanded(
               child: Padding(
                   padding: const EdgeInsets.fromLTRB(8, 8, 16, 8),
-                  child: SearchBar(_nsCubit(context).searchText, tr("search"), (term) => _nsCubit(context).filterGamesByName(term))),
+                  child: SearchBar(_nsCubit(context).searchText, tr("search"), (term) => _nsCubit(context).searchTermChanged(term))),
             ),
             BlocBuilder<GameMgrCubit, GameMgrBaseState>(
               builder: (context, state) {
                 return Row(children: [
+                  IconButton(
+                    onPressed: () async {
+                      _showAdvancedFilterDialog(_nsCubit(context).getAdvancedFilter());
+                    },
+                    icon: const Icon(Icons.filter_list),
+                    tooltip: tr("advanced_filter"),
+                  ),
                   Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: DropdownButton<String>(
@@ -118,7 +126,8 @@ class _GameMgrPageState extends State<GameMgrPage> {
                       )),
                   Tooltip(
                       message: tr("multi_selection_mode"),
-                      child: Switch(value: _nsCubit(context).getMultiSelectionMode(), onChanged: (value) => _nsCubit(context).swapMultiSelectionMode())),
+                      child:
+                          Switch(value: _nsCubit(context).getMultiSelectionMode(), onChanged: (value) => _nsCubit(context).swapMultiSelectionMode())),
                   IconButton(
                     onPressed: () async {
                       if (_formKey.currentState!.validate()) {
@@ -274,7 +283,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
         ),
         _buildInfoBar(context, nsgState, themeExtension)
       ];
-    } else if (nsgState is SearchTermChanged) {
+    } else if (nsgState is FilterChanged) {
       return [
         Expanded(
           child: Align(alignment: Alignment.topCenter, child: _createGameCards(context, nsgState, themeExtension)),
@@ -339,7 +348,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
   Widget _createGameCardImage(BuildContext context, GameView gameView, int index, CustomTheme themeExtension, BaseDataChanged state) {
     return Container(
       color: const Color.fromARGB(255, 80, 80, 80),
-      padding: EdgeInsets.fromLTRB(0,4, 0, 4),
+      padding: EdgeInsets.fromLTRB(0, 4, 0, 4),
       child: ExpandablePanel(
         controller: ExpandableController(initialExpanded: gameView.isExpanded)..addListener(() => _nsCubit(context).swapExpansionStateForItem(index)),
         header: Row(
@@ -366,10 +375,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
                               padding: const EdgeInsets.fromLTRB(0, 0, 24, 0),
                               child: gameView.game.isExternal ? null : Text(StringTools.bytesToStorageUnity(gameView.game.gameSize)),
                             ),
-                            Padding(
-                              padding: const EdgeInsets.fromLTRB(0, 0, 24, 0),
-                              child: _getDateText(gameView)
-                            )
+                            Padding(padding: const EdgeInsets.fromLTRB(0, 0, 24, 0), child: _getDateText(gameView))
                           ],
                         ),
                         Padding(
@@ -405,8 +411,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
   //region Full Baner
   Widget _createGameCardFullBannerSize(GameView gameView, int index, CustomTheme themeExtension, BaseDataChanged state) {
     return ExpandablePanel(
-      controller: ExpandableController(initialExpanded: gameView.isExpanded)
-        ..addListener(() => _nsCubit(context).swapExpansionStateForItem(index)),
+      controller: ExpandableController(initialExpanded: gameView.isExpanded)..addListener(() => _nsCubit(context).swapExpansionStateForItem(index)),
       header: Stack(
         children: [
           _getGameSteamImage(context, gameView, GameExecutableImageType.Banner, state.multiSelectionMode),
@@ -416,7 +421,8 @@ class _GameMgrPageState extends State<GameMgrPage> {
               children: [
                 Row(
                   children: [
-                    if (state.multiSelectionMode) Checkbox(value: gameView.selected, onChanged: (value) => {_nsCubit(context).swapGameViewSelected(gameView)}),
+                    if (state.multiSelectionMode)
+                      Checkbox(value: gameView.selected, onChanged: (value) => {_nsCubit(context).swapGameViewSelected(gameView)}),
                     Container(
                         padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
                         decoration: BoxDecoration(borderRadius: BorderRadius.circular(20), color: Colors.black.withAlpha(180)),
@@ -476,17 +482,17 @@ class _GameMgrPageState extends State<GameMgrPage> {
       color: Color.fromARGB(255, 80, 80, 80),
       alignment: Alignment.center,
       child: ExpandablePanel(
-        controller: ExpandableController(initialExpanded: gameView.isExpanded)
-          ..addListener(() => _nsCubit(context).swapExpansionStateForItem(index)),
+        controller: ExpandableController(initialExpanded: gameView.isExpanded)..addListener(() => _nsCubit(context).swapExpansionStateForItem(index)),
         header: ListTile(
           title: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              if (state.multiSelectionMode) Checkbox(value: gameView.selected, onChanged: (value) => {_nsCubit(context).swapGameViewSelected(gameView)}),
+              if (state.multiSelectionMode)
+                Checkbox(value: gameView.selected, onChanged: (value) => {_nsCubit(context).swapGameViewSelected(gameView)}),
               _getGameSteamImage(context, gameView, GameExecutableImageType.HalfBanner, state.multiSelectionMode),
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16,0,0,0),
+                  padding: const EdgeInsets.fromLTRB(16, 0, 0, 0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -494,7 +500,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
                         children: [
                           _getExeCurrentStateIcon(GameTools.getGameStatus(gameView.game)),
                           Padding(
-                            padding: const EdgeInsets.fromLTRB(16.0,0,0,0),
+                            padding: const EdgeInsets.fromLTRB(16.0, 0, 0, 0),
                             child: Text(gameView.game.name, style: Theme.of(context).textTheme.headline5, textAlign: TextAlign.left),
                           ),
                         ],
@@ -507,8 +513,6 @@ class _GameMgrPageState extends State<GameMgrPage> {
                         padding: const EdgeInsets.fromLTRB(32, 16, 0, 0),
                         child: gameView.game.isExternal ? null : Text(StringTools.bytesToStorageUnity(gameView.game.gameSize)),
                       ),
-
-
                     ],
                   ),
                 ),
@@ -516,7 +520,6 @@ class _GameMgrPageState extends State<GameMgrPage> {
               _buildContextMenu(gameView)
             ],
           ),
-
         ),
         expanded: Container(
             padding: const EdgeInsets.fromLTRB(0, 16, 0, 16),
@@ -605,11 +608,15 @@ class _GameMgrPageState extends State<GameMgrPage> {
         child: Column(
           children: [
             Focus(
-              onFocusChange: (hasFocus) {if(!hasFocus) {_nsCubit(context).notifyDataChanged();}},
+              onFocusChange: (hasFocus) {
+                if (!hasFocus) {
+                  _nsCubit(context).notifyDataChanged();
+                }
+              },
               child: TextFormField(
                 key: UniqueKey(),
                 initialValue: uge.name,
-                decoration: InputDecoration(labelText: tr("name"),errorStyle: TextStyle(color: Colors.redAccent.shade100)),
+                decoration: InputDecoration(labelText: tr("name"), errorStyle: TextStyle(color: Colors.redAccent.shade100)),
                 autovalidateMode: AutovalidateMode.onUserInteraction,
                 onChanged: (value) {
                   uge.name = value!;
@@ -627,7 +634,11 @@ class _GameMgrPageState extends State<GameMgrPage> {
               ),
             ),
             Focus(
-              onFocusChange: (hasFocus) {if(!hasFocus) {_nsCubit(context).notifyDataChanged();}},
+              onFocusChange: (hasFocus) {
+                if (!hasFocus) {
+                  _nsCubit(context).notifyDataChanged();
+                }
+              },
               child: TextFormField(
                 key: UniqueKey(),
                 initialValue: uge.launchOptions,
@@ -878,7 +889,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
                     text: TextSpan(children: [
                   TextSpan(text: tr("going_to")),
                   TextSpan(text: tr("delete_capitals"), style: const TextStyle(color: Colors.redAccent)),
-                  TextSpan(text: tr("delete_selected_game_dialog_text",args:[state.selectedGameCount.toString()])),
+                  TextSpan(text: tr("delete_selected_game_dialog_text", args: [state.selectedGameCount.toString()])),
                   TextSpan(text: tr("warning_action_undone"), style: const TextStyle(color: Colors.red, fontSize: 18, height: 2))
                 ])),
                 Padding(
@@ -1019,7 +1030,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
   }
 
   void _exportSelectedGames(List<GameView> games) async {
-    if(games.where((o)=>o.selected).isEmpty) {
+    if (games.where((o) => o.selected).isEmpty) {
       EasyLoading.showToast(tr("no_action_no_games_selected"));
       return;
     }
@@ -1060,8 +1071,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
   }
 
   void _importSelectedGamesConfig(List<GameView> games) async {
-
-    if(games.where((o)=>o.selected).isEmpty) {
+    if (games.where((o) => o.selected).isEmpty) {
       EasyLoading.showToast(tr("no_action_no_games_selected"));
       return;
     }
@@ -1105,42 +1115,41 @@ class _GameMgrPageState extends State<GameMgrPage> {
   void _importGameConfig(GameView gv) async {
     var nsCubit = _nsCubit(context);
     Future.microtask(() => showPlatformDialog(
-      context: context,
-      builder: (context) {
-        return BasicDialogAlert(
-          title: Row(children: [
-            const Padding(
-              padding: EdgeInsets.fromLTRB(0, 0, 8.0, 0),
-              child: Icon(Icons.warning, color: Colors.red),
-            ),
-            Text(tr('warning'))
-          ]),
-          content: Column(mainAxisSize: MainAxisSize.min, children: [
-            Text(tr("import_config_dialog_text")),
-          ]),
-          actions: <Widget>[
-            BasicDialogAction(
-              title: const Text("OK"),
-              onPressed: () {
-                nsCubit.importGameConfig(gv);
-                Navigator.pop(context);
-              },
-            ),
-            BasicDialogAction(
-              title: Text(tr("cancel")),
-              onPressed: () {
-                Navigator.pop(context);
-              },
-            ),
-          ],
-        );
-      },
-    ));
+          context: context,
+          builder: (context) {
+            return BasicDialogAlert(
+              title: Row(children: [
+                const Padding(
+                  padding: EdgeInsets.fromLTRB(0, 0, 8.0, 0),
+                  child: Icon(Icons.warning, color: Colors.red),
+                ),
+                Text(tr('warning'))
+              ]),
+              content: Column(mainAxisSize: MainAxisSize.min, children: [
+                Text(tr("import_config_dialog_text")),
+              ]),
+              actions: <Widget>[
+                BasicDialogAction(
+                  title: const Text("OK"),
+                  onPressed: () {
+                    nsCubit.importGameConfig(gv);
+                    Navigator.pop(context);
+                  },
+                ),
+                BasicDialogAction(
+                  title: Text(tr("cancel")),
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                ),
+              ],
+            );
+          },
+        ));
   }
 
   void _deleteSelectedGameConfigs(List<GameView> games) {
-
-    if(games.where((o)=>o.selected).isEmpty) {
+    if (games.where((o) => o.selected).isEmpty) {
       EasyLoading.showToast(tr("no_action_no_games_selected"));
       return;
     }
@@ -1394,14 +1403,9 @@ class _GameMgrPageState extends State<GameMgrPage> {
         padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
         child: _createGameCardFullBannerSize(gameView, index, themeExtension, state),
       );
-    }
-    else if(state.gameExecutableImageType == GameExecutableImageType.HalfBanner) {
-      return Padding(
-        padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
-        child: _createGameCardHalfBannerSize(gameView, index, themeExtension, state)
-      );
-    }
-    else {
+    } else if (state.gameExecutableImageType == GameExecutableImageType.HalfBanner) {
+      return Padding(padding: const EdgeInsets.fromLTRB(8, 8, 8, 8), child: _createGameCardHalfBannerSize(gameView, index, themeExtension, state));
+    } else {
       return Padding(
         padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
         child: _createGameCardImage(context, gameView, index, themeExtension, state),
@@ -1410,17 +1414,41 @@ class _GameMgrPageState extends State<GameMgrPage> {
   }
 
   Widget? _getDateText(GameView gameView) {
-    if(gameView.game.isExternal) return null;
+    if (gameView.game.isExternal) return null;
 
     try {
       String formatedDate = DateFormat('dd-MM-yyyy').format(gameView.game.creationDate);
-      return Text("Updated on $formatedDate",
-          style: TextStyle(fontSize: 12, color: Colors.grey.shade500));
-    }
-    catch(ex) {
+      return Text("Updated on $formatedDate", style: TextStyle(fontSize: 12, color: Colors.grey.shade500));
+    } catch (ex) {
       print(ex);
       return null;
     }
+  }
 
+  void _showAdvancedFilterDialog(AdvancedFilter advancedFilter) {
+    GameMgrCubit cubit = _nsCubit(context);
+
+    showPlatformDialog(
+      context: context,
+      builder: (context) => BasicDialogAlert(
+        title: Text(tr('advanced_filter'), style: TextStyle(fontWeight: FontWeight.bold),),
+        content: AdvancedFilterWidget(advancedFilter: advancedFilter, searchPaths: [..._userSettings.searchPaths]),
+        actions: <Widget>[
+          BasicDialogAction(
+            title: const Text("OK"),
+            onPressed: () async {
+              Navigator.pop(context);
+              cubit.applyAdvancedFilter(advancedFilter);
+            },
+          ),
+          BasicDialogAction(
+            title: Text(tr("cancel")),
+            onPressed: () {
+              Navigator.pop(context);
+            },
+          ),
+        ],
+      ),
+    );
   }
 }
