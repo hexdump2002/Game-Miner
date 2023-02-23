@@ -149,7 +149,7 @@
   "all_lowercase": "Todo en minúsculas",
   "advanced_filter": "Filtro avanzado",
   "filter_status": "Mostrar juegos con estado",
-  "filter_search_path": "Mostrar juegos cargados desde",
+  "filter_search_path": "Mostrar juegos en biblioteca cargados desde",
   "ad_fil_red_tooltip": "Sin añadir",
   "ad_fil_orange_tooltip": "Sin CompatTool",
   "ad_fil_green_tooltip": "Preparado",

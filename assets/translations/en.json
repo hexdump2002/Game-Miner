@@ -151,7 +151,7 @@
   "all_lowercase": "All lowercase",
   "advanced_filter": "Advanced filter",
   "filter_status": "Show games with status",
-  "filter_search_path": "Show games loaded from",
+  "filter_search_path": "Show user library games loaded from",
   "ad_fil_red_tooltip": "Not Added",
   "ad_fil_orange_tooltip": "No CompatTool",
   "ad_fil_green_tooltip": "Ready",

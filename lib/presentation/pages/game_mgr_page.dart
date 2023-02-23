@@ -517,6 +517,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
                   ),
                 ),
               ),
+              Padding(padding: const EdgeInsets.fromLTRB(16.0, 0, 0, 0),child: _getErrorsOrModifiedIcon(gameView)),
               _buildContextMenu(gameView)
             ],
           ),
@@ -1431,7 +1432,10 @@ class _GameMgrPageState extends State<GameMgrPage> {
     showPlatformDialog(
       context: context,
       builder: (context) => BasicDialogAlert(
-        title: Text(tr('advanced_filter'), style: TextStyle(fontWeight: FontWeight.bold),),
+        title: Text(
+          tr('advanced_filter'),
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         content: AdvancedFilterWidget(advancedFilter: advancedFilter, searchPaths: [..._userSettings.searchPaths]),
         actions: <Widget>[
           BasicDialogAction(
