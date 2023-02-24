@@ -199,4 +199,15 @@ class FileTools {
     }
   }
 
+  //path can be absolute o relative to the system look up paths
+  static bool isExecutableInPathSync(String path) {
+    var result = Process.runSync("command", ["-v",path],runInShell: true);
+
+    if(result.exitCode == 0 && result.stdout != "") {
+      return true;
+    }
+
+    return false;
+  }
+
 }

@@ -163,5 +163,6 @@
   "filter_with_no_images": "Sin Imagenes",
   "filter_with_configuration": "Con Configuración",
   "filter_with_no_configuration": "Sin Configuración",
-  "filter_both": "Ambos"
+  "filter_both": "Ambos",
+  "cleaner_system": "Sistema"
 }

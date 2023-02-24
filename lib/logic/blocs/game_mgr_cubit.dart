@@ -866,7 +866,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
   List<GameView> filterGamesByStatus(List<GameView> gameViews,  bool showRed, bool showOrange, bool showGreen, bool showBlue) {
     List<GameView> gvs = gameViews.where((element) {
       GameStatus status = GameTools.getGameStatus(element.game);
-      return true;
+
       if(showRed && status == GameStatus.NonAdded) {
         return true;
       } else if(showOrange && status == GameStatus.Added) {
@@ -884,6 +884,10 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
   }
 
   List<GameView> filterGamesBySearchPaths(List<GameView> gameViews, List<String> searchPaths) {
+    if(searchPaths.isEmpty) {
+      return gameViews.where((gameView) => _advancedFilter.showStatusBlue && gameView.game.isExternal).toList();
+    }
+
     List<GameView> gvs = gameViews.where((gameView) {
       return searchPaths.firstWhereOrNull((searchPath) {
         String searchPathWithSeparator = searchPath+p.separator;

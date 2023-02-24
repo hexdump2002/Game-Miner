@@ -14,7 +14,6 @@ import 'package:path/path.dart' as pathLib;
 
 import '../../logic/Tools/steam_tools.dart';
 
-
 class Game {
   static int _id = 1;
 
@@ -29,15 +28,14 @@ class Game {
   final List<GameExecutable> exeFileEntries = [];
 
   String get path => _path;
-  set path(String value) {
 
-    for(GameExecutable ex in exeFileEntries) {
-      if(ex.startDir.startsWith("$_path")) {
-        ex.startDir=ex.startDir.replaceFirst(_path, value);
+  set path(String value) {
+    for (GameExecutable ex in exeFileEntries) {
+      if (ex.startDir.startsWith("$_path")) {
+        ex.startDir = ex.startDir.replaceFirst(_path, value);
       }
     }
-    _path= value;
-
+    _path = value;
   }
 
   //Did we fully or partially configured game exe data from config file?
@@ -52,7 +50,7 @@ class Game {
   }
 
   //User Folders Game (Internal)
-  Game(String path, this.name) : id=_id {
+  Game(String path, this.name) : id = _id {
     ++_id;
     _path = path;
     isExternal = false;
@@ -73,6 +71,20 @@ class Game {
     isExternal = true;
   }*/
 
+  bool _checkIfExecutableIsReachable(String path) {
+    path = path.trim();
+
+     bool exists = false;
+    if (pathLib.isAbsolute(path)) {
+      exists = FileTools.existsFileSync(path);
+    } else {
+      //I amn not adding double quotes to path becase Process.run does not work. I hove path here will be just a command without spaces :)
+      exists = FileTools.isExecutableInPathSync(path);
+    }
+
+    return exists;
+  }
+
   void addExeFile(String absoluteFilePath) {
     if (isExternal) throw Exception("Can't add an internal exe to an external game");
 
@@ -82,14 +94,18 @@ class Game {
     //So we try to get the real executable path
     String exePath = _getExecutable(absoluteFilePath);*/
 
+    /*if(absoluteFilePath.contains("ChildofLight.exe")) {
+      print("hai");
+      String can = pathLib.normalize(absoluteFilePath);
+      print("ho");
+    }*/
 
-    bool exists = FileTools.existsFileSync(absoluteFilePath);
+    bool exists = _checkIfExecutableIsReachable(absoluteFilePath);
     exeFileEntries.add(GameExecutable(path, absoluteFilePath, SteamTools.generateAppId(absoluteFilePath), !exists));
   }
 
-  Future<void> resolveGameImages(String userId) async{
-
-    for(GameExecutable ge in exeFileEntries) {
+  Future<void> resolveGameImages(String userId) async {
+    for (GameExecutable ge in exeFileEntries) {
       GameExecutableImages images = await GameTools.getGameExecutableImages(ge.appId, userId);
       ge.images = images;
     }
@@ -100,41 +116,44 @@ class Game {
     //Some shortcuts come with the params in the executable and this produces an error when trying to check if exe exists
     //So we try to get the real executable path
     String exePath = _getExecutable(steamShortcut.exePath);
-    bool exists = FileTools.existsFileSync(StringTools.removeQuotes(exePath));
-    var uge = GameExecutable.asExternal(steamShortcut, !exists, protonMapping: pm, );
+
+    //Check if executable exists
+
+    //bool exists = FileTools.existsFileSync(StringTools.removeQuotes(exePath));
+    bool exists = _checkIfExecutableIsReachable(StringTools.removeQuotes(exePath));
+    var uge = GameExecutable.asExternal(
+      steamShortcut,
+      !exists,
+      protonMapping: pm,
+    );
     isExternal = true;
     exeFileEntries.add(uge);
   }
 
   String _getExecutable(String exePath) {
-    String exe= exePath.trim();
-    if(exe.isEmpty) return exePath;
+    String exe = exePath.trim();
+    if (exe.isEmpty) return exePath;
 
     //Type "/usr/bin/flatpak" params
-    if(exe.startsWith("\"")) {
-      int index = exe.indexOf("\"",1);
-      if(index!=exe.length-1) {
-        return exe.substring(0, index+1).trim();
+    if (exe.startsWith("\"")) {
+      int index = exe.indexOf("\"", 1);
+      if (index != exe.length - 1) {
+        return exe.substring(0, index + 1).trim();
       }
-    }
-    else{
-      int index = exe.indexOf(" ",1);
+    } else {
+      int index = exe.indexOf(" ", 1);
       //If we didn't started with \" but we found a space it means the type is /usr/bin/flatpak params
-      if(index!=-1){
-        return exe.substring(0, index+1).trim();
+      if (index != -1) {
+        return exe.substring(0, index + 1).trim();
       }
     }
 
     return exePath;
-
   }
-
 
   void addExeFiles(List<String> filePaths) {
     filePaths.forEach((filePath) {
       addExeFile(filePath);
     });
   }
-
-
 }

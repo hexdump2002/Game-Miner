@@ -90,6 +90,7 @@ class _GameDataMgrPageState extends State<GameDataMgrPage> {
   }
 
   Widget _buildPage(List<AppDataStorageEntry> appsStorage, int sortColumnIndex, bool ascending) {
+
     return DataTable2(
       columnSpacing: 16,
       sortColumnIndex: sortColumnIndex,
@@ -120,7 +121,7 @@ class _GameDataMgrPageState extends State<GameDataMgrPage> {
         return DataRow(onSelectChanged: (value) => _bloc.setSelectedState(e, value!), selected: e.selected, cells: [
           DataCell(Text(e.appStorage.appId)),
           DataCell(_getEntryImage(e)),
-          DataCell(Text(e.appStorage.name)),
+          DataCell(e.appStorage.appId == "0" ? Container(color:Colors.redAccent, padding:EdgeInsets.fromLTRB(4,4, 4, 4), child: Text(tr("cleaner_system"),style:const TextStyle(backgroundColor:Colors.redAccent))):Text(e.appStorage.name)),
           DataCell(Text(StringTools.bytesToStorageUnity(e.appStorage.size))),
           DataCell(_getStorageType(e)),
           DataCell(_getGameType(e)),
@@ -133,13 +134,6 @@ class _GameDataMgrPageState extends State<GameDataMgrPage> {
                 icon: Icon(Icons.delete),
                 tooltip: tr("delete"),
               ),
-              /*IconButton(
-                onPressed: () {
-                  _bloc.openFolder(e.appStorage.installdir);
-                },
-                icon: Icon(Icons.folder),
-                tooltip: tr("open_folder"),
-              )*/
             ],
           )),
         ]);

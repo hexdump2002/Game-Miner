@@ -162,10 +162,11 @@
   "filter_with_changes": "With Changes",
   "filter_with_no_changes": "With No Changes",
   "filter_with_images": "With Images",
-  "filter_with_no_images": "With no Images",
+  "filter_with_no_images": "With No Images",
   "filter_with_configuration": "With Confiuration",
-  "filter_with_no_configuration": "With no Configuration",
-  "filter_both": "Both"
+  "filter_with_no_configuration": "With No Configuration",
+  "filter_both": "Both",
+  "cleaner_system": "System"
 
 
 }
