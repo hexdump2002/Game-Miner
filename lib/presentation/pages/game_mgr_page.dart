@@ -136,7 +136,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
                         print("There are errors in the form. Fix them!");
                       }
                     },
-                    icon: const Icon(Icons.save),
+                    icon:  Icon(Icons.save, color: _nsCubit(context).modified ? Colors.orange : Colors.white),
                     tooltip: tr("save"),
                   ),
                   IconButton(

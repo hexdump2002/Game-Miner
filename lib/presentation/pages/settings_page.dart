@@ -21,7 +21,7 @@ class _SettingsPageState extends State<SettingsPage> {
   late final Future<void> _blocInitializer;
 
   //This follows same order as ExecutableNameProcesTextProcessingOption in settings
-  List<String> processingTextOptions = ["do_nothing", "capitalized",  "title_capitalized", "all_uppercase", "all_lowercase"];
+  List<String> processingTextOptions = ["do_nothing", "capitalized", "title_capitalized", "all_uppercase", "all_lowercase"];
 
   @override
   void initState() {
@@ -42,10 +42,14 @@ class _SettingsPageState extends State<SettingsPage> {
                 Navigator.pop(context, _bloc.isGameListDirty);
               }),*/
           actions: [
-            IconButton(
-              onPressed: () => _bloc.save(),
-              icon: Icon(Icons.save),
-              tooltip: tr("save"),
+            BlocBuilder<SettingsCubit, SettingsState>(
+              builder: (context, state) {
+                return IconButton(
+                  onPressed: () => _bloc.save(),
+                  icon: Icon(Icons.save, color: state.modified ? Colors.orange:Colors.white),
+                  tooltip: tr("save"),
+                );
+              },
             ),
           ],
         ),
@@ -109,7 +113,7 @@ class _SettingsPageState extends State<SettingsPage> {
                           textAlign: TextAlign.start,
                           style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                         ),
-                        SizedBox(width: 0,height: 16),
+                        SizedBox(width: 0, height: 16),
                         Padding(
                             padding: padding,
                             child: Row(
@@ -117,7 +121,9 @@ class _SettingsPageState extends State<SettingsPage> {
                                 Expanded(child: Text(tr("remove_extension"))),
                                 Switch(
                                   value: settings.executableNameProcessRemoveExtension,
-                                  onChanged: (bool? value) { _bloc.setExecutableNameProcessRemoveExtension(value!);},
+                                  onChanged: (bool? value) {
+                                    _bloc.setExecutableNameProcessRemoveExtension(value!);
+                                  },
                                 )
                               ],
                             )),
@@ -127,11 +133,15 @@ class _SettingsPageState extends State<SettingsPage> {
                               Expanded(child: Text(tr("text_processing"))),
                               Expanded(
                                 child: DropdownButtonFormField<ExecutableNameProcesTextProcessingOption>(
-                                    items: ExecutableNameProcesTextProcessingOption.values.map<DropdownMenuItem<ExecutableNameProcesTextProcessingOption>>((ExecutableNameProcesTextProcessingOption e) {
-                                      return DropdownMenuItem<ExecutableNameProcesTextProcessingOption>(value: e, child: Text(tr(processingTextOptions[e.index])));
+                                    items: ExecutableNameProcesTextProcessingOption.values
+                                        .map<DropdownMenuItem<ExecutableNameProcesTextProcessingOption>>(
+                                            (ExecutableNameProcesTextProcessingOption e) {
+                                      return DropdownMenuItem<ExecutableNameProcesTextProcessingOption>(
+                                          value: e, child: Text(tr(processingTextOptions[e.index])));
                                     }).toList(),
                                     value: settings.executableNameProcessTextProcessingOption,
-                                    onChanged: (ExecutableNameProcesTextProcessingOption? value) => _bloc.setDefaultNameProcessTextProcessingOption(value!) ,
+                                    onChanged: (ExecutableNameProcesTextProcessingOption? value) =>
+                                        _bloc.setDefaultNameProcessTextProcessingOption(value!),
                                     decoration: const InputDecoration()),
                               )
                             ]))

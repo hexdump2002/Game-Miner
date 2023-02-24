@@ -26,13 +26,13 @@ class SettingsCubit extends Cubit<SettingsState> {
 
   List<CompatTool> _availableCompatTools = [];
 
-  SettingsCubit() : super(SettingsInitial(UserSettings())) {
+  SettingsCubit() : super(SettingsInitial(UserSettings(), false)) {
     SettingsRepository repo = GetIt.I<SettingsRepository>();
     _currentUserId = repo.load().currentUserId;
     _oldUserSettings = repo.getSettingsForCurrentUser()!;
     _currentUserSettings = _oldUserSettings.clone();
 
-    emit(SettingsLoaded(_currentUserSettings));
+    emit(SettingsLoaded(_currentUserSettings, _modified));
   }
 
   Future<List<CompatTool>> initialize() async {
@@ -94,7 +94,7 @@ class SettingsCubit extends Cubit<SettingsState> {
     //repo.load(forceLoad: true);
 
     _modified = false;
-    emit(SettingsSaved(_currentUserSettings));
+    emit(SettingsSaved(_currentUserSettings, _modified));
   }
 
   bool _areSettingsPathEqual(UserSettings a, UserSettings b)
@@ -125,7 +125,7 @@ class SettingsCubit extends Cubit<SettingsState> {
       else {
         _currentUserSettings.searchPaths.add(selectedDirectory);
         _modified=true;
-        emit(SearchPathsChanged(_currentUserSettings));
+        emit(SearchPathsChanged(_currentUserSettings,_modified));
       }
     } else {
       // User canceled the picker
@@ -135,50 +135,50 @@ class SettingsCubit extends Cubit<SettingsState> {
   removePath(String e) {
     _currentUserSettings.searchPaths.remove(e);
     _modified=true;
-    emit(SearchPathsChanged(_currentUserSettings));
+    emit(SearchPathsChanged(_currentUserSettings,_modified));
   }
 
   void setDarkThemeState(bool state) {
     _currentUserSettings.darkTheme = state;
     _modified = true;
-    emit(GeneralOptionsChanged(_currentUserSettings));
+    emit(GeneralOptionsChanged(_currentUserSettings,_modified));
   }
 
   void setEnableBackups(bool value) {
     _currentUserSettings.backupsEnabled = value;
     _modified = true;
-    emit(GeneralOptionsChanged(_currentUserSettings));
+    emit(GeneralOptionsChanged(_currentUserSettings,_modified));
   }
 
   void setMaxBackupCount(double value) {
     _currentUserSettings.maxBackupsCount = value.toInt();
     _modified = true;
-    emit(GeneralOptionsChanged(_currentUserSettings));
+    emit(GeneralOptionsChanged(_currentUserSettings,_modified));
   }
 
   void setCloseSteamAtStartUp(bool value) {
     _currentUserSettings.closeSteamAtStartUp = value;
     _modified = true;
-    emit(GeneralOptionsChanged(_currentUserSettings));
+    emit(GeneralOptionsChanged(_currentUserSettings, _modified));
   }
 
   setDefaultGameManagerView(String viewTypeString) {
     int index = viewTypesStr.indexWhere((element) => element == viewTypeString);
     _currentUserSettings.defaultGameManagerView = index;
     _modified = true;
-    emit(GeneralOptionsChanged(_currentUserSettings));
+    emit(GeneralOptionsChanged(_currentUserSettings, _modified));
   }
 
   void setExecutableNameProcessRemoveExtension(bool value) {
     _currentUserSettings.executableNameProcessRemoveExtension = value;
     _modified = true;
-    emit(GeneralOptionsChanged(_currentUserSettings));
+    emit(GeneralOptionsChanged(_currentUserSettings, _modified));
   }
 
   setDefaultNameProcessTextProcessingOption(ExecutableNameProcesTextProcessingOption executableNameProcesTextProcessingOption) {
     _currentUserSettings.executableNameProcessTextProcessingOption = executableNameProcesTextProcessingOption;
     _modified = true;
-    emit(GeneralOptionsChanged(_currentUserSettings));
+    emit(GeneralOptionsChanged(_currentUserSettings,_modified));
   }
 
 
