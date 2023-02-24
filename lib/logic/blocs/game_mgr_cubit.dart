@@ -496,7 +496,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
     return false;
   }
 
-  Future<void> tryRenameGame(BuildContext context, Game game) async {
+  Future<void> tryRenameGame(BuildContext context,  Game game, String newName) async {
     if (game.hasErrors()) {
       showSimpleDialog(context, tr('warning'), tr('cant_rename_with_errors'), true, false, null);
       return;
@@ -504,10 +504,10 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
 
     if (await SteamTools.isSteamRunning()) {
       emit(SteamDetected(() {
-        emit(RenameGameClicked(game));
+        emit(RenameGameClicked(game, newName));
       }));
     } else {
-      emit(RenameGameClicked(game));
+      emit(RenameGameClicked(game, newName));
     }
   }
 

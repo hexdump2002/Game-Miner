@@ -164,7 +164,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
           } else if (state is SteamDetected) {
             showSteamActiveWhenSaving(context, state.okAction);
           } else if (state is RenameGameClicked) {
-            _renameGame(context, state.game);
+            _nsCubit(context).renameGame(state.game, state.newName);
           } else if (state is DeleteSelectedClicked) {
             _deleteSelectedGames(context, state);
           }
@@ -313,7 +313,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
         PopupMenuItem<ContextMenuItem>(
           value: ContextMenuItem.RenameGame,
           child: Text(tr("rename_game")),
-          onTap: () => _nsCubit(context).tryRenameGame(context, gameView.game),
+          onTap: () => Future.microtask(() => _renameGame(context, gameView.game)), //_nsCubit(context).tryRenameGame(context, gameView.game),
         ),
         PopupMenuItem<ContextMenuItem>(
             value: ContextMenuItem.DeleteGame, child: Text(tr("delete_game")), onTap: () => _nsCubit(context).tryDeleteGame(gameView.game)),
@@ -1264,7 +1264,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
                               ]));
                   return;
                 }
-                cubit.renameGame(game, _genericTextController.text);
+                cubit.tryRenameGame(context, game, _genericTextController.text);
                 Navigator.pop(context);
               }),
           BasicDialogAction(

@@ -141,8 +141,8 @@ class DeleteGameClicked extends GameMgrBaseState {
 
 class RenameGameClicked extends GameMgrBaseState {
   Game game;
-
-  RenameGameClicked(this.game);
+  String newName;
+  RenameGameClicked(this.game, this.newName);
 }
 
 class SteamDetected extends GameMgrBaseState {
