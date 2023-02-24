@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:async';
+import 'dart:io';
 
 
 import 'package:bloc/bloc.dart';
@@ -7,6 +8,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:game_miner/data/repositories/compat_tools_repository.dart';
+import 'package:game_miner/logic/Tools/file_tools.dart';
 import 'package:get_it/get_it.dart';
 import 'package:meta/meta.dart';
 import 'package:universal_disk_space/universal_disk_space.dart';
@@ -19,7 +21,7 @@ import '../../data/repositories/game_miner_data_repository.dart';
 import '../../data/repositories/settings_repository.dart';
 import '../../data/repositories/steam_config_repository.dart';
 import '../Tools/steam_tools.dart';
-
+import 'package:path/path.dart' as p;
 part 'splash_state.dart';
 
 class SplashCubit extends Cubit<SplashState> {
@@ -29,7 +31,13 @@ class SplashCubit extends Cubit<SplashState> {
 
   //Returns if we can go to main after this is executed
   Future<void> initDependencies() async {
-    stopwatch.start();
+
+    String configFolder = p.join(FileTools.getConfigFolder());
+    bool existsConfigFolder = await FileTools.existsFile(configFolder);
+    if(!existsConfigFolder) {
+      await Directory(configFolder).create(recursive: true);
+    }
+
 
     await GetIt.I<GameMinerDataRepository>().load();
 

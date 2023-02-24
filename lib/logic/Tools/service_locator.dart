@@ -21,11 +21,13 @@ import '../../data/models/steam_user.dart';
 import '../../data/repositories/steam_config_repository.dart';
 import '../../data/repositories/steam_user_repository.dart';
 import 'package:path/path.dart' as p;
+
+import 'file_tools.dart';
 final serviceLocator = GetIt.I;
 
 void setupServiceLocator()  {
-  var curDirectory = Directory.current.path;
-  var gameMinerAbsolutePath = p.join(curDirectory,"game_miner.json");
+  String configFolder = FileTools.getConfigFolder();
+  String gameMinerAbsolutePath = p.join(configFolder,"game_miner.json");
 
   //Data providers
   serviceLocator.registerLazySingleton<CompatToolsDataProvider>(() => CompatToolsDataProvider());

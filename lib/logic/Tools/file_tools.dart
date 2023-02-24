@@ -83,6 +83,11 @@ class FileTools {
     return envVars['HOME']!;
   }
 
+  static String getConfigFolder() {
+    String homeFolder = getHomeFolder();
+    return p.joinAll([homeFolder, ".config","gameminer"]);
+  }
+
   static Future<Map<String, int>> getFolderMetaData(String dirPath, {bool recursive=false}) async{
     int fileCount = 0;
     int totalSize = 0;

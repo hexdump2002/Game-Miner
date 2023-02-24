@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:path/path.dart' as p;
 
 import 'package:game_miner/logic/Tools/file_tools.dart';
 
@@ -10,8 +11,8 @@ class SettingsDataProvider {
 
   Settings loadSettings() {
 
-    Directory appFolder = Directory.current;
-    String fullPath = "${appFolder.path}/$_configFilePath";
+    String configFolder = FileTools.getConfigFolder();
+    String fullPath = p.join(configFolder,_configFilePath);
 
     Settings settings = Settings();
 
@@ -36,8 +37,8 @@ class SettingsDataProvider {
 
   void saveSettings(Settings settings) {
     String json = jsonEncode(settings);
-    Directory appFolder = Directory.current;
-    String fullPath = "${appFolder.path}/$_configFilePath";
+    String configFolder = FileTools.getConfigFolder();
+    String fullPath = p.join(configFolder,_configFilePath);
     File(fullPath)
       ..createSync(recursive: true)
       ..writeAsStringSync(json);
