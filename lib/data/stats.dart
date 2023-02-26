@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:game_miner/data/models/game.dart';
 import 'package:game_miner/logic/Tools/game_tools.dart';
 import 'package:universal_disk_space/universal_disk_space.dart';
+import 'package:path/path.dart' as p;
 
 import '../logic/Tools/file_tools.dart';
 
@@ -35,7 +36,8 @@ class Stats {
     await diskSpace.scan();
     var disks = diskSpace.disks;
     //Originally it was just /home but it didn't worked when I created a flatpak bundle
-    var homeDisk = diskSpace.getDisk(Directory('/home/hexdump/.var/app'));
+    var homeFolder = FileTools.getHomeFolder();
+    var homeDisk = diskSpace.getDisk(Directory(p.join(homeFolder,'/.var/app'));
     var sdDisk = diskSpace.getDisk(Directory('/run/media/mmcblk0p1'));
 
     return {

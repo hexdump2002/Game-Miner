@@ -88,6 +88,45 @@ class FileTools {
     return p.joinAll([homeFolder, ".config","gameminer"]);
   }
 
+  /*static Future<Map<String, int>> getFolderMetaData(String dirPath, {bool recursive=false}) async{
+    int fileCount = 0;
+    int totalSize = 0;
+    int creationDate = 0;
+
+    var dir = Directory(dirPath);
+    try {
+      if (await dir.exists()) {
+        FileStat fs = await dir.stat();
+        creationDate = fs.modified.microsecondsSinceEpoch;
+        totalSize = await FileTools.getFolderSize(dirPath);
+      }
+    } catch (e) {
+      print(e.toString());
+    }
+
+    return {'fileCount': fileCount, 'size': totalSize, 'creationDate':creationDate};
+  }
+
+  static Future<int> getFolderSize(String dirPath) async{
+    int folderSize = -1;
+    try {
+      var result = await Process.run("du", ["-s",dirPath]);
+
+      if (result.exitCode == 0 && result.stdout != "") {
+        String output = result.stdout;
+        output = output.split("\t")[0];
+        folderSize =  int.parse(output);
+      }
+    }
+    catch( ex) {
+      print(ex);
+
+    }
+
+    return folderSize;
+
+  }*/
+
   static Future<Map<String, int>> getFolderMetaData(String dirPath, {bool recursive=false}) async{
     int fileCount = 0;
     int totalSize = 0;
