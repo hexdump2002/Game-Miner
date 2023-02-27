@@ -15,6 +15,7 @@ import 'package:game_miner/logic/blocs/settings_cubit.dart';
 import 'package:game_miner/presentation/pages/game_data_mgr_page.dart';
 import 'package:game_miner/presentation/pages/settings_page.dart';
 import 'package:get_it/get_it.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:window_manager/window_manager.dart';
 
 import '../widgets/steam_user_selector_widget.dart';
@@ -32,6 +33,7 @@ class _MainPageState extends State<MainPage> with WindowListener {
   List<Widget?> _pages = List.generate(4, (index) => null);
 
   late MainPageCubit _bloc;
+  String _appVersion = "";
 
   @override
   void initState() {
@@ -74,6 +76,8 @@ class _MainPageState extends State<MainPage> with WindowListener {
   void _init() async {
     // Add this line to override the default close handler
     await windowManager.setPreventClose(true);
+    PackageInfo packageInfo = await PackageInfo.fromPlatform();
+    _appVersion = packageInfo.version;
     setState(() {});
   }
 
@@ -104,6 +108,7 @@ class _MainPageState extends State<MainPage> with WindowListener {
   }
 
   Widget _buildVerticalMenu(BuildContext context, SteamUser su, int selectedIndex) {
+
     return Column(
       children: [
         Expanded(
@@ -211,7 +216,7 @@ class _MainPageState extends State<MainPage> with WindowListener {
         ),
         Padding(
           padding: const EdgeInsets.all(8.0),
-          child: const Text("0.9.030"),
+          child: Text(_appVersion),
         ) //versión
       ],
 

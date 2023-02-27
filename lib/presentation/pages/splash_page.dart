@@ -1,10 +1,12 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_dialogs/flutter_dialogs.dart';
+import 'package:game_miner/logic/Tools/github_updater.dart';
 import 'package:game_miner/logic/blocs/main_dart_cubit.dart';
 import 'package:game_miner/logic/blocs/splash_cubit.dart';
 import 'package:game_miner/presentation/widgets/steam_user_selector_widget.dart';
@@ -62,6 +64,10 @@ class _SplashPageState extends State<SplashPage>  with SingleTickerProviderState
               ShowSteamUsersDialog sde = state as ShowSteamUsersDialog;
               showSteamUsersDialog(context, state.caption);
             }
+            else if(state is GameMinerUpdateFound) {
+              GameMinerUpdateFound gmuf = state;
+              showWantToUpdateUsersDialog(context, state.release, state.currentGMVersion);
+            }
             else if(state is UserAutoLogged)
             {
               _bloc.finalizeSetup(context, state.user);
@@ -70,6 +76,9 @@ class _SplashPageState extends State<SplashPage>  with SingleTickerProviderState
               SchedulerBinding.instance.addPostFrameCallback((_) {
                 Navigator.pushReplacementNamed(context, "/main");
               });
+            }
+            else if(state is UpdateDownloadComplete) {
+              showUpdateResetDiaglog(context);
             }
           },
           child: Container(
@@ -139,11 +148,65 @@ class _SplashPageState extends State<SplashPage>  with SingleTickerProviderState
       );
   }
 
+  void showWantToUpdateUsersDialog(BuildContext context, Release release, String currentGMVersion) {
+    showPlatformDialog(
+      context: context,
+      builder: (context) {
+        return BasicDialogAlert(
+          title: Row(children: [
+            const Padding(
+              padding: EdgeInsets.fromLTRB(0, 0, 8.0, 0),
+              child: Icon(Icons.info, color: Colors.blue),
+            ),
+            Text(tr('information'))
+          ]),
+          content: Column(mainAxisSize: MainAxisSize.min, children: [
+            Text(tr("gameminer_new_version_detected", args:[currentGMVersion, release.tagName.substring(1)])),
+          ]),
+          actions: <Widget>[
+            BasicDialogAction(
+              title: const Text("OK"),
+              onPressed: () {
+                _bloc.downloadUpdate(release);
+                Navigator.pop(context);
+              },
+            ),
+            BasicDialogAction(
+              title: Text(tr("cancel")),
+              onPressed: () {
+                _bloc.checkForUsers();
+                Navigator.pop(context);
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void showUpdateResetDiaglog(BuildContext context) {
+
+    showPlatformDialog(context: context,
+        builder: (context) =>
+            BasicDialogAlert(title: Text(tr("information")),
+                content:  Text(tr("reset_update_downloaded")),actions: [  BasicDialogAction(
+                  title: const Text("OK"),
+                  onPressed: () async {
+                    Process.runSync("mv",["GameMiner_newversion.AppImage", "GameMiner.AppImage"]);
+                    Process.runSync("chmod",["+x" ,"./GameMiner.AppImage"]);
+                    exit(0);
+                  },
+                )]
+            ));
+  }
+
   @override
   void dispose() {
     opacityAnimController.dispose();
 
     super.dispose();
   }
+
+
 
 }

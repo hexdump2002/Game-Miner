@@ -8,6 +8,7 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 
 import 'package:game_miner/data/repositories/settings_repository.dart';
 import 'package:game_miner/logic/Tools/file_tools.dart';
+import 'package:game_miner/logic/Tools/github_updater.dart';
 import 'package:game_miner/logic/Tools/steam_tools.dart';
 
 import 'package:game_miner/logic/blocs/main_dart_cubit.dart';
@@ -17,7 +18,7 @@ import 'package:game_miner/logic/blocs/splash_cubit.dart';
 import 'package:game_miner/presentation/pages/main_page.dart';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
-
+import 'package:path/path.dart' as p;
 import 'package:game_miner/presentation/pages/splash_page.dart';
 import 'package:get_it/get_it.dart';
 import 'package:window_manager/window_manager.dart';

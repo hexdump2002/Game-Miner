@@ -1,4 +1,4 @@
 - Change version in pubspec.yaml
 - Create a new gitbug release
-- Create a new tag that fits revious version in pubspec.yaml
+- Create a new tag that fits revious version in pubspec.yaml with format vX.XX.XXX
 - Upload AppImage as asset

@@ -164,5 +164,8 @@
   "filter_with_configuration": "Con Configuración",
   "filter_with_no_configuration": "Sin Configuración",
   "filter_both": "Ambos",
-  "cleaner_system": "Sistema"
+  "cleaner_system": "Sistema",
+  "information": "Información",
+  "gameminer_new_version_detected": "Se ha encontrado una nueva versión de Game miner. Tu versión es la {}. ¿Quieres actualizar a la versión {}?",
+  "reset_update_downloaded": "La nueva versión de Game Miner ha sido descargada. Game Miner necesita salir para aplicar la nueva version"
 }

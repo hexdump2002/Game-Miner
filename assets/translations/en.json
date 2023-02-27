@@ -166,7 +166,10 @@
   "filter_with_configuration": "With Confiuration",
   "filter_with_no_configuration": "With No Configuration",
   "filter_both": "Both",
-  "cleaner_system": "System"
+  "cleaner_system": "System",
+  "information": "Information",
+  "gameminer_new_version_detected": "A new Game Miner update is available. Your current version is {}. Do you want to update to version {}?",
+  "reset_update_downloaded": "Game Miner update was downloaded. Game Miner needs to be restarted to apply the new version"
 
 
 }

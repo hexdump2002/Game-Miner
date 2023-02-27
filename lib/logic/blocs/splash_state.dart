@@ -5,6 +5,11 @@ abstract class SplashState {}
 
 class SplashInitial extends SplashState {}
 
+class GameMinerUpdateFound extends SplashState {
+  final Release release;
+  final String currentGMVersion;
+  GameMinerUpdateFound(this.release, this.currentGMVersion);
+}
 
 class ShowSteamUsersDialog extends SplashState {
   final String caption;
@@ -19,4 +24,12 @@ class UserAutoLogged extends SplashState {
 
 class SplashWorkDone extends SplashState {
 
+}
+
+class UpdateDownloadingPercentageUpdated extends SplashState {
+  String percent;
+  UpdateDownloadingPercentageUpdated(this.percent);
+}
+
+class UpdateDownloadComplete extends SplashState {
 }
