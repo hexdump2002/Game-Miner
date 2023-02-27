@@ -1,0 +1,4 @@
+- Change version in pubspec.yaml
+- Create a new gitbug release
+- Create a new tag that fits revious version in pubspec.yaml
+- Upload AppImage as asset
