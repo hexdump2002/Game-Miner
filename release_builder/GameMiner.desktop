@@ -1,0 +1,8 @@
+[Desktop Entry]
+Categories=Utility;
+Type=Application
+Icon=GameMiner
+Exec=GameMiner
+Name=GameMiner
+
+X-AppImage-Version=001fbf7
