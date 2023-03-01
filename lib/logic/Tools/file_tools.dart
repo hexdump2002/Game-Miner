@@ -34,26 +34,27 @@ class FileTools {
   }*/
 
   //Returns null if the folder couldn't be read
-  static Future<List<String>?> getFolderFilesAsync(String path, {retrieveRelativePaths = false, bool recursive = true, String regExFilter = "", onlyFolders=false, bool regExCaseSensitive=true}) async{
+  static Future<List<String>?> getFolderFilesAsync(String path,
+      {retrieveRelativePaths = false, bool recursive = true, String regExFilter = "", onlyFolders = false, bool regExCaseSensitive = true}) async {
     final myDir = new Directory(path);
 
-    if(!await myDir.exists()) return [];
+    if (!await myDir.exists()) return [];
 
-    var stream =  myDir.list(recursive: recursive, followLinks: false);
+    var stream = myDir.list(recursive: recursive, followLinks: false);
 
-    if(onlyFolders) {
+    if (onlyFolders) {
       stream = stream.where((event) {
         return event.runtimeType.toString() == "_Directory"; // "event.runtimeType is Directory" is not working for me
       });
     }
 
-    if(regExFilter.isNotEmpty) {
-      RegExp r = RegExp(regExFilter,caseSensitive: regExCaseSensitive);
+    if (regExFilter.isNotEmpty) {
+      RegExp r = RegExp(regExFilter, caseSensitive: regExCaseSensitive);
 
       stream = stream.where((event) {
-          String fileName = p.basename(event.path);
-          return r.hasMatch(fileName);
-        });
+        String fileName = p.basename(event.path);
+        return r.hasMatch(fileName);
+      });
     }
 
     int pathLength = path.length;
@@ -61,7 +62,7 @@ class FileTools {
       var finalPath = f.path;
 
       //+1 to remove the / character
-      if (retrieveRelativePaths) finalPath = f.path.substring(pathLength+1);
+      if (retrieveRelativePaths) finalPath = f.path.substring(pathLength + 1);
 
       return finalPath;
     });
@@ -86,7 +87,7 @@ class FileTools {
 
   static String getConfigFolder() {
     String homeFolder = getHomeFolder();
-    return p.joinAll([homeFolder, ".config","gameminer"]);
+    return p.joinAll([homeFolder, ".config", "gameminer"]);
   }
 
   /*static Future<Map<String, int>> getFolderMetaData(String dirPath, {bool recursive=false}) async{
@@ -128,7 +129,7 @@ class FileTools {
 
   }*/
 
-  static Future<Map<String, int>> getFolderMetaData(String dirPath, {bool recursive=false}) async{
+  static Future<Map<String, int>> getFolderMetaData(String dirPath, {bool recursive = false}) async {
     int fileCount = 0;
     int totalSize = 0;
     int creationDate = 0;
@@ -150,7 +151,7 @@ class FileTools {
       print(e.toString());
     }
 
-    return {'fileCount': fileCount, 'size': totalSize, 'creationDate':creationDate};
+    return {'fileCount': fileCount, 'size': totalSize, 'creationDate': creationDate};
   }
 
   static bool existsFileSync(String path) {
@@ -161,37 +162,37 @@ class FileTools {
     return Directory(path).existsSync();
   }
 
-  static Future<bool> existsFile(String path) async{
+  static Future<bool> existsFile(String path) async {
     return await File(path).exists();
   }
 
-  static Future<bool> existsFolder(String path) async{
+  static Future<bool> existsFolder(String path) async {
     return await Directory(path).exists();
   }
 
   //Returns if the writer wrote anything. If not, there was no file modification
-  static Future<bool> saveFileSecure<T>(String path, T data, Map<String, dynamic> extraParams, Future<bool> Function(String,T, Map<String,dynamic> extraParams) writer, int maxBackups) async {
+  static Future<bool> saveFileSecure<T>(String path, T data, Map<String, dynamic> extraParams,
+      Future<bool> Function(String, T, Map<String, dynamic> extraParams) writer, int maxBackups) async {
     String dirName = p.dirname(path);
     String fileName = p.basename(path);
 
     //Copy current file to backup
     Tuple2 backupFiles = await getNextBackupFile(path, maxBackups);
 
-    if(await File(path).exists()) {
+    if (await File(path).exists()) {
       var file = File(path);
       await file.copy("${dirName}/${backupFiles.item1}");
     }
 
-    if(backupFiles.item2 != null) {
+    if (backupFiles.item2 != null) {
       //Create new and delete old backup
       await File(backupFiles.item2).delete();
-
     }
 
     //Create temp file, copy over the old old one and delete temp
-    String tempFileName ="${dirName}/tempFile";
-    bool didWrite = await writer(tempFileName,data, extraParams);
-    if(didWrite) {
+    String tempFileName = "${dirName}/tempFile";
+    bool didWrite = await writer(tempFileName, data, extraParams);
+    if (didWrite) {
       var tempFile = File(tempFileName);
       await tempFile.copy(path);
       await tempFile.delete();
@@ -202,23 +203,24 @@ class FileTools {
   }
 
   //Tuple[0] new backup file Tuple[1] the backup file that must be deleted to rotate (because we reach max backups
-  static Future<Tuple2<String,String?>> getNextBackupFile(String path, int maxBackups) async
+  static Future<Tuple2<String, String?>> getNextBackupFile(String path, int maxBackups) async
   {
     String? backupToDelete;
 
     String fileName = p.basename(path);
     String folder = p.dirname(path);
 
-    if(! await Directory(folder).exists()) throw NotFoundException("Folder $folder does not exist when saving backup.");
+    if (!await Directory(folder).exists()) throw NotFoundException("Folder $folder does not exist when saving backup.");
 
-    List<String>? files = await getFolderFilesAsync(folder,recursive: false, regExFilter: "${fileName}_.*");
-    if(files!.length>=maxBackups)
-    {
-        files.sort();
-        backupToDelete = files[0];
+    List<String>? files = await getFolderFilesAsync(folder, recursive: false, regExFilter: "${fileName}_.*");
+    if (files!.length >= maxBackups) {
+      files.sort();
+      backupToDelete = files[0];
     }
 
-    String newBackupFile = "${fileName}_${DateTime.now().millisecondsSinceEpoch}";
+    String newBackupFile = "${fileName}_${DateTime
+        .now()
+        .millisecondsSinceEpoch}";
 
     return Tuple2(newBackupFile, backupToDelete);
   }
@@ -228,23 +230,22 @@ class FileTools {
     String fileName = p.basename(path);
     String folder = p.dirname(path);
 
-    if(! await Directory(folder).exists()) throw NotFoundException("Folder $folder does not exist when saving backup.");
+    if (!await Directory(folder).exists()) throw NotFoundException("Folder $folder does not exist when saving backup.");
 
-    List<String>? files = await getFolderFilesAsync(folder,recursive: false, regExFilter: "${fileName}_.*");
+    List<String>? files = await getFolderFilesAsync(folder, recursive: false, regExFilter: "${fileName}_.*");
 
-    if(files!.length>=maxBackups)
-    {
+    if (files!.length >= maxBackups) {
       files.sort();
 
       //delete all not needed backups (older)
       int deleteCount = files.length - maxBackups;
-      for(int i=0; i<deleteCount; ++i) {
+      for (int i = 0; i < deleteCount; ++i) {
         await File(files[i]).delete();
       }
     }
   }
 
-  static Future<bool> saveImageAssetToPath(String assetPath, String absoluteFilePath)  async{
+  static Future<bool> saveImageAssetToPath(String assetPath, String absoluteFilePath) async {
     try {
       File file = File(absoluteFilePath);
       final imageBytes = await rootBundle.load(assetPath);
@@ -252,8 +253,7 @@ class FileTools {
       await file.writeAsBytes(
           buffer.asUint8List(imageBytes.offsetInBytes, imageBytes.lengthInBytes));
     }
-    catch(ex)
-    {
+    catch (ex) {
       print(ex);
       return false;
     }
@@ -265,31 +265,37 @@ class FileTools {
   static Future<bool> createAppShortcutIcons(String imageAssetPath, String desktopAssetPath) async {
     String homeFolder = FileTools.getHomeFolder();
 
-    bool success = false;
+    bool success = true;
     //Create folder if needed
     try {
-      String folderPath = p.join(homeFolder,".local/share/icons");
+      String folderPath = p.join(homeFolder, ".local/share/icons");
       bool folderExits = await FileTools.existsFolder(folderPath);
       if (!folderExits) {
         await Directory(folderPath).create(recursive: true);
       }
 
-      success = await saveImageAssetToPath(imageAssetPath, p.join(folderPath, "GameMiner.png"));
+      String gameMinerIconFilePath = folderPath = p.join(folderPath, "GameMiner.png");
+      if (!await FileTools.existsFile(gameMinerIconFilePath)) {
+        success = await saveImageAssetToPath(imageAssetPath, gameMinerIconFilePath);
+      }
 
-      if(success) {
+      if (success) {
         folderPath = p.join(homeFolder, ".local/share/applications");
         folderExits = await FileTools.existsFolder(folderPath);
         if (!folderExits) {
           await Directory(folderPath).create(recursive: true);
         }
 
-        File file = File(p.join(folderPath, "GameMiner.desktop"));
-        String txt = await rootBundle.loadString(desktopAssetPath);
-        txt = txt.replaceAll("\$HOME", homeFolder);
-        txt = txt.replaceAll("\$CURRENTDIR", p.join(Directory.current.path, "GameMiner.AppImage"));
-        await file.writeAsString(txt);
-      }
+        String appImageFilePath = p.join(folderPath, "GameMiner.desktop");
+        if (!await FileTools.existsFile(appImageFilePath)) {
+          File file = File(appImageFilePath);
 
+          String txt = await rootBundle.loadString(desktopAssetPath);
+          //txt = txt.replaceAll("\$HOME", homeFolder);
+          txt = txt.replaceAll("\$CURRENTDIR", p.join(Directory.current.path, "GameMiner.AppImage"));
+          await file.writeAsString(txt);
+        }
+      }
     }
     catch (ex) {
       print(ex);
@@ -299,14 +305,43 @@ class FileTools {
     return success;
   }
 
+  static Future<bool> removeAppShortcutIcons() async {
+    try {
+      //Delete icon
+      String homeFolder = FileTools.getHomeFolder();
+      String folderPath = p.join(homeFolder, ".local/share/icons");
+      String gameMinerIconFilePath = folderPath = p.join(folderPath, "GameMiner.png");
+
+      if (await FileTools.existsFile(gameMinerIconFilePath)) {
+        await File(gameMinerIconFilePath).delete();
+      }
+
+      //Delete desktop entry
+      folderPath = p.join(homeFolder, ".local/share/applications");
+      String appImageFilePath = p.join(folderPath, "GameMiner.desktop");
+      if (await FileTools.existsFile(appImageFilePath)) {
+        await File(appImageFilePath).delete();
+      }
+
+      return true;
+    }
+    catch(ex) {
+      print(ex);
+      return false;
+    }
+
+  }
+
   //path can be absolute o relative to the system look up paths
   static bool isExecutableInPathSync(String path) {
-    var result = Process.runSync("command", ["-v",path],runInShell: true);
+    var result = Process.runSync("command", ["-v", path], runInShell: true);
 
-    if(result.exitCode == 0 && result.stdout != "") {
+    if (result.exitCode == 0 && result.stdout != "") {
       return true;
     }
 
     return false;
   }
+
+
 }

@@ -5,4 +5,6 @@ Type=Application
 Terminal=false
 Exec=$CURRENTDIR
 Name=GameMiner
-Icon=$HOME/.local/share/icons/GameMiner.png
+Comment=Non-Steam Games Library Manager
+Comment[es]=Gestor de bibliotecas de juegos no-Steam
+Icon=GameMiner

@@ -169,7 +169,13 @@
   "cleaner_system": "System",
   "information": "Information",
   "gameminer_new_version_detected": "A new Game Miner update is available. Your current version is {}. Do you want to update to version {}?",
-  "reset_update_downloaded": "Game Miner update was downloaded. Game Miner needs to be restarted to apply the new version"
-
+  "reset_update_downloaded": "Game Miner update was downloaded. Game Miner needs to be restarted to apply the new version",
+  "add_settings_desktop_icons": "Add App icons",
+  "remove_settings_desktop_icons": "Remove app icons",
+  "desktop_icons_add_error": "App icons couldn't be removed",
+  "desktop_icons_removed": "App icons where removed",
+  "desktop_icons_added": "App icons where added",
+  "desktop_icons_add_error": "App icons couldn't be added",
+  "desktop_app_icon_options": "App Icon Options"
 
 }

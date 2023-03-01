@@ -35,6 +35,9 @@ class SplashCubit extends Cubit<SplashState> {
 
   //Returns if we can go to main after this is executed
   Future<void> initDependencies() async {
+    //Add app icons if needed
+    await FileTools.createAppShortcutIcons("packages/game_miner/appassets/icon.png", "packages/game_miner/appassets/GameMiner.desktop");
+
     String configFolder = p.join(FileTools.getConfigFolder());
     bool existsConfigFolder = await FileTools.existsFile(configFolder);
     if (!existsConfigFolder) {

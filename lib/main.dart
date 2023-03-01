@@ -32,12 +32,9 @@ Stream<Settings> stream = GetIt.I<SettingsRepository>().settings.distinct((Setti
 void main() async {
   setupServiceLocator();
 
-  String homeFolder = FileTools.getHomeFolder();
-  String folderPath = "$homeFolder/.local/share/applications/GameMiner.png";
-
   // Needs to be called so that we can await for EasyLocalization.ensureInitialized();
   WidgetsFlutterBinding.ensureInitialized();
-  bool success = await FileTools.createAppShortcutIcons("packages/game_miner/appassets/icon.png", "packages/game_miner/appassets/GameMiner.desktop");
+
   await windowManager.ensureInitialized();
   await EasyLocalization.ensureInitialized();
 

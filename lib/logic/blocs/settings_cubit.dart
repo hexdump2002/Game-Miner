@@ -18,10 +18,11 @@ import '../Tools/steam_tools.dart';
 part 'settings_state.dart';
 
 class SettingsCubit extends Cubit<SettingsState> {
-  late UserSettings _currentUserSettings ; //Settings after modifications
+  late UserSettings _currentUserSettings; //Settings after modifications
   late UserSettings _oldUserSettings; //Settings we got when we entered
   late String _currentUserId;
   bool _modified = false;
+
   bool get modified => _modified;
 
   List<CompatTool> _availableCompatTools = [];
@@ -36,20 +37,21 @@ class SettingsCubit extends Cubit<SettingsState> {
   }
 
   Future<List<CompatTool>> initialize() async {
-     Future<List<CompatTool>> compatTools =  GetIt.I<CompatToolsRepository>().loadCompatTools();
-     compatTools.then((value) => _availableCompatTools = value);
-     return compatTools;
+    Future<List<CompatTool>> compatTools = GetIt.I<CompatToolsRepository>().loadCompatTools();
+    compatTools.then((value) => _availableCompatTools = value);
+    return compatTools;
   }
 
-
-  UserSettings getUserSettings() { return _currentUserSettings;}
+  UserSettings getUserSettings() {
+    return _currentUserSettings;
+  }
 
   List<String> getAvailableCompatToolDisplayNames() {
     return CompatToolTools.getAvailableCompatToolDisplayNames(_availableCompatTools);
   }
 
   String getDefaultCompatToolDisplayNameFromCode() {
-      return getCompatToolDisplayNameFromCode(_currentUserSettings.defaultCompatTool);
+    return getCompatToolDisplayNameFromCode(_currentUserSettings.defaultCompatTool);
   }
 
   String getCompatToolDisplayNameFromCode(String code) {
@@ -61,13 +63,12 @@ class SettingsCubit extends Cubit<SettingsState> {
   }
 
   void setDefaultCompatToolFromName(String value) {
-    _currentUserSettings.defaultCompatTool =  getCompatToolCodeFromDisplayName(value);
+    _currentUserSettings.defaultCompatTool = getCompatToolCodeFromDisplayName(value);
     _modified = true;
   }
 
-
-  void save({bool showMessages=true}) {
-    if(showMessages) EasyLoading.show(status: "saving_settings");
+  void save({bool showMessages = true}) {
+    if (showMessages) EasyLoading.show(status: "saving_settings");
 
     SettingsRepository repo = GetIt.I<SettingsRepository>();
     //Super hacky, this should be inmutable, blah, blah. Just fire up the event
@@ -75,10 +76,10 @@ class SettingsCubit extends Cubit<SettingsState> {
     repo.updateUserSettings(_currentUserId, _currentUserSettings);
     repo.save();
 
-    if(showMessages) EasyLoading.showToast(tr("settings_saved"));
+    if (showMessages) EasyLoading.showToast(tr("settings_saved"));
 
     //Request a reload next time i
-    if(!_areSettingsPathEqual(_currentUserSettings, _oldUserSettings)) {
+    if (!_areSettingsPathEqual(_currentUserSettings, _oldUserSettings)) {
       GetIt.I<GamesRepository>().invalidateGamesCache();
     }
 
@@ -97,17 +98,16 @@ class SettingsCubit extends Cubit<SettingsState> {
     emit(SettingsSaved(_currentUserSettings, _modified));
   }
 
-  bool _areSettingsPathEqual(UserSettings a, UserSettings b)
-  {
+  bool _areSettingsPathEqual(UserSettings a, UserSettings b) {
     List<String> listA = a.searchPaths;
     List<String> listB = b.searchPaths;
 
-    if(listA.length != listB.length) return false;
+    if (listA.length != listB.length) return false;
 
     bool equal = true;
     int i = 0;
-    while(equal && i<listA.length) {
-      if(listB.contains(listB[i])) equal = false;
+    while (equal && i < listA.length) {
+      if (listB.contains(listB[i])) equal = false;
     }
 
     return equal;
@@ -118,14 +118,12 @@ class SettingsCubit extends Cubit<SettingsState> {
 
     if (selectedDirectory != null) {
       bool existed = _currentUserSettings.searchPaths.contains(selectedDirectory);
-      if(existed)
-      {
+      if (existed) {
         EasyLoading.showError(tr("path_duplicated"));
-      }
-      else {
+      } else {
         _currentUserSettings.searchPaths.add(selectedDirectory);
-        _modified=true;
-        emit(SearchPathsChanged(_currentUserSettings,_modified));
+        _modified = true;
+        emit(SearchPathsChanged(_currentUserSettings, _modified));
       }
     } else {
       // User canceled the picker
@@ -134,26 +132,26 @@ class SettingsCubit extends Cubit<SettingsState> {
 
   removePath(String e) {
     _currentUserSettings.searchPaths.remove(e);
-    _modified=true;
-    emit(SearchPathsChanged(_currentUserSettings,_modified));
+    _modified = true;
+    emit(SearchPathsChanged(_currentUserSettings, _modified));
   }
 
   void setDarkThemeState(bool state) {
     _currentUserSettings.darkTheme = state;
     _modified = true;
-    emit(GeneralOptionsChanged(_currentUserSettings,_modified));
+    emit(GeneralOptionsChanged(_currentUserSettings, _modified));
   }
 
   void setEnableBackups(bool value) {
     _currentUserSettings.backupsEnabled = value;
     _modified = true;
-    emit(GeneralOptionsChanged(_currentUserSettings,_modified));
+    emit(GeneralOptionsChanged(_currentUserSettings, _modified));
   }
 
   void setMaxBackupCount(double value) {
     _currentUserSettings.maxBackupsCount = value.toInt();
     _modified = true;
-    emit(GeneralOptionsChanged(_currentUserSettings,_modified));
+    emit(GeneralOptionsChanged(_currentUserSettings, _modified));
   }
 
   void setCloseSteamAtStartUp(bool value) {
@@ -178,14 +176,32 @@ class SettingsCubit extends Cubit<SettingsState> {
   setDefaultNameProcessTextProcessingOption(ExecutableNameProcesTextProcessingOption executableNameProcesTextProcessingOption) {
     _currentUserSettings.executableNameProcessTextProcessingOption = executableNameProcesTextProcessingOption;
     _modified = true;
-    emit(GeneralOptionsChanged(_currentUserSettings,_modified));
+    emit(GeneralOptionsChanged(_currentUserSettings, _modified));
   }
 
 
+  void addGameMinerDesktopIcons() async {
+    bool success =
+    await FileTools.createAppShortcutIcons("packages/game_miner/appassets/icon.png", "packages/game_miner/appassets/GameMiner.desktop");
+    if (success) {
+      EasyLoading.showToast(tr("desktop_icons_added"));
+      return;
+    }
 
+    EasyLoading.showToast(tr("desktop_icons_add_error"));
+  }
+
+  void removeGameMinerDesktopIcons() async{
+    bool success = await FileTools.removeAppShortcutIcons();
+    if (success) {
+      EasyLoading.showToast(tr("desktop_icons_removed"));
+      return;
+    }
+
+    EasyLoading.showToast(tr("desktop_icons_remove_error"));
+  }
 
 /*  bool getDarkThemeState() {
     return _settings.darkTheme;
   }*/
-
 }

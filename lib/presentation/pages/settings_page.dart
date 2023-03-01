@@ -214,19 +214,6 @@ class _SettingsPageState extends State<SettingsPage> {
                 ],
               ),
             ),
-            Padding(
-              padding: padding,
-              child: Row(
-                children: [
-                  Expanded(child: Text(tr("enable_backups"))),
-                  Switch(
-                      value: settings.backupsEnabled,
-                      onChanged: (value) {
-                        _bloc.setEnableBackups(value);
-                      }),
-                ],
-              ),
-            ),
             if (settings.backupsEnabled)
               Padding(
                 padding: padding,
@@ -255,7 +242,50 @@ class _SettingsPageState extends State<SettingsPage> {
       ),
     );
   }
-
+  Widget _buildDesktopOptions() {
+    var padding = EdgeInsets.fromLTRB(8, 8, 8, 0);
+    return Container(
+      padding: EdgeInsets.all(8.0),
+      child: Card(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(8),
+              child: Row(
+                children: [
+                  Text(
+                    tr("Desktop App Icon Options"),
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.fromLTRB(8,16, 8,16),
+              child: Row(children: [Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(64, 0, 64, 0),
+                  child: ElevatedButton(
+                      onPressed: () {
+                          _bloc.addGameMinerDesktopIcons();
+                      }, child: Text(tr('add_settings_desktop_icons')),),
+                ),
+              ),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(64, 0, 64, 0),
+                    child: ElevatedButton(
+                      onPressed: () {
+                         _bloc.removeGameMinerDesktopIcons();
+                      }, child: Text(tr('remove_settings_desktop_icons')),),
+                  ),
+                )]),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
   Widget _buildSearchPathSettings(UserSettings settings) {
     return Container(
         padding: EdgeInsets.all(8),
@@ -336,7 +366,7 @@ class _SettingsPageState extends State<SettingsPage> {
             return SingleChildScrollView(
               child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [_buildSearchPathSettings(state.settings), _buildGameMgrOptions(state.settings), _buildGeneralOptions(state.settings)]),
+                  children: [_buildSearchPathSettings(state.settings), _buildGameMgrOptions(state.settings), _buildGeneralOptions(state.settings), _buildDesktopOptions()]),
             );
           },
         ));
