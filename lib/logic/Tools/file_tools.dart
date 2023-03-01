@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/services.dart';
 import 'package:path/path.dart' as p;
 import 'package:tuple/tuple.dart';
 import 'package:universal_disk_space/universal_disk_space.dart';
@@ -243,6 +244,61 @@ class FileTools {
     }
   }
 
+  static Future<bool> saveImageAssetToPath(String assetPath, String absoluteFilePath)  async{
+    try {
+      File file = File(absoluteFilePath);
+      final imageBytes = await rootBundle.load(assetPath);
+      final buffer = imageBytes.buffer;
+      await file.writeAsBytes(
+          buffer.asUint8List(imageBytes.offsetInBytes, imageBytes.lengthInBytes));
+    }
+    catch(ex)
+    {
+      print(ex);
+      return false;
+    }
+
+    return true;
+  }
+
+
+  static Future<bool> createAppShortcutIcons(String imageAssetPath, String desktopAssetPath) async {
+    String homeFolder = FileTools.getHomeFolder();
+
+    bool success = false;
+    //Create folder if needed
+    try {
+      String folderPath = p.join(homeFolder,".local/share/icons");
+      bool folderExits = await FileTools.existsFolder(folderPath);
+      if (!folderExits) {
+        await Directory(folderPath).create(recursive: true);
+      }
+
+      success = await saveImageAssetToPath(imageAssetPath, p.join(folderPath, "GameMiner.png"));
+
+      if(success) {
+        folderPath = p.join(homeFolder, ".local/share/applications");
+        folderExits = await FileTools.existsFolder(folderPath);
+        if (!folderExits) {
+          await Directory(folderPath).create(recursive: true);
+        }
+
+        File file = File(p.join(folderPath, "GameMiner.desktop"));
+        String txt = await rootBundle.loadString(desktopAssetPath);
+        txt = txt.replaceAll("\$HOME", homeFolder);
+        txt = txt.replaceAll("\$CURRENTDIR", p.join(Directory.current.path, "GameMiner.AppImage"));
+        await file.writeAsString(txt);
+      }
+
+    }
+    catch (ex) {
+      print(ex);
+      return false;
+    }
+
+    return success;
+  }
+
   //path can be absolute o relative to the system look up paths
   static bool isExecutableInPathSync(String path) {
     var result = Process.runSync("command", ["-v",path],runInShell: true);
@@ -253,5 +309,4 @@ class FileTools {
 
     return false;
   }
-
 }

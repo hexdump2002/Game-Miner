@@ -37,7 +37,7 @@ class Stats {
     var disks = diskSpace.disks;
     //Originally it was just /home but it didn't worked when I created a flatpak bundle
     var homeFolder = FileTools.getHomeFolder();
-    var homeDisk = diskSpace.getDisk(Directory(p.join(homeFolder,'/.var/app')));
+    var homeDisk = diskSpace.getDisk(Directory(/*p.join(homeFolder,'/.var/app'))*/homeFolder));
     var sdDisk = diskSpace.getDisk(Directory('/run/media/mmcblk0p1'));
 
     return {

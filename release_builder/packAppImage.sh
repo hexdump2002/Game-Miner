@@ -1,7 +1,5 @@
 #!/bin/bash
 
-# AppImage builder for Game Miner created by FranjeGueje and edited by HexDump
-
 #Build binaries
 cd ..
 flutter build linux --release
@@ -11,25 +9,30 @@ cd release_builder
 tar cvzf  GameMiner-Linux-Portable.tar.gz -C ../build/linux/x64/release/bundle .
 
 # Requisites
-[ -d GameMiner ] && echo -e "*ERROR* \"GameMiner\" directory is present. Goint out!" && exit 1
-[ ! -f GameMiner-Linux-Portable.tar.gz ] && echo -e "*ERRROR* \"GameMiner-Linux-Portable.tar.gz\" is not present..." && exit 2
-[ ! -f GameMiner.png ] && echo -e "*ERRROR* \"GameMiner.png\" is not present..." && exit 3
+[ -d AppDir ] && echo -e "*ERROR* \"AppDir\" directory is present. Goint out!" && exit 1
+[ -d build ] && echo -e "*ERROR* \"buir\" directory is present. Goint out!" && exit 2
+[ ! -f GameMiner-Linux-Portable.tar.gz ] && echo -e "*ERRROR* \"GameMiner-Linux-Portable.tar.gz\" is not present..." && exit 3
+[ ! -f AppImageBuilder.yml ] && echo -e "*ERRROR* \"AppImageBuilder.yml\" is not present..." && exit 4
+[ ! -f AppDir.tar.gz ] && echo -e "*ERRROR* \"AppDir.tar.gz\" is not present..." && exit 5
 
 
 # Download de AppImage builder :D
-[ -f linuxdeploy-x86_64.AppImage ] && rm linuxdeploy-x86_64.AppImage
-wget https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage && chmod +x linuxdeploy-x86_64.AppImage
+[ ! -f appimage-builder-x86_64.AppImage ] && wget -O appimage-builder-x86_64.AppImage https://github.com/AppImageCrafters/appimage-builder/releases/download/v1.0.0-beta.1/appimage-builder-1.0.0-677acbd-x86_64.AppImage && \
+    chmod +x appimage-builder-x86_64.AppImage
 
 # Create the skel
-mkdir -p GameMiner/usr/bin/
+tar xvzf AppDir.tar.gz
 
 # Extract the GameMiner build on the directory
-tar -xzf GameMiner-Linux-Portable.tar.gz -C GameMiner/usr/bin/.
+tar -xzf GameMiner-Linux-Portable.tar.gz -C AppDir/usr/bin/.
 
-# Build the AppImage
-[ -f GameMiner/usr/bin/GameMiner ] && ./linuxdeploy-x86_64.AppImage --appdir GameMiner -e GameMiner/usr/bin/GameMiner --create-desktop-file -i GameMiner.png --output appimage
+# Make the link and Build the image
+cd AppDir/ && ln -s usr/bin/GameMiner . && cd - && [ -f AppDir/usr/bin/GameMiner ] && chmod +x AppDir/usr/bin/GameMiner AppDir/GameMiner && ./appimage-builder-x86_64.AppImage --recipe AppImageBuilder.yml --build-dir build
 
 # Delete all unnecesary files and directories
-rm -Rf GameMiner linuxdeploy-x86_64.AppImage
+rm -Rf build/ AppDir/
+rm appimage-builder-x86_64.AppImage
+# Change the name
+[ -f "Game Miner-latest-x86_64.AppImage" ] && mv "Game Miner-latest-x86_64.AppImage" "GameMiner.AppImage"
 
 exit 0

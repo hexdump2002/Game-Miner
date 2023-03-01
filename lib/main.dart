@@ -8,8 +8,6 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 
 import 'package:game_miner/data/repositories/settings_repository.dart';
 import 'package:game_miner/logic/Tools/file_tools.dart';
-import 'package:game_miner/logic/Tools/github_updater.dart';
-import 'package:game_miner/logic/Tools/steam_tools.dart';
 
 import 'package:game_miner/logic/blocs/main_dart_cubit.dart';
 
@@ -18,16 +16,12 @@ import 'package:game_miner/logic/blocs/splash_cubit.dart';
 import 'package:game_miner/presentation/pages/main_page.dart';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:path/path.dart' as p;
 import 'package:game_miner/presentation/pages/splash_page.dart';
 import 'package:get_it/get_it.dart';
 import 'package:window_manager/window_manager.dart';
 
-import 'package:collection/collection.dart';
 import 'data/models/settings.dart';
-import 'data/models/steam_user.dart';
 import 'logic/Tools/service_locator.dart';
-import 'logic/io/text_vdf_file.dart';
 
 Stream<Settings> stream = GetIt.I<SettingsRepository>().settings.distinct((Settings previous, Settings next) {
   if(next.currentUserId.isEmpty) return false;
@@ -38,8 +32,12 @@ Stream<Settings> stream = GetIt.I<SettingsRepository>().settings.distinct((Setti
 void main() async {
   setupServiceLocator();
 
+  String homeFolder = FileTools.getHomeFolder();
+  String folderPath = "$homeFolder/.local/share/applications/GameMiner.png";
+
   // Needs to be called so that we can await for EasyLocalization.ensureInitialized();
   WidgetsFlutterBinding.ensureInitialized();
+  bool success = await FileTools.createAppShortcutIcons("packages/game_miner/appassets/icon.png", "packages/game_miner/appassets/GameMiner.desktop");
   await windowManager.ensureInitialized();
   await EasyLocalization.ensureInitialized();
 

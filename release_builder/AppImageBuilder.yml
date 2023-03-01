@@ -1,0 +1,21 @@
+# appimage-builder recipe see https://appimage-builder.readthedocs.io for details
+version: 1
+AppDir:
+  path: ./AppDir
+  app_info:
+    id: com.hexdump.GameMiner
+    name: Game Miner
+    icon: GameMiner
+    version: latest
+    exec: GameMiner
+    exec_args: $@
+  files:
+    exclude:
+    - usr/share/man
+    - usr/share/doc/*/README.*
+    - usr/share/doc/*/changelog.*
+    - usr/share/doc/*/NEWS.*
+    - usr/share/doc/*/TODO.*
+AppImage:
+  arch: x86_64
+  update-information: guess
