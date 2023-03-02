@@ -107,6 +107,10 @@ class BinaryBufferReader {
     return equal;
   }
 
+  int peekByte() {
+    return _buffer[_pointerPos];
+  }
+
   int readByte() {
     return _buffer[_pointerPos++];
   }

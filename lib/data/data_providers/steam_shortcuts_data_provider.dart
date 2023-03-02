@@ -31,7 +31,7 @@ class SteamShortcutDataProvider {
       eof = _isShortcutsEndOfFile(file);
 
       while (!eof) {
-        //Skipt first byte of block
+        //Skip first byte of block
         file.seek(1, relative: true);
 
         var instance = SteamShortcut.fromBinaryVdfEntry(file);

@@ -71,8 +71,27 @@ class BinaryVdfBuffer extends BinaryBufferReader {
     return tags;
   }
 
+  //Skips all consecutive "byte" bytes
+  void skipAllBytes(int byte) {
+    while(peekByte() == byte){
+      readByte();
+    }
+  }
 
 
+  void skipBytesBetween(int startByte, int endByte) {
+    if(peekByte()!=startByte) {
+      throw Exception("Can't skip an entry chunk not starting with byte $startByte");
+    }
 
+    readByte();
+
+    while(peekByte() != endByte){
+      readByte();
+    }
+
+    //Read last 0x8
+    readByte();
+  }
 
 }

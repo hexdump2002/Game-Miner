@@ -70,18 +70,23 @@ class SteamShortcut {
 
     while (!finished) {
       var readPropertyRetVal = file.readProperty();
+
       _assignValue(readPropertyRetVal.item1, readPropertyRetVal.item2);
 
       if (_isShortcutsEndOfEntry(file)) {
-        file.seek(k_entry_end_mark.length, relative: true);
+        //Ussually a entry ends with 0808 but sometimes there are programs that insert data between these 2 bytes. I guess this is not valid because
+        //they are duplicaged entries. So, we skip all the bytes in between
+        file.skipBytesBetween(0x08,0x08);
+        //file.seek(k_entry_end_mark.length, relative: true);
         finished = true;
       }
     }
   }
 
   bool _isShortcutsEndOfEntry(BinaryVdfBuffer file){
-
     var currentFilePos = file.getCurrentPointerPos();
+    return file.peekByte() == 0x08;
+    /*var currentFilePos = file.getCurrentPointerPos();
     var index = 0;
     var equal = true;
 
@@ -97,7 +102,7 @@ class SteamShortcut {
     }
 
     //Get back to the beginning
-    file.seek(currentFilePos);
+    file.seek(currentFilePos);*/
 
     return true;
 

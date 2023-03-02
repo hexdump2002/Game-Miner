@@ -55,8 +55,13 @@ class GithubUpdater {
                 String githubVersion = r.tagName.substring(1);
                 List<int> appVersionParts = version.split(".").map<int>((e) => int.parse(e)).toList();
                 List<int> githubVersionParts = githubVersion.split(".").map<int>((e) => int.parse(e)).toList();
-                if (appVersionParts[0] < githubVersionParts[0] || appVersionParts[1] < githubVersionParts[1] ||
-                    appVersionParts[2] < githubVersionParts[2]) {
+                if (appVersionParts[0] < githubVersionParts[0]) {
+                  return r;
+                }
+                else if(appVersionParts[0] == githubVersionParts[0] && appVersionParts[1] < githubVersionParts[1]) {
+                    return r;
+                }
+                else if(appVersionParts[0] == githubVersionParts[0] && appVersionParts[1] == githubVersionParts[1] && appVersionParts[2] < githubVersionParts[2]) {
                     return r;
                 }
             }
