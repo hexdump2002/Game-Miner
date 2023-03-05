@@ -71,8 +71,24 @@ class SettingsCubit extends Cubit<SettingsState> {
     if (showMessages) EasyLoading.show(status: "saving_settings");
 
     SettingsRepository repo = GetIt.I<SettingsRepository>();
-    //Super hacky, this should be inmutable, blah, blah. Just fire up the event
 
+    //Check if our search paths and the one we have in filter are in sync
+    //Removed will be removed from filter and newly added will be added with showing = true 
+    
+    //filter == null means that no filter has been saved into configuration
+    if(_currentUserSettings.filter!=null) {
+      //Add new ones (Because we added to the filter they will be active in advanced filter dialog)
+      List<String> newPaths = _currentUserSettings.searchPaths.where((element) => !_currentUserSettings.filter!.searchPaths.contains(element)).toList();
+      _currentUserSettings.filter!.searchPaths.addAll(newPaths);
+
+      //Remove the ones that are not in searchpath anymore
+      List<String> removedPaths = _currentUserSettings.filter!.searchPaths.where((element) => !_currentUserSettings.searchPaths.contains(element)).toList();
+      _currentUserSettings.filter!.searchPaths.removeWhere((element) => removedPaths.contains(element));
+    }
+
+
+
+    //Super hacky, this should be inmutable, blah, blah. Just fire up the event
     repo.updateUserSettings(_currentUserId, _currentUserSettings);
     repo.save();
 

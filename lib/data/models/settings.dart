@@ -1,3 +1,7 @@
+import 'package:game_miner/logic/blocs/game_mgr_cubit.dart';
+
+import 'advanced_filter.dart';
+
 class Settings {
   String currentUserId = "";
   Map<String, UserSettings> _userSettings = {};
@@ -52,6 +56,8 @@ class UserSettings {
   bool executableNameProcessRemoveExtension = true;
   ExecutableNameProcesTextProcessingOption executableNameProcessTextProcessingOption = ExecutableNameProcesTextProcessingOption.noProcessing;
 
+  AdvancedFilter? filter;
+
   UserSettings();
 
   UserSettings.fromJson(Map<String, dynamic> json) {
@@ -62,6 +68,7 @@ class UserSettings {
     backupsEnabled = json['backupsEnabled'];
     maxBackupsCount = json['maxBackupsCount'];
     defaultGameManagerView = json['defaultGameManagerView'];
+    filter = json['filter'] != null? AdvancedFilter.fromJson(json['filter']):null;
 
     //To provide compatibility with previous versions of config we have to check for config
     executableNameProcessRemoveExtension = json['executableNameProcessRemoveExtension'] ?? false;
@@ -85,7 +92,8 @@ class UserSettings {
       'maxBackupsCount': maxBackupsCount,
       'defaultGameManagerView': defaultGameManagerView,
       'executableNameProcessTextProcessingOption': executableNameProcessTextProcessingOption.index,
-      'executableNameProcessRemoveExtension': executableNameProcessRemoveExtension
+      'executableNameProcessRemoveExtension': executableNameProcessRemoveExtension,
+      'filter': filter!=null ? filter!.toJson() : filter
     };
   }
 

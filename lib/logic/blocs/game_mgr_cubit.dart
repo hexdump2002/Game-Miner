@@ -26,6 +26,7 @@ import 'package:path/path.dart' as p;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:window_manager/window_manager.dart';
 
+import '../../data/models/advanced_filter.dart';
 import '../../data/models/app_storage.dart';
 import '../../data/models/compat_tool_mapping.dart';
 import '../../data/models/game_executable.dart';
@@ -58,27 +59,13 @@ class GameView {
   GameView(this.game, this.gameImagePath, this.isExpanded, this.modified, this.selected, this.hasConfig);
 }
 
-class AdvancedFilter {
-  bool showStatusRed = true;
-  bool showStatusOrange = true;
-  bool showStatusGreen = true;
-  bool showStatusBlue = true;
-  List<String> searchPaths; //All games inside these search paths will show
-  int showErrors = 2;
-  int showChanges = 2;
-  int showImages =2;
-  int showConfiguration=2;
-
-  AdvancedFilter(this.searchPaths);
-}
-
 class GameMgrCubit extends Cubit<GameMgrBaseState> {
   List<Game> _baseGames = [];
   List<GameView> _gameViews = [];
   int _sortIndex = 0;
   int _sortDirectionIndex = 0;
   String _searchText = "";
-  late AdvancedFilter _advancedFilter;
+  late AdvancedFilter _advancedFilter; //Current filter being applied
 
   String get searchText => _searchText;
 
@@ -128,9 +115,10 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
 
   void loadData() {
     _currentUserSettings = _settings!.getUserSettings(_settings!.currentUserId)!;
-    //If we changed the search paths in settings, reset the filter and add them all as active
-    if(_advancedFilter.searchPaths != _currentUserSettings.searchPaths) {
-      _advancedFilter.searchPaths = [..._currentUserSettings.searchPaths];
+
+    //Set current filter
+    if(_currentUserSettings.filter!=null) {
+      _advancedFilter = AdvancedFilter.fromJson(_currentUserSettings.filter!.toJson());
     }
 
     _loadData(_currentUserSettings);

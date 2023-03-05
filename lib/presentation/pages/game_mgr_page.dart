@@ -15,6 +15,7 @@ import 'package:game_miner/presentation/widgets/searchbar/searchbar_widget.dart'
 import 'package:get_it/get_it.dart';
 import 'package:collection/collection.dart';
 import 'package:window_manager/window_manager.dart';
+import '../../data/models/advanced_filter.dart';
 import '../../data/models/game_executable.dart';
 import '../../data/models/game.dart';
 import '../../data/models/settings.dart';
@@ -1432,10 +1433,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
     showPlatformDialog(
       context: context,
       builder: (context) => BasicDialogAlert(
-        title: Text(
-          tr('advanced_filter'),
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
+
         content: AdvancedFilterWidget(advancedFilter: advancedFilter, searchPaths: [..._userSettings.searchPaths]),
         actions: <Widget>[
           BasicDialogAction(
