@@ -174,5 +174,6 @@
   "desktop_icons_removed": "Los iconos de la aplicación fueron eliminados",
   "desktop_icons_added": "Los iconos de la aplicación fueron añadidos",
   "desktop_icons_add_error": "Los iconos de la aplicación no pudieron ser añadidos",
-  "desktop_app_icon_options": "Opciones de Iconos de aplicación"
+  "desktop_app_icon_options": "Opciones de Iconos de aplicación",
+  "reset_filter": "Reiniciar filtro"
 }

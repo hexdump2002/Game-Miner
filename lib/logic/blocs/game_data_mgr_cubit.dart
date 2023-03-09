@@ -386,8 +386,9 @@ class GameDataMgrCubit extends Cubit<GameDataMgrState> {
     );
   }
 
-  void openFolder(String path) async {
-    path = StringTools.removeQuotes(path); // external ones are not touched so they can come with this
+  void openFolder(AppStorage appStorage/*String path*/) async {
+    String dataType = appStorage.storageType == StorageType.CompatData ? "compatdata" : "shadercache";
+    String path = "${SteamTools.getSteamBaseFolder()}/steamapps/$dataType/${appStorage.appId}";
     bool b = await launchUrl(Uri.parse("file:$path"));
 
 

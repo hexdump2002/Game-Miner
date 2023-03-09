@@ -45,7 +45,11 @@ class _AdvancedFilterWidgetState extends State<AdvancedFilterWidget> {
               ),
               IconButton(onPressed: () {
                 _saveFiler();
-              }, tooltip: tr("save"), icon: Icon(Icons.save, color: widget._modified ? Colors.orange: Colors.white,))
+              }, tooltip: tr("save"), icon: Icon(Icons.save, color: widget._modified ? Colors.orange: Colors.white,)),
+              IconButton(onPressed: () {
+                _resetFilter();
+              }, tooltip: tr("reset_filter"), icon: Icon(Icons.refresh))
+
             ],
           ),
         ),
@@ -396,4 +400,13 @@ class _AdvancedFilterWidgetState extends State<AdvancedFilterWidget> {
     repo.update(settings);
     repo.save();
   }
+
+  void _resetFilter() {
+    setState(() {
+      widget._advancedFilter.reset(List.from(widget._searchPaths));
+      widget._modified = true;
+    });
+  }
 }
+
+

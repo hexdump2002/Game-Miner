@@ -74,10 +74,21 @@ class SteamShortcut {
       _assignValue(readPropertyRetVal.item1, readPropertyRetVal.item2);
 
       if (_isShortcutsEndOfEntry(file)) {
-        //Ussually a entry ends with 0808 but sometimes there are programs that insert data between these 2 bytes. I guess this is not valid because
-        //they are duplicaged entries. So, we skip all the bytes in between
-        file.skipBytesBetween(0x08,0x08);
-        //file.seek(k_entry_end_mark.length, relative: true);
+        //I see 2 situations here:
+        // 1. 1 || 2 0x08 followed by next chunk (Perhaps it is a padding byte?)
+        // 2. 1 0x08 followed with fake data and a 0x08
+
+        int filePos = file.getCurrentPointerPos();
+        List<int> bytes = file.peekXBytes(4);
+        if(bytes[0] == 0x08 && bytes[1] == 0x08) {
+          file.seek(2,relative: true);
+        }
+        else if(bytes[0] == 0x08 && bytes[1] == 0x00) {
+          file.seek(1,relative: true);
+        }
+        else {
+          file.skipBytesBetween(0x08,0x08);
+        }
         finished = true;
       }
     }

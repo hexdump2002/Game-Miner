@@ -129,11 +129,19 @@ class _GameDataMgrPageState extends State<GameDataMgrPage> {
             children: [
               IconButton(
                 onPressed: () {
+                  _bloc.openFolder(e.appStorage);
+                },
+                icon: const Icon(Icons.folder),
+                tooltip: tr("open_folder"),
+              ),
+              IconButton(
+                onPressed: () {
                   _bloc.deleteData(context, e);
                 },
                 icon: Icon(Icons.delete),
                 tooltip: tr("delete"),
               ),
+
             ],
           )),
         ]);
@@ -224,4 +232,5 @@ class _GameDataMgrPageState extends State<GameDataMgrPage> {
             filterQuality: FilterQuality.medium,
           );
   }
+
 }

@@ -111,6 +111,21 @@ class BinaryBufferReader {
     return _buffer[_pointerPos];
   }
 
+  List<int> peekXBytes(int bytesToPeek) {
+    List<int> bytes = [];
+
+    var counter = _pointerPos;
+    var i=0;
+
+    if(counter+bytesToPeek>_buffer.length) {
+      bytesToPeek = _buffer.length-counter;
+    }
+
+    bytes.addAll(_buffer.getRange(counter, counter+bytesToPeek));
+
+    return bytes;
+  }
+
   int readByte() {
     return _buffer[_pointerPos++];
   }

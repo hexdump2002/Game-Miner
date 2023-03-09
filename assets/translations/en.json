@@ -176,6 +176,7 @@
   "desktop_icons_removed": "App icons where removed",
   "desktop_icons_added": "App icons where added",
   "desktop_icons_add_error": "App icons couldn't be added",
-  "desktop_app_icon_options": "App Icon Options"
+  "desktop_app_icon_options": "App Icon Options",
+  "reset_filter": "Reset filter"
 
 }

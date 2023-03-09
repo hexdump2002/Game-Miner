@@ -107,12 +107,23 @@ class SteamShortcutDataProvider {
   }
 
   bool _isShortcutsEndOfFile(BinaryVdfBuffer file){
-    var val = file.readUint16(Endian.little);
+    //Check if we read 08 until the end of the file
+    var currentPos = file.getCurrentPointerPos();
 
-    //rollback pointer
-    file.seek(-2, relative: true);
+    bool eof = file.getCurrentPointerPos() >= file.getSize()-1;
 
-    return val == kEofMark;
+    while(!eof )
+    {
+      var byte = file.readByte();
+      if(byte != 0x8) {
+        file.seek(currentPos);
+        return false;
+      }
+
+      eof = file.getCurrentPointerPos() >= file.getSize()-1;
+    }
+
+    return true;
   }
 
   Future<void> updateShortcut(String shortcutsPath,String userId, SteamShortcut ss ) async {

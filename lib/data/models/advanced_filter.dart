@@ -34,4 +34,16 @@ class AdvancedFilter {
       'showConfiguration': showConfiguration,
     };
   }
+
+  void reset(List<String> searchPaths) {
+    showStatusRed = true;
+    showStatusOrange = true;
+    showStatusGreen = true;
+    showStatusBlue = true;
+    this.searchPaths = searchPaths;
+    showErrors = 2;
+    showChanges = 2;
+    showImages =2;
+    showConfiguration=2;
+  }
 }
