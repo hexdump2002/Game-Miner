@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:game_miner/logic/Tools/compat_tool_tools.dart';
 import 'package:game_miner/logic/io/text_vdf_file.dart';
 import 'package:collection/collection.dart';
 
@@ -57,7 +58,7 @@ class CompatToolsMappingDataProvider {
     for(String key in compatToolMappings.keys) {
       CanonicalizedMap<String,String,dynamic> compaToolMapping = compatToolMappings[key];
       String name = compaToolMapping['name'];
-      if(name.isEmpty) name = "not_assigned"; //TODO: Move this into a repostiry. THis belongs to domain not here!!!!!!!!!!!!!!!!!!
+      if(name.isEmpty) name = CompatToolTools.notAssigned; //TODO: Move this into a repostiry. THis belongs to domain not here!!!!!!!!!!!!!!!!!!
       protonMappings.add(CompatToolMapping(key, /*compaToolMapping['name'] as String*/name, compaToolMapping['config'] as String, compaToolMapping['priority'] as String));
     }
 

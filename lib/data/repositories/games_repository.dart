@@ -6,6 +6,7 @@ import 'package:game_miner/data/models/compat_tool_mapping.dart';
 import 'package:game_miner/data/models/steam_shortcut_game.dart';
 import 'package:game_miner/data/models/game.dart';
 import 'package:game_miner/data/repositories/cache_repository.dart';
+import 'package:game_miner/logic/Tools/compat_tool_tools.dart';
 import 'package:game_miner/logic/Tools/game_tools.dart';
 import 'package:game_miner/logic/Tools/steam_tools.dart';
 import 'package:game_miner/logic/Tools/string_tools.dart';
@@ -224,7 +225,7 @@ class GamesRepository extends CacheRepository<Game> {
         if(uge.added) {
           String compatToolCode = "";
           if (usedProtonMappings.containsKey(uge.appId)) throw Exception("An appId with 2 differnt pronton mappings found!. This is not valid.");
-          if (uge.compatToolCode != "not_assigned") compatToolCode = uge.compatToolCode;
+          if (uge.compatToolCode != CompatToolTools.notAssigned) compatToolCode = uge.compatToolCode;
 
           usedProtonMappings[uge.appId] = CompatToolMapping(uge.appId.toString(), /*uge.compatToolCode*/compatToolCode, uge.compatToolConfig, uge.compatToolPriority);
         }

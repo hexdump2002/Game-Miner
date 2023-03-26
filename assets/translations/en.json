@@ -26,6 +26,7 @@
   "delete_capitals": " DELETE",
   "delete_selected_game_dialog_text": " {} games from your file system.\n\nIf you want to clean other game related data for these games check options as needed.\n\nRemember that deleting compatdata will destroy all your game progress if the game doesn't support cloud save.",
   "delete_game_dialog_text": " '{}' Game from your file system.\n\nIf you want to clean other game related data check options as needed.\n\nRemember that deleting compatdata will destroy all your game progress if the game doesn't support cloud save.",
+  "change_compattool":"CompatTool",
   "delete_selected": "Delete selected",
   "deleting_games": "Deleting games",
   "warning_action_undone": "\nWarning: This action can't be undone",
@@ -156,7 +157,7 @@
   "ad_fil_orange_tooltip": "No CompatTool",
   "ad_fil_green_tooltip": "Ready",
   "ad_fil_blue_tooltip": "Not in Library",
-  "filter_general": "Show games",
+  "filter_general": "Show games ",
   "filter_with_errors": "With Errors",
   "filter_with_no_errors": "With No Errors",
   "filter_with_changes": "With Changes",
@@ -177,6 +178,9 @@
   "desktop_icons_added": "App icons where added",
   "desktop_icons_add_error": "App icons couldn't be added",
   "desktop_app_icon_options": "App Icon Options",
-  "reset_filter": "Reset filter"
+  "reset_filter": "Reset filter",
+  "change_compattool_dialog_title": "Change CompatTool",
+  "change_compattool_dialog_text": "To change the compat tool assigned to the selected games just select a compat tool from the dropdown and press Ok. Remember to save changes afterwards!",
+  "all_selected_games_compattool_changed":"All games compat tool were changed to {} successfuly"
 
 }

@@ -9,6 +9,7 @@ import 'package:game_miner/data/models/compat_tool_mapping.dart';
 import 'package:game_miner/data/models/game_executable.dart';
 import 'package:game_miner/data/models/game_export_data.dart';
 import 'package:game_miner/data/repositories/compat_tools_repository.dart';
+import 'package:game_miner/logic/Tools/compat_tool_tools.dart';
 import 'package:game_miner/logic/Tools/file_tools.dart';
 import 'package:game_miner/logic/Tools/steam_tools.dart';
 import 'package:get_it/get_it.dart';
@@ -40,7 +41,7 @@ class GameTools {
   static bool hasExecutableCorrectProtonsAssigned(GameExecutable exe) {
     CompatToolsRepository ctr = GetIt.I<CompatToolsRepository>();
     List<CompatTool> cts = ctr.getCachedCompatTools();
-    if (exe.compatToolCode != "not_assigned" && exe.compatToolCode != "no_use") {
+    if (exe.compatToolCode != CompatToolTools.notAssigned && exe.compatToolCode != CompatToolTools.notInUseCode) {
       CompatTool? ctm = cts.firstWhereOrNull((element) => element.code == exe.compatToolCode);
       if (ctm == null) {
         return false;
@@ -58,7 +59,7 @@ class GameTools {
 
     bool added = game.exeFileEntries.firstWhereOrNull((element) => element.added == true) != null;
     bool oneExeAddedAndCompatToolAssigned =
-        game.exeFileEntries.firstWhereOrNull((element) => element.added == true && element.compatToolCode != "not_assigned") != null;
+        game.exeFileEntries.firstWhereOrNull((element) => element.added == true && element.compatToolCode != CompatToolTools.notAssigned) != null;
 
     GameStatus status = GameStatus.NonAdded;
     if (added == true && oneExeAddedAndCompatToolAssigned == true) {

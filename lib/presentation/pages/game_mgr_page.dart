@@ -189,57 +189,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
                   alignment: Alignment.bottomCenter,
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(0, 0, 0, 0),
-                    child: Container(
-                      color: Colors.grey.shade700,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: ElevatedButton(
-                                onPressed: () => {_nsCubit(context).selectAll()},
-                                style: ElevatedButton.styleFrom(backgroundColor: Colors.grey.shade800),
-                                child: Text(tr("select_all"))),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: ElevatedButton(
-                                onPressed: () => {_nsCubit(context).selectNone()},
-                                style: ElevatedButton.styleFrom(backgroundColor: Colors.grey.shade800),
-                                child: Text(tr("select_none"))),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: ElevatedButton(
-                                onPressed: () => _nsCubit(context).tryDeleteSelected(),
-                                style: ElevatedButton.styleFrom(backgroundColor: Colors.grey.shade800),
-                                child: Text(tr("delete_selected"))),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: ElevatedButton(
-                                onPressed: () => _importSelectedGamesConfig(state.games),
-                                style: ElevatedButton.styleFrom(backgroundColor: Colors.grey.shade800),
-                                child: Text(tr("import_selected"))),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: ElevatedButton(
-                                onPressed: () => _exportSelectedGames(state.games),
-                                style: ElevatedButton.styleFrom(backgroundColor: Colors.grey.shade800),
-                                child: Text(tr("export_selected"))),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: ElevatedButton(
-                                onPressed: () => _deleteSelectedGameConfigs(state.games),
-                                style: ElevatedButton.styleFrom(backgroundColor: Colors.grey.shade800),
-                                child: Text(tr("delete_configs"))),
-                          ),
-                        ],
-                      ),
-                    ),
+                    child: _buildMultiSelectionPanel(state)
                   ),
                 ),
             ],
@@ -254,6 +204,66 @@ class _GameMgrPageState extends State<GameMgrPage> {
     return widgets;
   }
 
+  Widget _buildMultiSelectionPanel(BaseDataChanged state) {
+    return Container(
+      color: Colors.grey.shade700,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: ElevatedButton(
+                onPressed: () => {_nsCubit(context).selectAll()},
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.grey.shade800),
+                child: Text(tr("select_all"))),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: ElevatedButton(
+                onPressed: () => {_nsCubit(context).selectNone()},
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.grey.shade800),
+                child: Text(tr("select_none"))),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: ElevatedButton(
+                onPressed: () => {_showChangeCompatToolDialog(state)},
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.grey.shade800),
+                child: Text(tr("change_compattool"))),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: ElevatedButton(
+                onPressed: () => _nsCubit(context).tryDeleteSelected(),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.grey.shade800),
+                child: Text(tr("delete_selected"))),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: ElevatedButton(
+                onPressed: () => _importSelectedGamesConfig(state.games),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.grey.shade800),
+                child: Text(tr("import_selected"))),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: ElevatedButton(
+                onPressed: () => _exportSelectedGames(state.games),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.grey.shade800),
+                child: Text(tr("export_selected"))),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: ElevatedButton(
+                onPressed: () => _deleteSelectedGameConfigs(state.games),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.grey.shade800),
+                child: Text(tr("delete_configs"))),
+          ),
+        ],
+      ),
+    );
+  }
   List<Widget> _buildDataScreen(BuildContext context, GameMgrBaseState nsgState) {
     CustomTheme themeExtension = Theme.of(context).extension<CustomTheme>()!;
 
@@ -1440,7 +1450,72 @@ class _GameMgrPageState extends State<GameMgrPage> {
             title: const Text("OK"),
             onPressed: () async {
               Navigator.pop(context);
-              cubit.applyAdvancedFilter(advancedFilter);
+              cubit.setAdvancedFilter(advancedFilter);
+            },
+          ),
+          BasicDialogAction(
+            title: Text(tr("cancel")),
+            onPressed: () {
+              Navigator.pop(context);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  //Hay que forzar un repintado por si hay algun juego desplegado que se vea el cambio ahi tmb
+  //TOO Lazy to do this in the correct way. Just make it work.
+  void _showChangeCompatToolDialog(BaseDataChanged state) {
+    GameMgrCubit cubit = _nsCubit(context);
+
+    if (state.games.where((element) => element.selected).isEmpty) {
+      EasyLoading.showToast(tr("no_action_no_games_selected"));
+      return;
+    }
+
+    String compatToolName = state.availableProntonNames[0];
+    
+    showPlatformDialog(
+      context: context,
+      builder: (context) => BasicDialogAlert(
+        title: Text(tr('change_compattool_dialog_title')),
+        content: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: SizedBox(
+            width: 700,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(height: 32,),
+                Text(tr("change_compattool_dialog_text")),
+                SizedBox(height: 16,),
+                Row(
+                  children: [
+                    Expanded(child: Text(tr("Compat Tool"))),
+                    Expanded(
+                      child: DropdownButtonFormField<String>(
+                          items: state.availableProntonNames.map<DropdownMenuItem<String>>((String e) {
+                            return DropdownMenuItem<String>(value: e, child: Text(e));
+                          }).toList(),
+                          value: state.availableProntonNames[0], //At least one must exist
+                          onChanged: (String? value) => compatToolName = value!,
+                          decoration: const InputDecoration()),
+                    ),
+                  ],
+                )
+
+              ],
+            ),
+          ),
+        ),
+        actions: <Widget>[
+          BasicDialogAction(
+            title: const Text("OK"),
+            onPressed: () async {
+              Navigator.pop(context);
+              cubit.changeSelectedGamesCompatTool(compatToolName);
+              EasyLoading.showToast(tr("all_selected_games_compattool_changed", args:[compatToolName]));
             },
           ),
           BasicDialogAction(

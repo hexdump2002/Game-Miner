@@ -1,3 +1,5 @@
+import 'package:game_miner/logic/Tools/compat_tool_tools.dart';
+
 class AdvancedFilter {
   bool showStatusRed = true;
   bool showStatusOrange = true;
@@ -8,6 +10,9 @@ class AdvancedFilter {
   int showChanges = 2;
   int showImages =2;
   int showConfiguration=2;
+
+  bool compatToolFilterActive = false;
+  String compatToolCode = CompatToolTools.notAssigned;
 
   AdvancedFilter(this.searchPaths);
 
@@ -20,6 +25,8 @@ class AdvancedFilter {
     showChanges = json['showChanges'];
     showImages = json['showImages'];
     showConfiguration = json['showConfiguration'];
+    compatToolFilterActive = json['compatToolFilterActive'] ?? false;
+    compatToolCode = json['compatToolCode'] ?? CompatToolTools.notAssigned;
   }
 
   Map<String, dynamic> toJson() {
@@ -32,6 +39,8 @@ class AdvancedFilter {
       'showChanges': showChanges,
       'showImages': showImages,
       'showConfiguration': showConfiguration,
+      'compatToolFilterActive':compatToolFilterActive,
+      'compatToolCode':compatToolCode
     };
   }
 
@@ -45,5 +54,8 @@ class AdvancedFilter {
     showChanges = 2;
     showImages =2;
     showConfiguration=2;
+
+    compatToolFilterActive = false;
+    compatToolCode = CompatToolTools.notAssigned;
   }
 }

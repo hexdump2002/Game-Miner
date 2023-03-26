@@ -1,5 +1,6 @@
 import 'package:game_miner/data/models/compat_tool_mapping.dart';
 import 'package:game_miner/data/models/steam_shortcut_game.dart';
+import 'package:game_miner/logic/Tools/compat_tool_tools.dart';
 import 'package:path/path.dart' as p;
 import 'package:collection/collection.dart';
 
@@ -30,7 +31,7 @@ class GameExecutable {
   late String relativeExePath;
   late String name;
 
-  String compatToolCode = "not_assigned"; //If null there's no proton mapping assigned to this executable
+  String compatToolCode = CompatToolTools.notAssigned; //If null there's no proton mapping assigned to this executable
   String compatToolPriority="0";
   String compatToolConfig="";
   bool added = false;
@@ -103,7 +104,7 @@ class GameExecutable {
   }
 
   void clearCompatToolMappingData() {
-    compatToolCode = "not_assigned";
+    compatToolCode = CompatToolTools.notAssigned;
     compatToolConfig = "";
     compatToolPriority = "0";
 

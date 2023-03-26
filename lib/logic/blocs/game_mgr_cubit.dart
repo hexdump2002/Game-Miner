@@ -110,16 +110,19 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
 
   GameMgrCubit() : super(IninitalState()) {
     _settings = GetIt.I<SettingsRepository>().getSettings();
-    _advancedFilter = AdvancedFilter([..._settings.getCurrentUserSettings()!.searchPaths]);
-  }
 
-  void loadData() {
     _currentUserSettings = _settings!.getUserSettings(_settings!.currentUserId)!;
 
     //Set current filter
     if(_currentUserSettings.filter!=null) {
       _advancedFilter = AdvancedFilter.fromJson(_currentUserSettings.filter!.toJson());
     }
+    else
+      _advancedFilter = AdvancedFilter([..._settings.getCurrentUserSettings()!.searchPaths]);
+  }
+
+  void loadData() {
+    _currentUserSettings = _settings!.getUserSettings(_settings!.currentUserId)!;
 
     _loadData(_currentUserSettings);
   }
@@ -153,7 +156,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
     _filteredGames.addAll(_gameViews);
     _availableCompatTools = await _compatToolsRepository.loadCompatTools();
 
-    applyAdvancedFilter(_advancedFilter);
+    _applyCurrentAdvancedFilter();
     _sortedFilteredGames = sortFilteredByCurrent();
 
     _refreshGameCountFromGameViews(_sortedFilteredGames);
@@ -183,9 +186,13 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
 
   void refreshGameViewImages(List<GameView> gameViews) {
     for (GameView g in gameViews) {
-      String? gameImage = GameTools.getGameImagePath(g.game, _currentImageType!);
-      g.gameImagePath = gameImage;
+      refreshGameViewImage(g);
     }
+  }
+
+  void refreshGameViewImage(GameView g) {
+    String? gameImage = GameTools.getGameImagePath(g.game, _currentImageType!);
+    g.gameImagePath = gameImage;
   }
 
   Future<List<GameView>> _generateGameViews(List<Game> games) async {
@@ -374,7 +381,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
   void setCompatToolDataFor(GameView gv, GameExecutable uge, String value) {
     //assert(value!=null);
 
-    if (value == "not_assigned" || value == "no_use") {
+    if (value == CompatToolTools.notAssigned || value == CompatToolTools.notInUseCode) {
       uge.clearCompatToolMappingData();
     } else {
       uge.fillProtonMappingData(getCompatToolCodeFromDisplayName(value), "", "250");
@@ -575,9 +582,17 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
         //ge.appId=SteamTools.generateAppId(p.joinAll([ge.startDir,ge.relativeExePath])); //Se generara el mismo?
         ge.fillProtonMappingData(foundGe.compatToolCode, "", "250");
         //ge.dataFromConfigFile = true; //Mark as configured by config file
+
+        //Import and load art if it exists
+        await GameTools.importShortcutArt(gv.game.path, ge, _settings.currentUserId);
+        ge.images = await GameTools.getGameExecutableImages(ge.appId, _settings.currentUserId);
+
         modified = true;
       }
     }
+
+    //Set the new active image depending on the current view
+    refreshGameViewImage(gv);
 
     gv.modified = modified;
 
@@ -818,9 +833,13 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
     return sortByCurrent([..._filteredGames]);
   }
 
-  void applyAdvancedFilter(AdvancedFilter advancedFilter) {
+  void setAdvancedFilter(AdvancedFilter advancedFilter) {
     _advancedFilter = advancedFilter;
+    _applyCurrentAdvancedFilter();
+    notifyDataChanged();
+  }
 
+  void _applyCurrentAdvancedFilter() {
     _filteredGames = filterGamesByName(_gameViews, _searchText);
     _filteredGames = filterGamesByChanges(_filteredGames, _advancedFilter.showChanges);
     _filteredGames = filterGamesByStatus(_filteredGames, _advancedFilter.showStatusRed, _advancedFilter.showStatusOrange, _advancedFilter.showStatusGreen, _advancedFilter.showStatusBlue);
@@ -828,6 +847,10 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
     _filteredGames = filterGamesByError(_filteredGames, _advancedFilter.showErrors);
     _filteredGames = filterGamesByImages(_filteredGames, _advancedFilter.showImages);
     _filteredGames = filterGamesBySearchPaths(_filteredGames, _advancedFilter.searchPaths);
+
+    if(_advancedFilter.compatToolFilterActive) {
+      _filteredGames = filterGamesByCompatTool(_filteredGames, _advancedFilter.compatToolCode);
+    }
 
     _sortedFilteredGames = sortFilteredByCurrent();
 
@@ -839,7 +862,8 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
   //region Filters
   searchTermChanged(String term) {
     _searchText = term;
-    applyAdvancedFilter(_advancedFilter);
+    _applyCurrentAdvancedFilter();
+    notifyDataChanged();
   }
 
   AdvancedFilter getAdvancedFilter() { return _advancedFilter; }
@@ -939,6 +963,18 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
       //With no errors
       return gameViews.where((element) =>  !element.hasConfig).toList();
     }
+  }
+
+  List<GameView> filterGamesByCompatTool(List<GameView> filteredGames, String compatToolCode) {
+    List<GameView> filteredGameView = [];
+    for(GameView g in filteredGames) {
+      GameExecutable? ge = g.game.exeFileEntries.firstWhereOrNull((element) => element.added && element.compatToolCode == compatToolCode);
+      if(ge!=null) {
+        filteredGameView.add(g);
+      }
+    }
+
+    return filteredGameView;
   }
 /*
   void setFilterRedStatus(bool value) {
@@ -1138,19 +1174,39 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
   }
 
   void selectAll() {
-    for (GameView gv in _gameViews) {
+    for (GameView gv in _filteredGames) {
       gv.selected = true;
     }
     notifyDataChanged();
   }
 
   void selectNone() {
-    for (GameView gv in _gameViews) {
+    for (GameView gv in _filteredGames) {
       gv.selected = false;
     }
 
     notifyDataChanged();
   }
+
+  void changeSelectedGamesCompatTool(String protonName) {
+    var selectedGames = _gameViews.where((element)  =>element.selected);
+
+    String compatToolCode = CompatToolTools.getCompatToolCodeFromDisplayName(protonName, _availableCompatTools);
+    for(GameView gv in selectedGames) {
+      for(GameExecutable ge in gv.game.exeFileEntries) {
+        if(ge.added) {
+          ge.compatToolCode = compatToolCode;
+          gv.modified = true;
+        }
+      }
+    }
+
+    _applyCurrentAdvancedFilter();
+
+    notifyDataChanged();
+  }
+
+
 
 
 

@@ -85,10 +85,6 @@ class GameDataMgrCubit extends Cubit<GameDataMgrState> {
         }
       }
 
-      if(as.appId =="0") {
-        print("YHA");
-      }
-
       //Get Image. We can't use games repository because there can be data left for deleted games
       var icons = await FileTools.getFolderFilesAsync(nonSteamGamesiconFolder, recursive: false, regExFilter: "\^${as.appId}_icon.*");
       if(icons!= null && icons.isEmpty) {

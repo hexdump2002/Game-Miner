@@ -72,6 +72,7 @@
   "backup_count": "Número de backups",
   "select_none": "Ninguno",
   "select_all": "Todos",
+  "change_compattool":"CompatTool",
   "delete_selected": "Borrar Juegos",
   "import_selected": "Import, conf",
   "export_selected": "Export. conf",
@@ -175,5 +176,8 @@
   "desktop_icons_added": "Los iconos de la aplicación fueron añadidos",
   "desktop_icons_add_error": "Los iconos de la aplicación no pudieron ser añadidos",
   "desktop_app_icon_options": "Opciones de Iconos de aplicación",
-  "reset_filter": "Reiniciar filtro"
+  "reset_filter": "Reiniciar filtro",
+  "change_compattool_dialog_title": "Cambiar CompatTool",
+  "change_compattool_dialog_text": "Para cambiar la capa de compatibilidad de los juego seleccionados, elige una del desplegable y pulsa OK. Recuerda guardar los cambios depués!",
+  "all_selected_games_compattool_changed":"El compat tool de todos los juegos seleccionados fue cambiado con éxito"
 }

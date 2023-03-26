@@ -3,14 +3,15 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dialogs/flutter_dialogs.dart';
 import 'package:game_miner/data/repositories/settings_repository.dart';
+import 'package:game_miner/logic/Tools/compat_tool_tools.dart';
 import 'package:game_miner/logic/blocs/game_mgr_cubit.dart';
 import 'package:get_it/get_it.dart';
 
 import '../../data/models/advanced_filter.dart';
 import '../../data/models/settings.dart';
 import '../../data/models/steam_config.dart';
+import '../../data/repositories/compat_tools_repository.dart';
 import '../../data/repositories/steam_config_repository.dart';
-
 
 class AdvancedFilterWidget extends StatefulWidget {
   final AdvancedFilter _advancedFilter;
@@ -19,7 +20,8 @@ class AdvancedFilterWidget extends StatefulWidget {
   bool _modified = false;
 
   AdvancedFilterWidget({Key? key, required AdvancedFilter advancedFilter, required List<String> searchPaths})
-      : _advancedFilter = advancedFilter, _searchPaths = searchPaths,
+      : _advancedFilter = advancedFilter,
+        _searchPaths = searchPaths,
         super(key: key);
 
   @override
@@ -27,14 +29,15 @@ class AdvancedFilterWidget extends StatefulWidget {
 }
 
 class _AdvancedFilterWidgetState extends State<AdvancedFilterWidget> {
-
   @override
   Widget build(BuildContext context) {
+    final CompatToolsRepository _compatToolsRepository = GetIt.I<CompatToolsRepository>();
+    final compatTools= _compatToolsRepository.getCachedCompatTools();
 
     return SingleChildScrollView(
       child: Column(children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(0,0,0,16),
+          padding: const EdgeInsets.fromLTRB(0, 0, 0, 16),
           child: Row(
             children: [
               Expanded(
@@ -43,13 +46,21 @@ class _AdvancedFilterWidgetState extends State<AdvancedFilterWidget> {
                   style: TextStyle(fontSize: 23),
                 ),
               ),
-              IconButton(onPressed: () {
-                _saveFiler();
-              }, tooltip: tr("save"), icon: Icon(Icons.save, color: widget._modified ? Colors.orange: Colors.white,)),
-              IconButton(onPressed: () {
-                _resetFilter();
-              }, tooltip: tr("reset_filter"), icon: Icon(Icons.refresh))
-
+              IconButton(
+                  onPressed: () {
+                    _saveFiler();
+                  },
+                  tooltip: tr("save"),
+                  icon: Icon(
+                    Icons.save,
+                    color: widget._modified ? Colors.orange : Colors.white,
+                  )),
+              IconButton(
+                  onPressed: () {
+                    _resetFilter();
+                  },
+                  tooltip: tr("reset_filter"),
+                  icon: Icon(Icons.refresh))
             ],
           ),
         ),
@@ -74,7 +85,7 @@ class _AdvancedFilterWidgetState extends State<AdvancedFilterWidget> {
                             value: widget._advancedFilter.showStatusRed,
                             onChanged: (value) {
                               setState(() {
-                                widget._modified=true;
+                                widget._modified = true;
                                 widget._advancedFilter.showStatusRed = value!;
                               });
                             }),
@@ -98,7 +109,7 @@ class _AdvancedFilterWidgetState extends State<AdvancedFilterWidget> {
                             onChanged: (value) {
                               setState(() {
                                 widget._advancedFilter.showStatusOrange = value!;
-                                widget._modified=true;
+                                widget._modified = true;
                               });
                             }),
                         Container(height: 15, width: 15, color: Colors.orange),
@@ -121,7 +132,7 @@ class _AdvancedFilterWidgetState extends State<AdvancedFilterWidget> {
                             onChanged: (value) {
                               setState(() {
                                 widget._advancedFilter.showStatusGreen = value!;
-                                widget._modified=true;
+                                widget._modified = true;
                               });
                             }),
                         Container(height: 15, width: 15, color: Colors.green),
@@ -144,7 +155,7 @@ class _AdvancedFilterWidgetState extends State<AdvancedFilterWidget> {
                             onChanged: (value) {
                               setState(() {
                                 widget._advancedFilter.showStatusBlue = value!;
-                                widget._modified=true;
+                                widget._modified = true;
                               });
                             }),
                         Container(height: 15, width: 15, color: Colors.blue.shade200),
@@ -183,16 +194,13 @@ class _AdvancedFilterWidgetState extends State<AdvancedFilterWidget> {
                               leading: Checkbox(
                                 onChanged: (value) {
                                   setState(() {
-                                    widget._modified=true;
-                                    if(value!) {
+                                    widget._modified = true;
+                                    if (value!) {
                                       widget._advancedFilter.searchPaths.add(e);
-                                    }
-                                    else
-                                    {
+                                    } else {
                                       widget._advancedFilter.searchPaths.remove(e);
                                     }
                                   });
-
                                 },
                                 value: widget._advancedFilter.searchPaths.contains(e),
                               ),
@@ -222,10 +230,12 @@ class _AdvancedFilterWidgetState extends State<AdvancedFilterWidget> {
                               Checkbox(
                                   value: widget._advancedFilter.showErrors == 0,
                                   onChanged: (value) {
-                                    setState(() { widget._advancedFilter.showErrors = 0; widget._modified=true; });
+                                    setState(() {
+                                      widget._advancedFilter.showErrors = 0;
+                                      widget._modified = true;
+                                    });
                                   }),
                               Expanded(child: Text(tr("filter_with_errors"))),
-
                             ],
                           ),
                         ),
@@ -235,10 +245,12 @@ class _AdvancedFilterWidgetState extends State<AdvancedFilterWidget> {
                               Checkbox(
                                   value: widget._advancedFilter.showErrors == 1,
                                   onChanged: (value) {
-                                    setState(() { widget._advancedFilter.showErrors = 1; widget._modified=true;});
+                                    setState(() {
+                                      widget._advancedFilter.showErrors = 1;
+                                      widget._modified = true;
+                                    });
                                   }),
                               Expanded(child: Text(tr("filter_with_no_errors"))),
-
                             ],
                           ),
                         ),
@@ -248,10 +260,12 @@ class _AdvancedFilterWidgetState extends State<AdvancedFilterWidget> {
                               Checkbox(
                                   value: widget._advancedFilter.showErrors == 2,
                                   onChanged: (value) {
-                                    setState(() { widget._advancedFilter.showErrors = 2; widget._modified=true;});
+                                    setState(() {
+                                      widget._advancedFilter.showErrors = 2;
+                                      widget._modified = true;
+                                    });
                                   }),
                               Expanded(child: Text(tr("filter_both"))),
-
                             ],
                           ),
                         ),
@@ -265,10 +279,12 @@ class _AdvancedFilterWidgetState extends State<AdvancedFilterWidget> {
                               Checkbox(
                                   value: widget._advancedFilter.showChanges == 0,
                                   onChanged: (value) {
-                                    setState(() { widget._advancedFilter.showChanges = 0;widget._modified=true;});
+                                    setState(() {
+                                      widget._advancedFilter.showChanges = 0;
+                                      widget._modified = true;
+                                    });
                                   }),
                               Expanded(child: Text(tr("filter_with_changes"))),
-
                             ],
                           ),
                         ),
@@ -278,10 +294,12 @@ class _AdvancedFilterWidgetState extends State<AdvancedFilterWidget> {
                               Checkbox(
                                   value: widget._advancedFilter.showChanges == 1,
                                   onChanged: (value) {
-                                    setState(() { widget._advancedFilter.showChanges = 1; widget._modified=true;});
+                                    setState(() {
+                                      widget._advancedFilter.showChanges = 1;
+                                      widget._modified = true;
+                                    });
                                   }),
                               Expanded(child: Text(tr("filter_with_no_changes"))),
-
                             ],
                           ),
                         ),
@@ -291,10 +309,12 @@ class _AdvancedFilterWidgetState extends State<AdvancedFilterWidget> {
                               Checkbox(
                                   value: widget._advancedFilter.showChanges == 2,
                                   onChanged: (value) {
-                                    setState(() { widget._advancedFilter.showChanges = 2; widget._modified=true;});
+                                    setState(() {
+                                      widget._advancedFilter.showChanges = 2;
+                                      widget._modified = true;
+                                    });
                                   }),
                               Expanded(child: Text(tr("filter_both"))),
-
                             ],
                           ),
                         ),
@@ -308,10 +328,12 @@ class _AdvancedFilterWidgetState extends State<AdvancedFilterWidget> {
                               Checkbox(
                                   value: widget._advancedFilter.showImages == 0,
                                   onChanged: (value) {
-                                    setState(() { widget._advancedFilter.showImages = 0;widget._modified=true;});
+                                    setState(() {
+                                      widget._advancedFilter.showImages = 0;
+                                      widget._modified = true;
+                                    });
                                   }),
                               Expanded(child: Text(tr("filter_with_images"))),
-
                             ],
                           ),
                         ),
@@ -321,10 +343,12 @@ class _AdvancedFilterWidgetState extends State<AdvancedFilterWidget> {
                               Checkbox(
                                   value: widget._advancedFilter.showImages == 1,
                                   onChanged: (value) {
-                                    setState(() { widget._advancedFilter.showImages = 1; widget._modified=true;});
+                                    setState(() {
+                                      widget._advancedFilter.showImages = 1;
+                                      widget._modified = true;
+                                    });
                                   }),
                               Expanded(child: Text(tr("filter_with_no_images"))),
-
                             ],
                           ),
                         ),
@@ -334,9 +358,11 @@ class _AdvancedFilterWidgetState extends State<AdvancedFilterWidget> {
                               Checkbox(
                                   value: widget._advancedFilter.showImages == 2,
                                   onChanged: (value) {
-                                    setState(() { widget._advancedFilter.showImages = 2; widget._modified=true;});
+                                    setState(() {
+                                      widget._advancedFilter.showImages = 2;
+                                      widget._modified = true;
+                                    });
                                   }),
-
                               Expanded(child: Text(tr("filter_both"))),
                             ],
                           ),
@@ -351,10 +377,12 @@ class _AdvancedFilterWidgetState extends State<AdvancedFilterWidget> {
                               Checkbox(
                                   value: widget._advancedFilter.showConfiguration == 0,
                                   onChanged: (value) {
-                                    setState(() { widget._advancedFilter.showConfiguration = 0;widget._modified=true;});
+                                    setState(() {
+                                      widget._advancedFilter.showConfiguration = 0;
+                                      widget._modified = true;
+                                    });
                                   }),
                               Expanded(child: Text(tr("filter_with_configuration"))),
-
                             ],
                           ),
                         ),
@@ -364,10 +392,12 @@ class _AdvancedFilterWidgetState extends State<AdvancedFilterWidget> {
                               Checkbox(
                                   value: widget._advancedFilter.showConfiguration == 1,
                                   onChanged: (value) {
-                                    setState(() {widget._advancedFilter.showConfiguration = 1;widget._modified=true;});
+                                    setState(() {
+                                      widget._advancedFilter.showConfiguration = 1;
+                                      widget._modified = true;
+                                    });
                                   }),
                               Expanded(child: Text(tr("filter_with_no_configuration"))),
-
                             ],
                           ),
                         ),
@@ -377,16 +407,59 @@ class _AdvancedFilterWidgetState extends State<AdvancedFilterWidget> {
                               Checkbox(
                                   value: widget._advancedFilter.showConfiguration == 2,
                                   onChanged: (value) {
-                                    setState(() { widget._advancedFilter.showConfiguration = 2;widget._modified=true;});
+                                    setState(() {
+                                      widget._advancedFilter.showConfiguration = 2;
+                                      widget._modified = true;
+                                    });
                                   }),
                               Expanded(child: Text(tr("filter_both"))),
-
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Row(
+                            children: [
+                              Expanded(
+                                flex: 3,
+                                child: Row(
+                                  children: [
+                                    Checkbox(
+                                        value: widget._advancedFilter.compatToolFilterActive,
+                                        onChanged: (value) {
+                                          setState(() {
+                                            widget._advancedFilter.compatToolFilterActive = value!;
+                                            widget._modified = true;
+                                          });
+                                        }),
+                                    Text(tr("with_proton")),
+                                  ],
+                                ),
+                              ),
+                              Expanded(
+                                flex: 7,
+                                child: DropdownButtonFormField<String>(
+                                    items: CompatToolTools.getAvailableCompatToolDisplayNames(compatTools).map<DropdownMenuItem<String>>((String e) {
+                                      return DropdownMenuItem<String>(value: e, child: Text(e));
+                                    }).toList(),
+                                    value: CompatToolTools.getCompatToolDisplayNameFromCode(widget._advancedFilter.compatToolCode, compatTools), //At least one must exist
+                                    onChanged: widget._advancedFilter.compatToolFilterActive
+                                        ? (String? value) => setState(() {
+                                              widget._advancedFilter.compatToolCode = CompatToolTools.getCompatToolCodeFromDisplayName(value!, compatTools);
+                                              widget._modified = true;
+                                            })
+                                        : null,
+                                    decoration: const InputDecoration()),
+                              ),
                             ],
                           ),
                         ),
                       ],
                     )
-                  ]))
+                  ])),
             ]))
       ]),
     );
@@ -395,7 +468,7 @@ class _AdvancedFilterWidgetState extends State<AdvancedFilterWidget> {
   _saveFiler() {
     var repo = GetIt.I<SettingsRepository>();
     Settings settings = repo.getSettings();
-    UserSettings userSettings= settings.getCurrentUserSettings()!;
+    UserSettings userSettings = settings.getCurrentUserSettings()!;
     userSettings.filter = widget._advancedFilter;
     repo.update(settings);
     repo.save();
@@ -408,5 +481,3 @@ class _AdvancedFilterWidgetState extends State<AdvancedFilterWidget> {
     });
   }
 }
-
-

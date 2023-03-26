@@ -1,3 +1,4 @@
+import 'package:game_miner/logic/Tools/compat_tool_tools.dart';
 import 'package:game_miner/logic/blocs/game_mgr_cubit.dart';
 
 import 'advanced_filter.dart';
@@ -42,7 +43,7 @@ enum ExecutableNameProcesTextProcessingOption { noProcessing, capitalized, title
 class UserSettings {
   List<String> searchPaths = [];
 
-  String defaultCompatTool = "not_assigned";
+  String defaultCompatTool = CompatToolTools.notAssigned;
   bool darkTheme = true;
   bool backupsEnabled = true;
   int maxBackupsCount = 5;
@@ -77,7 +78,7 @@ class UserSettings {
         : ExecutableNameProcesTextProcessingOption.noProcessing;
 
     //Backward compatibility
-    if (defaultCompatTool == "None") defaultCompatTool = "not_assigned";
+    if (defaultCompatTool == "None") defaultCompatTool = CompatToolTools.notAssigned;
   }
 
   Map<String, dynamic> toJson() {
