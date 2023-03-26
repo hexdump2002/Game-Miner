@@ -65,6 +65,7 @@ class SettingsCubit extends Cubit<SettingsState> {
   void setDefaultCompatToolFromName(String value) {
     _currentUserSettings.defaultCompatTool = getCompatToolCodeFromDisplayName(value);
     _modified = true;
+    emit(GeneralOptionsChanged(_currentUserSettings, _modified));
   }
 
   void save({bool showMessages = true}) {
