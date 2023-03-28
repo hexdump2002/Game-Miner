@@ -9,7 +9,8 @@ class Release {
     String name;
     String url;
     String tagName;
-    Release(this.name, this.tagName, this.url);
+    String body;
+    Release(this.name, this.tagName, this.body, this.url);
 }
 
 class GithubUpdater {
@@ -27,7 +28,7 @@ class GithubUpdater {
             var decodedResponse = jsonDecode(utf8.decode(response.bodyBytes));
             for(Map<String,dynamic> obj in decodedResponse) {
                 if(obj['prerelease'] == false && obj['draft'] == false && (obj['assets'] as List).isNotEmpty) {
-                  releases.add(Release(obj['name'], obj['tag_name'],obj['assets'][0]['browser_download_url']));
+                  releases.add(Release(obj['name'], obj['tag_name'], obj['body'], obj['assets'][0]['browser_download_url']));
                 }
             }
         } else {

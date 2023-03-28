@@ -22,6 +22,7 @@ doc/api/
 
 
 settings.cfg
+.flutter-plugins-dependencies
 /FlutterApp-Linux-Portable.tar.gz
 /build-dir/
 /.flatpak-builder/

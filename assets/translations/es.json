@@ -180,5 +180,6 @@
   "change_compattool_dialog_title": "Cambiar CompatTool",
   "change_compattool_dialog_text": "Para cambiar la capa de compatibilidad de los juegos seleccionados, elige una del desplegable y pulsa OK. Recuerda guardar los cambios después!",
   "all_selected_games_compattool_changed":"El compat tool de todos los juegos seleccionados fue cambiado con éxito",
-  "with_proton": "Con CompatTool"
+  "with_proton": "Con CompatTool",
+  "release_notes": "Información de la versión"
 }

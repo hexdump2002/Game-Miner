@@ -160,8 +160,19 @@ class _SplashPageState extends State<SplashPage>  with SingleTickerProviderState
             ),
             Text(tr('information'))
           ]),
-          content: Column(mainAxisSize: MainAxisSize.min, children: [
+          content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch,children: [
             Text(tr("gameminer_new_version_detected", args:[currentGMVersion, release.tagName.substring(1)])),
+            SizedBox(height: 16,),
+            Container(color:Colors.grey.shade300, padding: EdgeInsets.all(16),child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(tr("release_notes"), style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),),
+                SizedBox(height: 8,),
+                Text(release.body, textAlign: TextAlign.start, style: TextStyle(fontSize:13),),
+              ],
+            ),
+            )
+
           ]),
           actions: <Widget>[
             BasicDialogAction(
