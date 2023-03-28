@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:game_miner/data/models/game_miner_cached_stats_data.dart';
 
 import 'package:game_miner/data/repositories/settings_repository.dart';
 import 'package:game_miner/logic/Tools/file_tools.dart';
@@ -20,8 +21,12 @@ import 'package:game_miner/presentation/pages/splash_page.dart';
 import 'package:get_it/get_it.dart';
 import 'package:window_manager/window_manager.dart';
 
+import 'data/data_providers/game_stats_provider.dart';
+import 'data/models/game_folder_stats.dart';
 import 'data/models/settings.dart';
 import 'logic/Tools/service_locator.dart';
+
+import 'package:path/path.dart' as p;
 
 Stream<Settings> stream = GetIt.I<SettingsRepository>().settings.distinct((Settings previous, Settings next) {
   if(next.currentUserId.isEmpty) return false;
@@ -31,6 +36,17 @@ Stream<Settings> stream = GetIt.I<SettingsRepository>().settings.distinct((Setti
 
 void main() async {
   setupServiceLocator();
+
+  /*String configFolder = FileTools.getConfigFolder();
+  String gameMinerAbsolutePath = p.join(configFolder,"game_miner_folders_cached_data.json");
+  var dic = <String, GameFolderStats>{};
+  dic['/home/deck/Games/perico1'] =  GameFolderStats(100,34000, DateTime.now());
+  dic['/home/deck/Games/manolita1'] =  GameFolderStats(100,34000, DateTime.now());
+  GameStatsProvider gsp = GameStatsProvider();
+  var gmcfsd = GameMinerCachedFolderStatsData(dic);
+  gsp.save(gameMinerAbsolutePath, gmcfsd);
+  GameMinerCachedFolderStatsData data = await gsp.load(gameMinerAbsolutePath);*/
+
 
   // Needs to be called so that we can await for EasyLocalization.ensureInitialized();
   WidgetsFlutterBinding.ensureInitialized();

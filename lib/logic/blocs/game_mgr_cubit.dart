@@ -139,7 +139,9 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
       emit(RetrievingGameData());
 
       /*_baseGames*/
-      games = await _gameRepository.loadGames(_settings.currentUserId, _currentUserSettings.searchPaths);
+      String configFolder = FileTools.getConfigFolder();
+      String gameMinerFolderCacheDataAbsolutePath = p.join(configFolder,"game_miner_folders_cached_data.json");
+      games = await _gameRepository.loadGames(_settings.currentUserId, _currentUserSettings.searchPaths,gameMinerFolderCacheDataAbsolutePath);
 
       _baseGames = games!;
 
@@ -749,9 +751,9 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
     SortDirection sortDirection = _sortDirectionIndex == 0 ? SortDirection.Asc : SortDirection.Desc;
 
     if (sortDirection == SortDirection.Asc) {
-      gvs.sort((a, b) => a.game.creationDate.compareTo(b.game.creationDate));
+      gvs.sort((a, b) => a.game.discoveredDate.compareTo(b.game.discoveredDate));
     } else {
-      gvs.sort((a, b) => b.game.creationDate.compareTo(a.game.creationDate));
+      gvs.sort((a, b) => b.game.discoveredDate.compareTo(a.game.discoveredDate));
     }
 
     return gvs;

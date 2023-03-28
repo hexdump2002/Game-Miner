@@ -1,8 +1,10 @@
 
 import 'package:collection/collection.dart';
 import 'package:game_miner/data/data_providers/compat_tools_mapping_data_provider.dart';
+import 'package:game_miner/data/data_providers/game_stats_provider.dart';
 import 'package:game_miner/data/data_providers/steam_shortcuts_data_provider.dart';
 import 'package:game_miner/data/models/compat_tool_mapping.dart';
+import 'package:game_miner/data/models/game_folder_stats.dart';
 import 'package:game_miner/data/models/steam_shortcut_game.dart';
 import 'package:game_miner/data/models/game.dart';
 import 'package:game_miner/data/repositories/cache_repository.dart';
@@ -24,12 +26,14 @@ class GamesRepository extends CacheRepository<Game> {
   late final SteamShortcutDataProvider _steamShortcutsDataProvider;
   late final UserLibraryGamesDataProvider _libraryGamesDataProvider;
   late final CompatToolsMappingDataProvider _compatToolsMappingDataProvider;
+  late final GameStatsProvider _gameStatsProvider;
 
 
   GamesRepository() {
     _steamShortcutsDataProvider = GetIt.I<SteamShortcutDataProvider>();
     _libraryGamesDataProvider = GetIt.I<UserLibraryGamesDataProvider>();
     _compatToolsMappingDataProvider = GetIt.I<CompatToolsMappingDataProvider>();
+    _gameStatsProvider = GetIt.I<GameStatsProvider>();
   }
 
   List<Game>? getGames() {
@@ -48,20 +52,35 @@ class GamesRepository extends CacheRepository<Game> {
 
   }
 
-  Future<List<Game>> loadGames(String userId, List<String> userLibraryPaths) async {
+  Future<List<Game>> loadGames(String userId, List<String> userLibraryPaths, String gameMinerFoldersCacheDataAbsolutePath) async {
     List<Game>? games = getObjectsFromCache(cacheKey);
 
     if (games == null) {
       List<SteamShortcut> shortcuts = await _steamShortcutsDataProvider.loadShortcutGames(userId);
       List<Game> userLibraryGames = await _libraryGamesDataProvider.loadGames(userLibraryPaths);
       List<CompatToolMapping> compatToolMappings = await _compatToolsMappingDataProvider.loadCompatToolMappings();
-
-
-      //
+      Map<String, GameFolderStats> gameFoldersCacheStats = await _gameStatsProvider.load(gameMinerFoldersCacheDataAbsolutePath);
 
       games = userLibraryGames;
 
       List<Game> externalGames = [];
+
+      //Load File stats if not cached to complete data
+      bool newStats = false;
+      for(Game g in userLibraryGames) {
+        GameFolderStats? gfs = gameFoldersCacheStats[g.path];        if(gfs==null) {
+          print("New game with no cache detected: ${g.path}");
+          gfs = (await GameTools.getGameFolderStats(g))!;
+          gameFoldersCacheStats[g.path] = GameFolderStats(gfs.fileCount, gfs.size, gfs.discoverDate);
+          newStats = true;
+        }
+        g.gameSize = gfs!.size;
+        g.discoveredDate = gfs!.discoverDate;
+        g.fileCount = gfs!.fileCount;
+      }
+      if(newStats) {
+        _gameStatsProvider.save(gameMinerFoldersCacheDataAbsolutePath, gameFoldersCacheStats);
+      }
 
       for (SteamShortcut shortcut in shortcuts) {
         bool finished = false;

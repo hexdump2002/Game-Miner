@@ -16,6 +16,7 @@ import 'package:get_it/get_it.dart';
 import 'package:path/path.dart' as p;
 import 'package:collection/collection.dart';
 
+import '../../data/models/game_folder_stats.dart';
 import '../../data/stats.dart';
 import '../../data/models/compat_tool.dart';
 import '../../data/models/game.dart';

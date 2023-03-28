@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:game_miner/data/data_providers/compat_tools_data_provider.dart';
 import 'package:game_miner/data/data_providers/compat_tools_mapping_data_provider.dart';
 import 'package:game_miner/data/data_providers/game_miner_data_provider.dart';
+import 'package:game_miner/data/data_providers/game_stats_provider.dart';
 import 'package:game_miner/data/data_providers/settings_data_provider.dart';
 import 'package:game_miner/data/data_providers/steam_apps_data_provider.dart';
 import 'package:game_miner/data/data_providers/steam_config_data_provider.dart';
@@ -38,6 +39,7 @@ void setupServiceLocator()  {
   serviceLocator.registerLazySingleton<SettingsDataProvider>(() => SettingsDataProvider());
   serviceLocator.registerLazySingleton<AppsStorageDataProvider>(() => AppsStorageDataProvider());
   serviceLocator.registerLazySingleton<GameMinerDataProvider>(() => GameMinerDataProvider());
+  serviceLocator.registerLazySingleton<GameStatsProvider>(() => GameStatsProvider());
   serviceLocator.registerLazySingleton<SteamConfigDataProvider>(() => SteamConfigDataProvider());
   //serviceLocator.registerLazySingleton<SteamUsersDataProvider>(()=>SteamUsersDataProvider());
 

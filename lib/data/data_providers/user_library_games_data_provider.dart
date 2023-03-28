@@ -23,10 +23,11 @@ class UserLibraryGamesDataProvider {
               retrieveRelativePaths: false, recursive: true, regExFilter: r".*\.(exe|sh|bat)$", regExCaseSensitive: false);
           if(exeFiles!=null) {
             ug.addExeFiles(exeFiles);
-            GameFolderStats gfs = (await GameTools.getGameFolderStats(ug))!;
+            //We will do this now just when te game is discovered not everytime we bootup GM
+            /*GameFolderStats gfs = (await GameTools.getGameFolderStats(ug))!;
             ug.creationDate = gfs.creationDate;
             ug.fileCount = gfs.fileCount;
-            ug.gameSize = gfs.size;
+            ug.gameSize = gfs.size;*/
           }
           else
           {

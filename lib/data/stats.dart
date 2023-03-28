@@ -7,13 +7,6 @@ import 'package:path/path.dart' as p;
 
 import '../logic/Tools/file_tools.dart';
 
-class GameFolderStats {
-  int fileCount = 0;
-  int size = 0;
-  DateTime creationDate;
-  GameFolderStats(this.fileCount, this.size, this.creationDate);
-}
-
 class AgregatedGameStats {
   int fileCount = 0;
   int totalSize= 0;

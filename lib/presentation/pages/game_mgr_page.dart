@@ -1429,7 +1429,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
     if (gameView.game.isExternal) return null;
 
     try {
-      String formatedDate = DateFormat('dd-MM-yyyy').format(gameView.game.creationDate);
+      String formatedDate = DateFormat('dd-MM-yyyy').format(gameView.game.discoveredDate);
       return Text("Updated on $formatedDate", style: TextStyle(fontSize: 12, color: Colors.grey.shade500));
     } catch (ex) {
       print(ex);
