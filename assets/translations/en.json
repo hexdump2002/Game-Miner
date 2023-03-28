@@ -182,6 +182,7 @@
   "change_compattool_dialog_title": "Change CompatTool",
   "change_compattool_dialog_text": "To change the compat tool assigned to the selected games just select a compat tool from the dropdown and press Ok. Remember to save changes afterwards!",
   "all_selected_games_compattool_changed":"All games compat tool were changed to {} successfuly",
-  "with_proton": "With Compat Tool"
+  "with_proton": "With Compat Tool",
+  "release_notes": "Release notes"
 
 }
