@@ -10,7 +10,7 @@ tar cvzf  GameMiner-Linux-Portable.tar.gz -C ../build/linux/x64/release/bundle .
 
 # Requisites
 [ -d AppDir ] && echo -e "*ERROR* \"AppDir\" directory is present. Goint out!" && exit 1
-[ -d build ] && echo -e "*ERROR* \"buir\" directory is present. Goint out!" && exit 2
+[ -d build ] && echo -e "*ERROR* \"build\" directory is present. Goint out!" && exit 2
 [ ! -f GameMiner-Linux-Portable.tar.gz ] && echo -e "*ERRROR* \"GameMiner-Linux-Portable.tar.gz\" is not present..." && exit 3
 [ ! -f AppImageBuilder.yml ] && echo -e "*ERRROR* \"AppImageBuilder.yml\" is not present..." && exit 4
 [ ! -f AppDir.tar.gz ] && echo -e "*ERRROR* \"AppDir.tar.gz\" is not present..." && exit 5

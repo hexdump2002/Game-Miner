@@ -11,7 +11,7 @@ import 'package:game_miner/logic/Tools/string_tools.dart';
 import 'package:game_miner/logic/blocs/game_mgr_cubit.dart';
 import 'package:game_miner/main.dart';
 import 'package:game_miner/presentation/pages/view_image_type_common.dart';
-import 'package:game_miner/presentation/widgets/searchbar/searchbar_widget.dart';
+import 'package:game_miner/presentation/widgets/searchbar/searchbar_widget.dart' as GameMinerPresentation;
 import 'package:get_it/get_it.dart';
 import 'package:collection/collection.dart';
 import 'package:window_manager/window_manager.dart';
@@ -68,7 +68,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
             Expanded(
               child: Padding(
                   padding: const EdgeInsets.fromLTRB(8, 8, 16, 8),
-                  child: SearchBar(_nsCubit(context).searchText, tr("search"), (term) => _nsCubit(context).searchTermChanged(term))),
+                  child: GameMinerPresentation.SearchBar(_nsCubit(context).searchText, tr("search"), (term) => _nsCubit(context).searchTermChanged(term))),
             ),
             BlocBuilder<GameMgrCubit, GameMgrBaseState>(
               builder: (context, state) {
@@ -378,7 +378,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
                   children: [
                     Row(
                       children: [
-                        Expanded(child: Text(gameView.game.name, style: Theme.of(context).textTheme.headline5, textAlign: TextAlign.left)),
+                        Expanded(child: Text(gameView.game.name, style: Theme.of(context).textTheme.headlineSmall, textAlign: TextAlign.left)),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
@@ -437,7 +437,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
                     Container(
                         padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
                         decoration: BoxDecoration(borderRadius: BorderRadius.circular(20), color: Colors.black.withAlpha(180)),
-                        child: Text(gameView.game.name, style: Theme.of(context).textTheme.headline5, textAlign: TextAlign.left)),
+                        child: Text(gameView.game.name, style: Theme.of(context).textTheme.headlineSmall, textAlign: TextAlign.left)),
                     Expanded(child: Container()),
                     Container(
                       padding: const EdgeInsets.fromLTRB(16, 0, 18, 0),
@@ -512,7 +512,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
                           _getExeCurrentStateIcon(GameTools.getGameStatus(gameView.game)),
                           Padding(
                             padding: const EdgeInsets.fromLTRB(16.0, 0, 0, 0),
-                            child: Text(gameView.game.name, style: Theme.of(context).textTheme.headline5, textAlign: TextAlign.left),
+                            child: Text(gameView.game.name, style: Theme.of(context).textTheme.headlineSmall, textAlign: TextAlign.left),
                           ),
                         ],
                       ),
@@ -575,7 +575,7 @@ class _GameMgrPageState extends State<GameMgrPage> {
                     message: error ? _buildErrorTextForGameExecutable(uge) : ""),
               ),
               Expanded(
-                child: Text(uge.relativeExePath, style: Theme.of(context).textTheme.headline6, textAlign: TextAlign.left),
+                child: Text(uge.relativeExePath, style: Theme.of(context).textTheme.titleLarge, textAlign: TextAlign.left),
               ),
               Row(children: [
                 Switch(

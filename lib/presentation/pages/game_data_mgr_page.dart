@@ -5,7 +5,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:game_miner/logic/Tools/string_tools.dart';
-import 'package:game_miner/presentation/widgets/searchbar/searchbar_widget.dart';
+import 'package:game_miner/presentation/widgets/searchbar/searchbar_widget.dart' as GameMinerPresentation;
 
 import '../../data/models/app_storage.dart';
 import '../../logic/blocs/game_data_mgr_cubit.dart';
@@ -42,7 +42,7 @@ class _GameDataMgrPageState extends State<GameDataMgrPage> {
               }),*/
           actions: [
             Expanded(
-              child: Padding(padding: const EdgeInsets.fromLTRB(8, 8, 16, 8), child: SearchBar("", tr("search"), (term) => _bloc.filterByName(term))),
+              child: Padding(padding: const EdgeInsets.fromLTRB(8, 8, 16, 8), child: GameMinerPresentation.SearchBar("", tr("search"), (term) => _bloc.filterByName(term))),
             ),
             BlocBuilder<GameDataMgrCubit, GameDataMgrState>(builder: (context, state) {
               return Row(children: [
