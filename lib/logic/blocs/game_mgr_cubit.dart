@@ -128,7 +128,7 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
   }
 
   Future<void> _loadData(UserSettings settings) async {
-    final stopwatch = Stopwatch()..start();
+    // final stopwatch = Stopwatch()..start();
 
     _currentImageType ??= GameExecutableImageType.values[_currentUserSettings.defaultGameManagerView];
 
@@ -180,8 +180,8 @@ class GameMgrCubit extends Cubit<GameMgrBaseState> {
         _multiSelectionMode,
     _advancedFilter));
 
-    stopwatch.stop();
-    print('[Logic] Time taken to execute method: ${stopwatch.elapsed}');
+    // stopwatch.stop();
+    // print('[Logic] Time taken to execute method: ${stopwatch.elapsed}');
   }
 
   void refreshGameViewImages(List<GameView> gameViews) {
