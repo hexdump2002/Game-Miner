@@ -21,6 +21,11 @@ class CompatToolsDataProvider {
   final int _kEndOfEntryMark = 0x0800;
   final int _kEndOfCompToolsMark = 0x0808;
 
+  static final int kAPPINFO_29 = 0x107564427;
+  static final int kAPPINFO_28 = 0x107564428;
+
+  final List<int> _supportedVersions = [kAPPINFO_28, kAPPINFO_29];
+
   Future<List<CompatTool>> loadExternalCompatTools() async {
 
     String path = "${SteamTools.getSteamBaseFolder()}/compatibilitytools.d";
@@ -48,9 +53,66 @@ class CompatToolsDataProvider {
     return compatTools;
   }
 
+  // Hack to extract compat tools
   Future<List<CompatTool>> loadInternalCompatTools() async {
+    List<CompatTool> compatTools = [];
+
+    List<String> validCompToolsPrefixes = ['proton_', 'steamlinuxruntime_'];
+
     String path = "${SteamTools.getSteamBaseFolder()}/appcache/appinfo.vdf";
     BinaryVdfBuffer buffer = BinaryVdfBuffer(path);
+
+    int fileVersion = buffer.readUint64(Endian.little);
+
+    //Check if we have a valid appinfo.vdf version
+    /*if(!_supportedVersions.contains(fileVersion)) {
+      throw new Exception("appcache/appinfo.df version $fileVersion is not valid");
+    }*/
+
+    int pos = buffer.findStringInBuffer("compat_tools");
+    if(pos==-1) return [];
+
+    buffer.seek(pos);
+    buffer.seek("compat_tools".length+1, relative: true); //+1 because of string end flag 00
+
+    int bytesRead = 0;
+    bool exit = false;
+
+    while(bytesRead<512 || exit) {
+      try {
+        String protonToolCandidate = buffer.readString();
+
+        if (validCompToolsPrefixes.any((prefix) => protonToolCandidate.startsWith(prefix))) {
+          //Valid! -> split name to format it a bit and add it to the compatibility toolset
+          compatTools.add(new CompatTool(protonToolCandidate, protonToolCandidate, false));
+        }
+
+        bytesRead += protonToolCandidate.length;
+      }
+      catch (e){
+        print("There was an error reading appinfo.vdf compat tools. The error was: "+e.toString());
+        exit = true;
+      }
+    }
+
+
+    return compatTools;
+  }
+
+
+
+
+  //This is not working any more... steam changed the way compat_tools exist into appinfo.vdf and new format is pretty hard to swallow
+  /*Future<List<CompatTool>> loadInternalCompatTools() async {
+    String path = "${SteamTools.getSteamBaseFolder()}/appcache/appinfo.vdf";
+    BinaryVdfBuffer buffer = BinaryVdfBuffer(path);
+
+    int fileVersion = buffer.readUint64(Endian.little);
+
+    //Check if we have a valid appinfo.vdf version
+    if(!_supportedVersions.contains(fileVersion)) {
+      throw new Exception("appcache/appinfo.df version $fileVersion is not valid");
+    }
 
     int pos = buffer.findStringInBuffer("compat_tools");
     if(pos==-1) return [];
@@ -61,6 +123,7 @@ class CompatToolsDataProvider {
 
     List<CompatTool> compatTools = [];
 
+
     while(!_isEndOfCompatTools(buffer))
     {
       compatTools.add(await _loadInternalCompatToolEntry(buffer));
@@ -69,6 +132,8 @@ class CompatToolsDataProvider {
     return compatTools;
   }
 
+
+  //This is not working any more... steam changed the way compat_tools exist into appinfo.vdf and new format is pretty hard to swallow
   Future<CompatTool> _loadInternalCompatToolEntry(BinaryVdfBuffer buffer) async {
 
     String compatToolCode = buffer.readString();
@@ -97,7 +162,7 @@ class CompatToolsDataProvider {
     }
 
     return CompatTool(compatToolCode, compatToolName, unlisted);
-  }
+  }*/
 
   bool _isEndOfEntry(BinaryVdfBuffer buffer) {
     int val = buffer.readUint16(Endian.big);
@@ -114,6 +179,5 @@ class CompatToolsDataProvider {
   bool _convertIntToBool(propertyValue) {
     return propertyValue == 0 ? false:true;
   }
-
 
 }

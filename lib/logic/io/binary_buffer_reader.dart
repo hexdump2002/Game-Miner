@@ -155,6 +155,23 @@ class BinaryBufferReader {
     return str;
   }
 
+  int readUint64(Endian endian) {
+    int finalValue = 0;
+
+    for(int i=0; i<8;++i) {
+      int byte = readByte();
+
+      if(endian == Endian.little) {
+        finalValue |= byte << i * 8;
+      }
+      else {
+        finalValue |= byte << (7-i)*8;
+      }
+    }
+
+    return finalValue;
+  }
+
   int readUint32(Endian endian) {
     int byte0 = readByte();
     int byte1 = readByte();

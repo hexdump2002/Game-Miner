@@ -105,8 +105,6 @@ class SplashCubit extends Cubit<SplashState> {
     AppsStorageRepository repo = GetIt.I<AppsStorageRepository>();
     List<AppStorage>? steamApps = await repo.load(settings.currentUserId, paths);
 
-    GetIt.I<CompatToolsRepository>().loadCompatTools();
-
     /*SchedulerBinding.instance.addPostFrameCallback((_) {
       Navigator.pushReplacementNamed(context, "/main");
     });*/
