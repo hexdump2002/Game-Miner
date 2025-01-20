@@ -17,6 +17,7 @@ import 'package:game_miner/presentation/pages/main_page.dart';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:game_miner/presentation/pages/splash_page.dart';
+import 'package:game_miner/presentation/widgets/error_widget.dart';
 import 'package:get_it/get_it.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -29,7 +30,10 @@ Stream<Settings> stream = GetIt.I<SettingsRepository>().settings.distinct((Setti
   return previous.getCurrentUserSettings()!.darkTheme != next.getCurrentUserSettings()!.darkTheme;
 });
 
+
 void main() async {
+  final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
   setupServiceLocator();
 
   // Needs to be called so that we can await for EasyLocalization.ensureInitialized();
@@ -39,10 +43,21 @@ void main() async {
   await EasyLocalization.ensureInitialized();
 
 
-  windowManager.setMinimumSize(const Size(800,700));
-  runApp(EasyLocalization(child: MyApp(), supportedLocales: [Locale('en'), Locale('es')], path: 'assets/translations', fallbackLocale: Locale('en')));
-  EasyLoading.instance.userInteractions = false;
-  EasyLoading.instance.displayDuration=const Duration(seconds: 2);
+  windowManager.setMinimumSize(const Size(800, 700));
+
+  runZonedGuarded( () {
+
+    runApp(
+        EasyLocalization(child: MyApp(navigatorKey:navigatorKey), supportedLocales: [Locale('en'), Locale('es')], path: 'assets/translations', fallbackLocale: Locale('en')));
+    EasyLoading.instance.userInteractions = false;
+    EasyLoading.instance.displayDuration = const Duration(seconds: 2);
+  }, (error, stackTrace) {
+    print('Caught an unhandled exception: $error');
+    print('Stack trace: $stackTrace');
+
+    EasyLoading.dismiss();
+    navigatorKey.currentState?.push( MaterialPageRoute( builder: (context) => ErrorScreen(error: error.toString(), stackTrace: stackTrace.toString())));
+  });
 }
 
 class CustomTheme extends ThemeExtension<CustomTheme> {
@@ -74,7 +89,8 @@ class CustomTheme extends ThemeExtension<CustomTheme> {
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final GlobalKey<NavigatorState> navigatorKey;
+  const MyApp({required this.navigatorKey});
 
   // This widget is the root of your application.
   @override
@@ -84,6 +100,7 @@ class MyApp extends StatelessWidget {
         initialData: Settings(), //PLACEHOLDER
         builder: (context, AsyncSnapshot<Settings> snapshot) {
           return MaterialApp(
+            navigatorKey: navigatorKey,
             debugShowCheckedModeBanner: false,
             localizationsDelegates: context.localizationDelegates,
             supportedLocales: context.supportedLocales,

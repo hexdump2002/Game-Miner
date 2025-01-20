@@ -11,7 +11,7 @@ class TxtVdfFile {
   final int closingBrace = "}".codeUnitAt(0);
   final int slashChar = "/".codeUnitAt(0);
 
-  final List<int> _emptyCodeUnits = [" ".codeUnitAt(0), "\t".codeUnitAt(0), "\n".codeUnitAt(0)];
+  final List<int> _emptyCodeUnits = [" ".codeUnitAt(0), "\t".codeUnitAt(0), "\n".codeUnitAt(0), "\r".codeUnitAt(0)];
 
   String _text="";
 
