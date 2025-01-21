@@ -1,0 +1,21 @@
+-- Build App if needed (This step is not needed to create app image. It is done inplace by the script)
+
+flutter build linux --release
+
+-- INSTALL DEPENDENCIES
+
+sudo apt-get update -y && sudo apt-get upgrade -y;
+sudo apt-get install -y curl git unzip xz-utils zip libglu1-mesa
+sudo apt-get install  clang cmake git ninja-build pkg-config libgtk-3-dev liblzma-dev libstdc++-12-dev
+sudo apt install fuse
+
+-- BUILD AppImage
+
+run "release_builder/packAppImage.sh"
+
+-- DEPLOY
+
+- Change version in pubspec.yaml
+- Create a new gitbug release
+- Create a new tag that fits revious version in pubspec.yaml with format vX.XX.XXX
+- Upload AppImage as asset
